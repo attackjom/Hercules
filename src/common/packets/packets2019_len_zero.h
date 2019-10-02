@@ -4563,7 +4563,9 @@ packetLen(0x0b37, -1)
 #endif
 
 // Packet: 0x0b38
-#if PACKETVER >= 20190724
+#if PACKETVER >= 20191008
+// removed
+#elif PACKETVER >= 20190724
 packetLen(0x0b38, -1)
 #endif
 
@@ -4573,12 +4575,16 @@ packetLen(0x0b39, -1)
 #endif
 
 // Packet: 0x0b3a
-#if PACKETVER >= 20190724
+#if PACKETVER >= 20191008
+// removed
+#elif PACKETVER >= 20190724
 packetLen(0x0b3a, 4)
 #endif
 
 // Packet: 0x0b3b
-#if PACKETVER >= 20190724
+#if PACKETVER >= 20191008
+// removed
+#elif PACKETVER >= 20190724
 packetLen(0x0b3b, 4)
 #endif
 
@@ -4598,7 +4604,9 @@ packetLen(0x0b3e, -1)
 #endif
 
 // Packet: 0x0b3f
-#if PACKETVER >= 20190724
+#if PACKETVER >= 20191008
+packetLen(0x0b3f, 63)
+#elif PACKETVER >= 20190724
 packetLen(0x0b3f, 64)
 #endif
 
@@ -4608,12 +4616,16 @@ packetLen(0x0b40, -1)
 #endif
 
 // Packet: 0x0b41
-#if PACKETVER >= 20190724
+#if PACKETVER >= 20191008
+packetLen(0x0b41, 69)
+#elif PACKETVER >= 20190724
 packetLen(0x0b41, 41)
 #endif
 
 // Packet: 0x0b42
-#if PACKETVER >= 20190724
+#if PACKETVER >= 20191008
+packetLen(0x0b42, 61)
+#elif PACKETVER >= 20190724
 packetLen(0x0b42, 30)
 #endif
 
@@ -4623,12 +4635,16 @@ packetLen(0x0b43, 47)
 #endif
 
 // Packet: 0x0b44
-#if PACKETVER >= 20190724
+#if PACKETVER >= 20191008
+packetLen(0x0b44, 57)
+#elif PACKETVER >= 20190724
 packetLen(0x0b44, 32)
 #endif
 
 // Packet: 0x0b45
-#if PACKETVER >= 20190724
+#if PACKETVER >= 20191008
+packetLen(0x0b45, 57)
+#elif PACKETVER >= 20190724
 packetLen(0x0b45, 32)
 #endif
 
@@ -4730,28 +4746,43 @@ packetLen(0x0b58, 2)
 #endif
 
 // Packet: 0x0b59
-#if PACKETVER >= 20190918
+#if PACKETVER >= 20191008
+packetLen(0x0b59, 4)
+#elif PACKETVER >= 20190918
 packetLen(0x0b59, 2)
 #endif
 
 // Packet: 0x0b5a
-#if PACKETVER >= 20190918
+#if PACKETVER >= 20191008
+packetLen(0x0b5a, -1)
+#elif PACKETVER >= 20190918
 packetLen(0x0b5a, 4)
 #endif
 
 // Packet: 0x0b5b
-#if PACKETVER >= 20190918
+#if PACKETVER >= 20191008
+packetLen(0x0b5b, 14)
+#elif PACKETVER >= 20190918
 packetLen(0x0b5b, -1)
 #endif
 
 // Packet: 0x0b5c
-#if PACKETVER >= 20190918
+#if PACKETVER >= 20191008
+packetLen(0x0b5c, 2)
+#elif PACKETVER >= 20190918
 packetLen(0x0b5c, 10)
 #endif
 
 // Packet: 0x0b5d
-#if PACKETVER >= 20190918
+#if PACKETVER >= 20191008
+packetLen(0x0b5d, 10)
+#elif PACKETVER >= 20190918
 packetLen(0x0b5d, 2)
+#endif
+
+// Packet: 0x0b5e
+#if PACKETVER >= 20191008
+packetLen(0x0b5e, 33)
 #endif
 
 

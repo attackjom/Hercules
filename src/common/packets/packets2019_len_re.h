@@ -4583,7 +4583,9 @@ packetLen(0x0b37, -1)
 #endif
 
 // Packet: 0x0b38
-#if PACKETVER >= 20190724
+#if PACKETVER >= 20191002
+// removed
+#elif PACKETVER >= 20190724
 packetLen(0x0b38, -1)
 #endif
 
@@ -4593,12 +4595,16 @@ packetLen(0x0b39, -1)
 #endif
 
 // Packet: 0x0b3a
-#if PACKETVER >= 20190724
+#if PACKETVER >= 20191002
+// removed
+#elif PACKETVER >= 20190724
 packetLen(0x0b3a, 4)
 #endif
 
 // Packet: 0x0b3b
-#if PACKETVER >= 20190724
+#if PACKETVER >= 20191002
+// removed
+#elif PACKETVER >= 20190724
 packetLen(0x0b3b, 4)
 #endif
 
@@ -4765,13 +4771,25 @@ packetLen(0x0b5b, -1)
 #endif
 
 // Packet: 0x0b5c
-#if PACKETVER >= 20190918
+#if PACKETVER >= 20191002
+packetLen(0x0b5c, 14)
+#elif PACKETVER >= 20190918
 packetLen(0x0b5c, 10)
 #endif
 
 // Packet: 0x0b5d
 #if PACKETVER >= 20190918
 packetLen(0x0b5d, 2)
+#endif
+
+// Packet: 0x0b5e
+#if PACKETVER >= 20191002
+packetLen(0x0b5e, 10)
+#endif
+
+// Packet: 0x0b5f
+#if PACKETVER >= 20191002
+packetLen(0x0b5f, 33)
 #endif
 
 
