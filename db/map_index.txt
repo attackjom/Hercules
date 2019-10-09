@@ -1040,6 +1040,23 @@ sp_rudus3
 mag_dun03
 gl_cas01_
 1@gl_prq
+1@ghg
+ba_2whs01
+ba_2whs02
+ba_lib
+1@lost
+ba_in01
+1@herbs
+ba_chess
+ba_pw01
+ba_pw02
+ba_pw03
+1@bamn
+1@bamq
+ba_go
+ba_maison
+ba_lost
+ba_bath
 
 // Only add maps under this line if they are not standard maps!
 //======================================================================================
