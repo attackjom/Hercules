@@ -370,8 +370,8 @@ bonus3 bSPVanishRate,`n`,`x`,`bf`;     | Add the (`n`/10)% chance of decreasing 
 
 HP/SP Gain                             | Description
 :------------------------------------- | :-------------------------
-bonus bHPGainValue,`n`;                | When killing a monster by physical attack, you gain `n` HP
-bonus bSPGainValue,`n`;                | When killing a monster by physical attack, you gain `n` SP
+bonus bHPGainValue,`n`;                | When killing a monster by physical Melee attack, you gain `n` HP
+bonus bSPGainValue,`n`;                | When killing a monster by physical Melee attack, you gain `n` SP
 bonus bMagicHPGainValue,`n`;           | Gains +`n` HP when killing an enemy with magic attack
 bonus bMagicSPGainValue,`n`;           | Gains +`n` SP when killing an enemy with magic attack
 bonus2 bHPGainRaceAttack,`r`,`n`;      | Heals `n` HP when attacking race `r` on every hit
