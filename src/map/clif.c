@@ -5899,7 +5899,7 @@ static void clif_skill_estimation(struct map_session_data *sd, struct block_list
 {
 	struct status_data *dstatus;
 	unsigned char buf[64];
-	int i;//, fix;
+	int i, fix;
 
 	nullpo_retv(sd);
 	nullpo_retv(dst);
@@ -5921,9 +5921,9 @@ static void clif_skill_estimation(struct map_session_data *sd, struct block_list
 	              + ((battle_config.estimation_type&2) ? dstatus->mdef2 : 0);
 	WBUFW(buf,18) = dstatus->def_ele;
 	for(i=0;i<9;i++) {
-		WBUFB(buf,20+i)= (unsigned char)battle->attr_ratio(i+1,dstatus->def_ele, dstatus->ele_lv);
+		// WBUFB(buf,20+i)= (unsigned char)battle->attr_ratio(i+1,dstatus->def_ele, dstatus->ele_lv);
 		// The following caps negative attributes to 0 since the client displays them as 255-fix. [Skotlex]
-		//WBUFB(buf,20+i)= (unsigned char)((fix=battle->attr_ratio(i+1,dstatus->def_ele, dstatus->ele_lv))<0?0:fix);
+		WBUFB(buf,20+i)= (unsigned char)((fix=battle->attr_ratio(i+1,dstatus->def_ele, dstatus->ele_lv))<0?0:fix);
 	}
 
 	clif->send(buf,packet_len(0x18c),&sd->bl,sd->status.party_id>0?PARTY_SAMEMAP:SELF);
@@ -6041,7 +6041,7 @@ static void clif_cooking_list(struct map_session_data *sd, int trigger, uint16 s
 	}
 }
 
-static void clif_status_change_notick(struct block_list *bl, int type, int flag, int tick, int val1, int val2, int val3)
+static void clif_status_change_notick(struct block_list *bl, int type, int flag, int tick, int total_tick, int val1, int val2, int val3)
 {
 	struct packet_sc_notick p;
 	struct map_session_data *sd;
@@ -6070,7 +6070,7 @@ static void clif_status_change_notick(struct block_list *bl, int type, int flag,
 /// 08ff <id>.L <index>.W <remain msec>.L { <val>.L }*3  (PACKETVER >= 20111108)
 /// 0983 <index>.W <id>.L <state>.B <total msec>.L <remain msec>.L { <val>.L }*3 (PACKETVER >= 20120618)
 /// 0984 <id>.L <index>.W <total msec>.L <remain msec>.L { <val>.L }*3 (PACKETVER >= 20120618)
-static void clif_status_change(struct block_list *bl, int type, int flag, int tick, int val1, int val2, int val3)
+static void clif_status_change_sub(struct block_list *bl, int type, int flag, int tick, int total_tick, int val1, int val2, int val3)
 {
 	struct packet_status_change p;
 	struct map_session_data *sd;
@@ -6094,7 +6094,7 @@ static void clif_status_change(struct block_list *bl, int type, int flag, int ti
 	p.state = (unsigned char)flag;
 
 #if PACKETVER >= 20120618
-	p.Total = tick; /* at this stage remain and total are the same value I believe */
+	p.Total = total_tick;
 #endif
 #if PACKETVER >= 20090121
 	p.Left = tick;
@@ -6103,6 +6103,13 @@ static void clif_status_change(struct block_list *bl, int type, int flag, int ti
 	p.val3 = val3;
 #endif
 	clif->send(&p,sizeof(p), bl, (sd && sd->status.option&OPTION_INVISIBLE) ? SELF : AREA);
+}
+
+/// Notifies clients of a status change.
+/// @see clif_status_change_sub
+static void clif_status_change(struct block_list *bl, int type, int flag, int total_tick, int val1, int val2, int val3)
+{
+	clif->status_change_sub(bl, type, flag, total_tick, total_tick, val1, val2, val3);
 }
 
 /// Send message (modified by [Yor]) (ZC_NOTIFY_PLAYERCHAT).
@@ -10769,7 +10776,7 @@ static void clif_parse_LoadEndAck(int fd, struct map_session_data *sd)
 
 		if( map->list[sd->bl.m].flag.allowks && !map_flag_ks(sd->bl.m) ) {
 			char output[128];
-			sprintf(output, "[ Kill Steal Protection Disabled. KS is allowed in this map ]");
+			sprintf(output, "%s", msg_sd(sd, 893)); // [ Kill Steal Protection Disabled. KS is allowed in this map ]
 			clif->broadcast(&sd->bl, output, (int)strlen(output) + 1, BC_BLUE, SELF);
 		}
 
@@ -11664,7 +11671,7 @@ static void clif_parse_WisMessage(int fd, struct map_session_data *sd)
 	// if player is autotrading
 	if (dstsd->state.autotrade) {
 		char output[256];
-		sprintf(output, "%s is in autotrade mode and cannot receive whispered messages.", dstsd->status.name);
+		sprintf(output, msg_fd(fd, 894), dstsd->status.name); // %s is in autotrade mode and cannot receive whispered messages.
 		clif->wis_message(fd, map->wisp_server_name, output, (int)strlen(output));
 		return;
 	}
@@ -14298,7 +14305,7 @@ static void clif_parse_CloseVending(int fd, struct map_session_data *sd) __attri
 /// 012e
 static void clif_parse_CloseVending(int fd, struct map_session_data *sd)
 {
-	if (pc_istrading(sd) || pc_isdead(sd))
+	if (sd->npc_id || sd->state.buyingstore || sd->state.trading)
 		return;
 
 	vending->close(sd);
@@ -16686,7 +16693,7 @@ static void clif_Mail_refreshinbox(struct map_session_data *sd)
 
 	if( md->full ) {// TODO: is this official?
 		char output[100];
-		sprintf(output, "Inbox is full (Max %d). Delete some mails.", MAIL_MAX_INBOX);
+		sprintf(output, msg_sd(sd, 511), MAIL_MAX_INBOX); // Inbox is full (Max %d). Delete some mails.
 		clif_disp_onlyself(sd, output);
 	}
 }
@@ -19787,7 +19794,8 @@ static void clif_cashshop_db(void)
 {
 	struct config_t cashshop_conf;
 	struct config_setting_t *cashshop = NULL, *cats = NULL;
-	const char *config_filename = "db/cashshop_db.conf"; // FIXME hardcoded name
+	char config_filename[256];
+	libconfig->format_db_path("cashshop_db.conf", config_filename, sizeof(config_filename));
 	int i, item_count_t = 0;
 	for( i = 0; i < CASHSHOP_TAB_MAX; i++ ) {
 		CREATE(clif->cs.data[i], struct hCSData *, 1);
@@ -20602,7 +20610,7 @@ static void clif_show_modifiers(struct map_session_data *sd)
 	if( sd->status.mod_exp != 100 || sd->status.mod_drop != 100 || sd->status.mod_death != 100 ) {
 		char output[128];
 
-		snprintf(output,128,"Base EXP : %d%% | Base Drop: %d%% | Base Death Penalty: %d%%",
+		snprintf(output,128, msg_sd(sd, 896), // Base EXP : %d%% | Base Drop: %d%% | Base Death Penalty: %d%%
 				sd->status.mod_exp,sd->status.mod_drop,sd->status.mod_death);
 		clif->broadcast2(&sd->bl, output, (int)strlen(output) + 1, 0xffbc90, 0x190, 12, 0, 0, SELF);
 	}
@@ -21058,7 +21066,8 @@ static bool clif_parse_roulette_db(void)
 {
 	struct config_t roulette_conf;
 	struct config_setting_t *roulette = NULL, *levels = NULL;
-	const char *config_filename = "db/roulette_db.conf"; // FIXME hardcoded name
+	char config_filename[256];
+	libconfig->format_db_path("roulette_db.conf", config_filename, sizeof(config_filename));
 	int i, j, item_count_t = 0;
 
 	for( i = 0; i < MAX_ROULETTE_LEVEL; i++ ) {
@@ -22542,7 +22551,8 @@ static bool clif_parse_attendance_db(void)
 {
 	struct config_t attendance_conf;
 	struct config_setting_t *attendance = NULL, *it = NULL;
-	const char *config_filename = "db/attendance_db.conf"; // FIXME hardcoded name
+	char config_filename[256];
+	libconfig->format_db_path("attendance_db.conf", config_filename, sizeof(config_filename));
 	int i = 0;
 
 	if (!libconfig->load_file(&attendance_conf, config_filename))
@@ -23679,9 +23689,9 @@ static void packetdb_loaddb(void)
 static void clif_bc_ready(void)
 {
 	if( battle_config.display_status_timers )
-		clif->status_change = clif_status_change;
+		clif->status_change_sub = clif_status_change_sub;
 	else
-		clif->status_change = clif_status_change_notick;
+		clif->status_change_sub = clif_status_change_notick;
 
 	switch( battle_config.packet_obfuscation ) {
 		case 0:
@@ -23899,6 +23909,7 @@ void clif_defaults(void)
 	clif->autospell = clif_autospell;
 	clif->combo_delay = clif_combo_delay;
 	clif->status_change = clif_status_change;
+	clif->status_change_sub = clif_status_change_sub;
 	clif->insert_card = clif_insert_card;
 	clif->inventoryList = clif_inventoryList;
 	clif->inventoryItems = clif_inventoryItems;

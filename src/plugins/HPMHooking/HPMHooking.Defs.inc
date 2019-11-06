@@ -1330,8 +1330,10 @@ typedef void (*HPMHOOK_pre_clif_autospell) (struct map_session_data **sd, uint16
 typedef void (*HPMHOOK_post_clif_autospell) (struct map_session_data *sd, uint16 skill_lv);
 typedef void (*HPMHOOK_pre_clif_combo_delay) (struct block_list **bl, int *wait);
 typedef void (*HPMHOOK_post_clif_combo_delay) (struct block_list *bl, int wait);
-typedef void (*HPMHOOK_pre_clif_status_change) (struct block_list **bl, int *type, int *flag, int *tick, int *val1, int *val2, int *val3);
-typedef void (*HPMHOOK_post_clif_status_change) (struct block_list *bl, int type, int flag, int tick, int val1, int val2, int val3);
+typedef void (*HPMHOOK_pre_clif_status_change) (struct block_list **bl, int *type, int *flag, int *total_tick, int *val1, int *val2, int *val3);
+typedef void (*HPMHOOK_post_clif_status_change) (struct block_list *bl, int type, int flag, int total_tick, int val1, int val2, int val3);
+typedef void (*HPMHOOK_pre_clif_status_change_sub) (struct block_list **bl, int *type, int *flag, int *tick, int *total_tick, int *val1, int *val2, int *val3);
+typedef void (*HPMHOOK_post_clif_status_change_sub) (struct block_list *bl, int type, int flag, int tick, int total_tick, int val1, int val2, int val3);
 typedef void (*HPMHOOK_pre_clif_insert_card) (struct map_session_data **sd, int *idx_equip, int *idx_card, int *flag);
 typedef void (*HPMHOOK_post_clif_insert_card) (struct map_session_data *sd, int idx_equip, int idx_card, int flag);
 typedef void (*HPMHOOK_pre_clif_inventoryList) (struct map_session_data **sd);
@@ -4178,6 +4180,10 @@ typedef enum parsefunc_rcode (*HPMHOOK_pre_PRIV__lclif_parse_CA_CHARSERVERCONNEC
 typedef enum parsefunc_rcode (*HPMHOOK_post_PRIV__lclif_parse_CA_CHARSERVERCONNECT) (enum parsefunc_rcode retVal___, int fd, struct login_session_data *sd);
 #endif // LOGIN_LCLIF_P_H
 #ifdef COMMON_CONF_H /* libconfig */
+typedef void (*HPMHOOK_pre_libconfig_set_db_path) (const char **db_path);
+typedef void (*HPMHOOK_post_libconfig_set_db_path) (const char *db_path);
+typedef void (*HPMHOOK_pre_libconfig_format_db_path) (const char **filename, char **path_buf, int *buffer_len);
+typedef void (*HPMHOOK_post_libconfig_format_db_path) (const char *filename, char *path_buf, int buffer_len);
 typedef int (*HPMHOOK_pre_libconfig_read) (struct config_t **config, FILE **stream);
 typedef int (*HPMHOOK_post_libconfig_read) (int retVal___, struct config_t *config, FILE *stream);
 typedef void (*HPMHOOK_pre_libconfig_write) (const struct config_t **config, FILE **stream);
@@ -5144,6 +5150,10 @@ typedef int (*HPMHOOK_pre_mapif_parse_ClanMemberCount) (int *fd, int *clan_id, i
 typedef int (*HPMHOOK_post_mapif_parse_ClanMemberCount) (int retVal___, int fd, int clan_id, int kick_interval);
 #endif // CHAR_MAPIF_H
 #ifdef COMMON_MAPINDEX_H /* mapindex */
+typedef bool (*HPMHOOK_pre_mapindex_config_read_dbpath) (const char **filename, const struct config_t **config);
+typedef bool (*HPMHOOK_post_mapindex_config_read_dbpath) (bool retVal___, const char *filename, const struct config_t *config);
+typedef bool (*HPMHOOK_pre_mapindex_config_read) (void);
+typedef bool (*HPMHOOK_post_mapindex_config_read) (bool retVal___);
 typedef int (*HPMHOOK_pre_mapindex_init) (void);
 typedef int (*HPMHOOK_post_mapindex_init) (int retVal___);
 typedef void (*HPMHOOK_pre_mapindex_final) (void);
@@ -5346,6 +5356,8 @@ typedef int (*HPMHOOK_pre_mob_ai_sub_hard_lootsearch) (struct block_list **bl, v
 typedef int (*HPMHOOK_post_mob_ai_sub_hard_lootsearch) (int retVal___, struct block_list *bl, va_list ap);
 typedef int (*HPMHOOK_pre_mob_warpchase_sub) (struct block_list **bl, va_list ap);
 typedef int (*HPMHOOK_post_mob_warpchase_sub) (int retVal___, struct block_list *bl, va_list ap);
+typedef bool (*HPMHOOK_pre_mob_is_in_battle_state) (const struct mob_data **md);
+typedef bool (*HPMHOOK_post_mob_is_in_battle_state) (bool retVal___, const struct mob_data *md);
 typedef int (*HPMHOOK_pre_mob_ai_sub_hard_slavemob) (struct mob_data **md, int64 *tick);
 typedef int (*HPMHOOK_post_mob_ai_sub_hard_slavemob) (int retVal___, struct mob_data *md, int64 tick);
 typedef int (*HPMHOOK_pre_mob_unlocktarget) (struct mob_data **md, int64 *tick);
@@ -7056,8 +7068,10 @@ typedef void (*HPMHOOK_pre_script_load_translations) (void);
 typedef void (*HPMHOOK_post_script_load_translations) (void);
 typedef bool (*HPMHOOK_pre_script_load_translation_addstring) (const char **file, uint8 *lang_id, const char **msgctxt, const struct script_string_buf **msgid, const struct script_string_buf **msgstr);
 typedef bool (*HPMHOOK_post_script_load_translation_addstring) (bool retVal___, const char *file, uint8 lang_id, const char *msgctxt, const struct script_string_buf *msgid, const struct script_string_buf *msgstr);
-typedef int (*HPMHOOK_pre_script_load_translation) (const char **file, uint8 *lang_id);
-typedef int (*HPMHOOK_post_script_load_translation) (int retVal___, const char *file, uint8 lang_id);
+typedef int (*HPMHOOK_pre_script_load_translation_file) (const char **file, uint8 *lang_id);
+typedef int (*HPMHOOK_post_script_load_translation_file) (int retVal___, const char *file, uint8 lang_id);
+typedef int (*HPMHOOK_pre_script_load_translation) (const char **directory, uint8 *lang_id);
+typedef int (*HPMHOOK_post_script_load_translation) (int retVal___, const char *directory, uint8 lang_id);
 typedef int (*HPMHOOK_pre_script_translation_db_destroyer) (union DBKey *key, struct DBData **data, va_list ap);
 typedef int (*HPMHOOK_post_script_translation_db_destroyer) (int retVal___, union DBKey key, struct DBData *data, va_list ap);
 typedef void (*HPMHOOK_pre_script_clear_translations) (bool *reload);
@@ -7066,8 +7080,8 @@ typedef int (*HPMHOOK_pre_script_parse_cleanup_timer) (int *tid, int64 *tick, in
 typedef int (*HPMHOOK_post_script_parse_cleanup_timer) (int retVal___, int tid, int64 tick, int id, intptr_t data);
 typedef uint8 (*HPMHOOK_pre_script_add_language) (const char **name);
 typedef uint8 (*HPMHOOK_post_script_add_language) (uint8 retVal___, const char *name);
-typedef const char* (*HPMHOOK_pre_script_get_translation_file_name) (const char **file);
-typedef const char* (*HPMHOOK_post_script_get_translation_file_name) (const char* retVal___, const char *file);
+typedef const char* (*HPMHOOK_pre_script_get_translation_dir_name) (const char **directory);
+typedef const char* (*HPMHOOK_post_script_get_translation_dir_name) (const char* retVal___, const char *directory);
 typedef void (*HPMHOOK_pre_script_parser_clean_leftovers) (void);
 typedef void (*HPMHOOK_post_script_parser_clean_leftovers) (void);
 typedef void (*HPMHOOK_pre_script_run_use_script) (struct map_session_data **sd, struct item_data **data, int *oid);
@@ -7810,6 +7824,8 @@ typedef int (*HPMHOOK_pre_status_get_sc_def) (struct block_list **src, struct bl
 typedef int (*HPMHOOK_post_status_get_sc_def) (int retVal___, struct block_list *src, struct block_list *bl, enum sc_type type, int rate, int tick, int flag);
 typedef int (*HPMHOOK_pre_status_change_start) (struct block_list **src, struct block_list **bl, enum sc_type *type, int *rate, int *val1, int *val2, int *val3, int *val4, int *tick, int *flag);
 typedef int (*HPMHOOK_post_status_change_start) (int retVal___, struct block_list *src, struct block_list *bl, enum sc_type type, int rate, int val1, int val2, int val3, int val4, int tick, int flag);
+typedef int (*HPMHOOK_pre_status_change_start_sub) (struct block_list **src, struct block_list **bl, enum sc_type *type, int *rate, int *val1, int *val2, int *val3, int *val4, int *tick, int *total_tick, int *flag);
+typedef int (*HPMHOOK_post_status_change_start_sub) (int retVal___, struct block_list *src, struct block_list *bl, enum sc_type type, int rate, int val1, int val2, int val3, int val4, int tick, int total_tick, int flag);
 typedef int (*HPMHOOK_pre_status_change_end_) (struct block_list **bl, enum sc_type *type, int *tid, const char **file, int *line);
 typedef int (*HPMHOOK_post_status_change_end_) (int retVal___, struct block_list *bl, enum sc_type type, int tid, const char *file, int line);
 typedef bool (*HPMHOOK_pre_status_is_immune_to_status) (struct status_change **sc, enum sc_type *type);
@@ -7826,8 +7842,8 @@ typedef int (*HPMHOOK_pre_status_get_val_flag) (enum sc_type *type);
 typedef int (*HPMHOOK_post_status_get_val_flag) (int retVal___, enum sc_type type);
 typedef void (*HPMHOOK_pre_status_change_start_display) (struct map_session_data **sd, enum sc_type *type, int *val1, int *val2, int *val3, int *val4);
 typedef void (*HPMHOOK_post_status_change_start_display) (struct map_session_data *sd, enum sc_type type, int val1, int val2, int val3, int val4);
-typedef bool (*HPMHOOK_pre_status_change_start_unknown_sc) (struct block_list **src, struct block_list **bl, enum sc_type *type, int *calc_flag, int *rate, int *val1, int *val2, int *val3, int *val4, int *tick, int *flag);
-typedef bool (*HPMHOOK_post_status_change_start_unknown_sc) (bool retVal___, struct block_list *src, struct block_list *bl, enum sc_type type, int calc_flag, int rate, int val1, int val2, int val3, int val4, int tick, int flag);
+typedef bool (*HPMHOOK_pre_status_change_start_unknown_sc) (struct block_list **src, struct block_list **bl, enum sc_type *type, int *calc_flag, int *rate, int *val1, int *val2, int *val3, int *val4, int *total_tick, int *flag);
+typedef bool (*HPMHOOK_post_status_change_start_unknown_sc) (bool retVal___, struct block_list *src, struct block_list *bl, enum sc_type type, int calc_flag, int rate, int val1, int val2, int val3, int val4, int total_tick, int flag);
 typedef int (*HPMHOOK_pre_status_kaahi_heal_timer) (int *tid, int64 *tick, int *id, intptr_t *data);
 typedef int (*HPMHOOK_post_status_kaahi_heal_timer) (int retVal___, int tid, int64 tick, int id, intptr_t data);
 typedef int (*HPMHOOK_pre_status_change_timer) (int *tid, int64 *tick, int *id, intptr_t *data);

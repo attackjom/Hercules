@@ -45,7 +45,6 @@
 #include "map/mapreg.h"
 #include "map/mercenary.h"
 #include "map/mob.h"
-#include "map/npc.h"
 #include "map/npc.h" // npc_setcells(), npc_unsetcells()
 #include "map/party.h"
 #include "map/path.h"
@@ -4055,6 +4054,7 @@ static bool map_config_read_database(const char *filename, struct config_t *conf
 		return false;
 	}
 	libconfig->setting_lookup_mutable_string(setting, "db_path", map->db_path, sizeof(map->db_path));
+	libconfig->set_db_path(map->db_path);
 	libconfig->setting_lookup_int(setting, "save_settings", &map->save_settings);
 
 	if (libconfig->setting_lookup_int(setting, "autosave_time", &map->autosave_interval) == CONFIG_TRUE) {
@@ -5574,12 +5574,8 @@ static void read_map_zone_db(void)
 {
 	struct config_t map_zone_db;
 	struct config_setting_t *zones = NULL;
-	/* TODO: #ifndef required for re/pre-re */
-#ifdef RENEWAL
-	const char *config_filename = "db/re/map_zone_db.conf"; // FIXME hardcoded name
-#else
-	const char *config_filename = "db/pre-re/map_zone_db.conf"; // FIXME hardcoded name
-#endif
+	char config_filename[256];
+	libconfig->format_db_path(DBPATH"map_zone_db.conf", config_filename, sizeof(config_filename));
 	if (!libconfig->load_file(&map_zone_db, config_filename))
 		return;
 
@@ -6305,6 +6301,7 @@ static CPCMD(gm_position)
 	map->cpsd->bl.x = x;
 	map->cpsd->bl.y = y;
 	map->cpsd->bl.m = m;
+	map->cpsd->mapindex = map_id2index(m);
 }
 static CPCMD(gm_use)
 {
@@ -6333,6 +6330,8 @@ static void map_cp_defaults(void)
 	map->cpsd->bl.x = mapindex->default_x;
 	map->cpsd->bl.y = mapindex->default_y;
 	map->cpsd->bl.m = map->mapname2mapid(mapindex->default_map);
+	Assert_retv(map->cpsd->bl.m >= 0);
+	map->cpsd->mapindex = map_id2index(map->cpsd->bl.m);
 
 	console->input->addCommand("gm:info",CPCMD_A(gm_position));
 	console->input->addCommand("gm:use",CPCMD_A(gm_use));
@@ -6774,6 +6773,7 @@ void map_defaults(void)
 	map->extra_scripts_count = 0;
 
 	sprintf(map->db_path ,"db");
+	libconfig->set_db_path(map->db_path);
 	sprintf(map->help_txt ,"conf/help.txt");
 	sprintf(map->charhelp_txt ,"conf/charhelp.txt");
 

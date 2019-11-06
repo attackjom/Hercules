@@ -152,7 +152,8 @@ static bool guild_read_castledb_libconfig(void)
 {
 	struct config_t castle_conf;
 	struct config_setting_t *castle_db = NULL, *it = NULL;
-	const char *config_filename = "db/castle_db.conf"; // FIXME hardcoded name
+	char config_filename[256];
+	libconfig->format_db_path("castle_db.conf", config_filename, sizeof(config_filename));
 	int i = 0;
 
 	if (libconfig->load_file(&castle_conf, config_filename) == 0)
@@ -565,6 +566,7 @@ static int guild_check_member(const struct guild *g)
 		if (i == INDEX_NOT_FOUND) {
 			sd->status.guild_id=0;
 			sd->guild_emblem_id=0;
+			sd->guild = NULL;
 			ShowWarning("guild: check_member %d[%s] is not member\n",sd->status.account_id,sd->status.name);
 		}
 	}
@@ -581,8 +583,11 @@ static int guild_recv_noinfo(int guild_id)
 
 	iter = mapit_getallusers();
 	for (sd = BL_UCAST(BL_PC, mapit->first(iter)); mapit->exists(iter); sd = BL_UCAST(BL_PC, mapit->next(iter))) {
-		if( sd->status.guild_id == guild_id )
+		if (sd->status.guild_id == guild_id) {
 			sd->status.guild_id = 0; // erase guild
+			sd->guild_emblem_id = 0;
+			sd->guild = NULL;
+		}
 	}
 	mapit->free(iter);
 
@@ -872,6 +877,8 @@ static void guild_member_joined(struct map_session_data *sd)
 	i = guild->getindex(g, sd->status.account_id, sd->status.char_id);
 	if (i == INDEX_NOT_FOUND) {
 		sd->status.guild_id = 0;
+		sd->guild_emblem_id = 0;
+		sd->guild = NULL;
 	} else {
 		g->member[i].sd = sd;
 		sd->guild = g;

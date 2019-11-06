@@ -922,6 +922,8 @@ struct {
 	struct HPMHookPoint *HP_clif_combo_delay_post;
 	struct HPMHookPoint *HP_clif_status_change_pre;
 	struct HPMHookPoint *HP_clif_status_change_post;
+	struct HPMHookPoint *HP_clif_status_change_sub_pre;
+	struct HPMHookPoint *HP_clif_status_change_sub_post;
 	struct HPMHookPoint *HP_clif_insert_card_pre;
 	struct HPMHookPoint *HP_clif_insert_card_post;
 	struct HPMHookPoint *HP_clif_inventoryList_pre;
@@ -3286,6 +3288,10 @@ struct {
 	struct HPMHookPoint *HP_itemdb_read_libconfig_lapineddukddak_sub_post;
 	struct HPMHookPoint *HP_itemdb_read_libconfig_lapineddukddak_sub_sources_pre;
 	struct HPMHookPoint *HP_itemdb_read_libconfig_lapineddukddak_sub_sources_post;
+	struct HPMHookPoint *HP_libconfig_set_db_path_pre;
+	struct HPMHookPoint *HP_libconfig_set_db_path_post;
+	struct HPMHookPoint *HP_libconfig_format_db_path_pre;
+	struct HPMHookPoint *HP_libconfig_format_db_path_post;
 	struct HPMHookPoint *HP_libconfig_read_pre;
 	struct HPMHookPoint *HP_libconfig_read_post;
 	struct HPMHookPoint *HP_libconfig_write_pre;
@@ -3756,6 +3762,10 @@ struct {
 	struct HPMHookPoint *HP_map_merge_zone_post;
 	struct HPMHookPoint *HP_map_zone_clear_single_pre;
 	struct HPMHookPoint *HP_map_zone_clear_single_post;
+	struct HPMHookPoint *HP_mapindex_config_read_dbpath_pre;
+	struct HPMHookPoint *HP_mapindex_config_read_dbpath_post;
+	struct HPMHookPoint *HP_mapindex_config_read_pre;
+	struct HPMHookPoint *HP_mapindex_config_read_post;
 	struct HPMHookPoint *HP_mapindex_init_pre;
 	struct HPMHookPoint *HP_mapindex_init_post;
 	struct HPMHookPoint *HP_mapindex_final_pre;
@@ -3948,6 +3958,8 @@ struct {
 	struct HPMHookPoint *HP_mob_ai_sub_hard_lootsearch_post;
 	struct HPMHookPoint *HP_mob_warpchase_sub_pre;
 	struct HPMHookPoint *HP_mob_warpchase_sub_post;
+	struct HPMHookPoint *HP_mob_is_in_battle_state_pre;
+	struct HPMHookPoint *HP_mob_is_in_battle_state_post;
 	struct HPMHookPoint *HP_mob_ai_sub_hard_slavemob_pre;
 	struct HPMHookPoint *HP_mob_ai_sub_hard_slavemob_post;
 	struct HPMHookPoint *HP_mob_unlocktarget_pre;
@@ -5590,6 +5602,8 @@ struct {
 	struct HPMHookPoint *HP_script_load_translations_post;
 	struct HPMHookPoint *HP_script_load_translation_addstring_pre;
 	struct HPMHookPoint *HP_script_load_translation_addstring_post;
+	struct HPMHookPoint *HP_script_load_translation_file_pre;
+	struct HPMHookPoint *HP_script_load_translation_file_post;
 	struct HPMHookPoint *HP_script_load_translation_pre;
 	struct HPMHookPoint *HP_script_load_translation_post;
 	struct HPMHookPoint *HP_script_translation_db_destroyer_pre;
@@ -5600,8 +5614,8 @@ struct {
 	struct HPMHookPoint *HP_script_parse_cleanup_timer_post;
 	struct HPMHookPoint *HP_script_add_language_pre;
 	struct HPMHookPoint *HP_script_add_language_post;
-	struct HPMHookPoint *HP_script_get_translation_file_name_pre;
-	struct HPMHookPoint *HP_script_get_translation_file_name_post;
+	struct HPMHookPoint *HP_script_get_translation_dir_name_pre;
+	struct HPMHookPoint *HP_script_get_translation_dir_name_post;
 	struct HPMHookPoint *HP_script_parser_clean_leftovers_pre;
 	struct HPMHookPoint *HP_script_parser_clean_leftovers_post;
 	struct HPMHookPoint *HP_script_run_use_script_pre;
@@ -6332,6 +6346,8 @@ struct {
 	struct HPMHookPoint *HP_status_get_sc_def_post;
 	struct HPMHookPoint *HP_status_change_start_pre;
 	struct HPMHookPoint *HP_status_change_start_post;
+	struct HPMHookPoint *HP_status_change_start_sub_pre;
+	struct HPMHookPoint *HP_status_change_start_sub_post;
 	struct HPMHookPoint *HP_status_change_end__pre;
 	struct HPMHookPoint *HP_status_change_end__post;
 	struct HPMHookPoint *HP_status_is_immune_to_status_pre;
@@ -7735,6 +7751,8 @@ struct {
 	int HP_clif_combo_delay_post;
 	int HP_clif_status_change_pre;
 	int HP_clif_status_change_post;
+	int HP_clif_status_change_sub_pre;
+	int HP_clif_status_change_sub_post;
 	int HP_clif_insert_card_pre;
 	int HP_clif_insert_card_post;
 	int HP_clif_inventoryList_pre;
@@ -10099,6 +10117,10 @@ struct {
 	int HP_itemdb_read_libconfig_lapineddukddak_sub_post;
 	int HP_itemdb_read_libconfig_lapineddukddak_sub_sources_pre;
 	int HP_itemdb_read_libconfig_lapineddukddak_sub_sources_post;
+	int HP_libconfig_set_db_path_pre;
+	int HP_libconfig_set_db_path_post;
+	int HP_libconfig_format_db_path_pre;
+	int HP_libconfig_format_db_path_post;
 	int HP_libconfig_read_pre;
 	int HP_libconfig_read_post;
 	int HP_libconfig_write_pre;
@@ -10569,6 +10591,10 @@ struct {
 	int HP_map_merge_zone_post;
 	int HP_map_zone_clear_single_pre;
 	int HP_map_zone_clear_single_post;
+	int HP_mapindex_config_read_dbpath_pre;
+	int HP_mapindex_config_read_dbpath_post;
+	int HP_mapindex_config_read_pre;
+	int HP_mapindex_config_read_post;
 	int HP_mapindex_init_pre;
 	int HP_mapindex_init_post;
 	int HP_mapindex_final_pre;
@@ -10761,6 +10787,8 @@ struct {
 	int HP_mob_ai_sub_hard_lootsearch_post;
 	int HP_mob_warpchase_sub_pre;
 	int HP_mob_warpchase_sub_post;
+	int HP_mob_is_in_battle_state_pre;
+	int HP_mob_is_in_battle_state_post;
 	int HP_mob_ai_sub_hard_slavemob_pre;
 	int HP_mob_ai_sub_hard_slavemob_post;
 	int HP_mob_unlocktarget_pre;
@@ -12403,6 +12431,8 @@ struct {
 	int HP_script_load_translations_post;
 	int HP_script_load_translation_addstring_pre;
 	int HP_script_load_translation_addstring_post;
+	int HP_script_load_translation_file_pre;
+	int HP_script_load_translation_file_post;
 	int HP_script_load_translation_pre;
 	int HP_script_load_translation_post;
 	int HP_script_translation_db_destroyer_pre;
@@ -12413,8 +12443,8 @@ struct {
 	int HP_script_parse_cleanup_timer_post;
 	int HP_script_add_language_pre;
 	int HP_script_add_language_post;
-	int HP_script_get_translation_file_name_pre;
-	int HP_script_get_translation_file_name_post;
+	int HP_script_get_translation_dir_name_pre;
+	int HP_script_get_translation_dir_name_post;
 	int HP_script_parser_clean_leftovers_pre;
 	int HP_script_parser_clean_leftovers_post;
 	int HP_script_run_use_script_pre;
@@ -13145,6 +13175,8 @@ struct {
 	int HP_status_get_sc_def_post;
 	int HP_status_change_start_pre;
 	int HP_status_change_start_post;
+	int HP_status_change_start_sub_pre;
+	int HP_status_change_start_sub_post;
 	int HP_status_change_end__pre;
 	int HP_status_change_end__post;
 	int HP_status_is_immune_to_status_pre;
