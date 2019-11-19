@@ -195,21 +195,26 @@ static void initChangeTables(void)
 	add_sc( MG_STONECURSE        , SC_STONE           );
 	add_sc( AL_RUWACH            , SC_RUWACH          );
 	add_sc( AL_PNEUMA            , SC_PNEUMA          );
-	status->set_sc( AL_INCAGI            , SC_INC_AGI         , SI_INC_AGI         , SCB_AGI|SCB_SPEED );
+	status->set_sc( AL_INCAGI            , SC_INC_AGI         , SI_INC_AGI         , SCB_AGI|SCB_SPEED|SCB_ASPD );
 	status->set_sc( AL_DECAGI            , SC_DEC_AGI         , SI_DEC_AGI         , SCB_AGI|SCB_SPEED );
 	status->set_sc( AL_CRUCIS            , SC_CRUCIS          , SI_CRUCIS          , SCB_DEF );
-	status->set_sc( AL_ANGELUS           , SC_ANGELUS         , SI_ANGELUS         , SCB_DEF2 );
-	status->set_sc( AL_BLESSING          , SC_BLESSING        , SI_BLESSING        , SCB_STR|SCB_INT|SCB_DEX );
+	status->set_sc( AL_ANGELUS           , SC_ANGELUS         , SI_ANGELUS         , SCB_DEF2|SCB_MAXHP );
+	status->set_sc( AL_BLESSING          , SC_BLESSING        , SI_BLESSING        , SCB_STR|SCB_INT|SCB_DEX|SCB_HIT );
 	status->set_sc( AC_CONCENTRATION     , SC_CONCENTRATION   , SI_CONCENTRATION   , SCB_AGI|SCB_DEX );
 	status->set_sc( TF_HIDING            , SC_HIDING          , SI_HIDING          , SCB_SPEED );
 	add_sc( TF_POISON            , SC_POISON          );
-	status->set_sc( KN_TWOHANDQUICKEN    , SC_TWOHANDQUICKEN  , SI_TWOHANDQUICKEN  , SCB_ASPD );
-	add_sc( KN_AUTOCOUNTER       , SC_AUTOCOUNTER     );
-	status->set_sc( PR_IMPOSITIO         , SC_IMPOSITIO       , SI_IMPOSITIO       ,
+	status->set_sc( KN_TWOHANDQUICKEN    , SC_TWOHANDQUICKEN  , SI_TWOHANDQUICKEN  , SCB_ASPD
 #ifdef RENEWAL
-		SCB_NONE );
+		|SCB_HIT|SCB_CRI );
 #else
-		SCB_WATK );
+		);
+#endif
+	add_sc( KN_AUTOCOUNTER       , SC_AUTOCOUNTER     );
+	status->set_sc( PR_IMPOSITIO         , SC_IMPOSITIO       , SI_IMPOSITIO       , SCB_WATK
+#ifdef RENEWAL
+		|SCB_MATK );
+#else
+		);
 #endif
 	status->set_sc( PR_SUFFRAGIUM        , SC_SUFFRAGIUM      , SI_SUFFRAGIUM      , SCB_NONE );
 	status->set_sc( PR_ASPERSIO          , SC_ASPERSIO        , SI_ASPERSIO        , SCB_ATK_ELE );
@@ -225,7 +230,12 @@ static void initChangeTables(void)
 	add_sc( WZ_FROSTNOVA         , SC_FREEZE          );
 	add_sc( WZ_STORMGUST         , SC_FREEZE          );
 	status->set_sc( WZ_QUAGMIRE          , SC_QUAGMIRE        , SI_QUAGMIRE     , SCB_AGI|SCB_DEX|SCB_ASPD|SCB_SPEED );
-	status->set_sc( BS_ADRENALINE        , SC_ADRENALINE      , SI_ADRENALINE   , SCB_ASPD );
+	status->set_sc( BS_ADRENALINE        , SC_ADRENALINE      , SI_ADRENALINE   , SCB_ASPD
+#ifdef RENEWAL
+		|SCB_HIT );
+#else
+		);
+#endif
 	status->set_sc( BS_WEAPONPERFECT     , SC_WEAPONPERFECT   , SI_WEAPONPERFECT, SCB_NONE );
 	status->set_sc( BS_OVERTHRUST        , SC_OVERTHRUST      , SI_OVERTHRUST   , SCB_NONE );
 	status->set_sc( BS_MAXIMIZE          , SC_MAXIMIZEPOWER   , SI_MAXIMIZE     , SCB_REGEN );
@@ -244,7 +254,7 @@ static void initChangeTables(void)
 	status->set_sc( SM_AUTOBERSERK       , SC_AUTOBERSERK  , SI_AUTOBERSERK     , SCB_NONE );
 	add_sc( TF_SPRINKLESAND      , SC_BLIND           );
 	add_sc( TF_THROWSTONE        , SC_STUN            );
-	status->set_sc( MC_LOUD              , SC_SHOUT        , SI_SHOUT           , SCB_STR );
+	status->set_sc( MC_LOUD              , SC_SHOUT        , SI_SHOUT           , SCB_STR|SCB_WATK );
 	status->set_sc( MG_ENERGYCOAT        , SC_ENERGYCOAT   , SI_ENERGYCOAT      , SCB_NONE );
 	status->set_sc( NPC_EMOTION          , SC_MODECHANGE   , SI_BLANK           , SCB_MODE );
 	add_sc( NPC_EMOTION_ON       , SC_MODECHANGE   );
@@ -3978,6 +3988,15 @@ static void status_calc_bl_main(struct block_list *bl, /*enum scb_flag*/int flag
 			st->cri *= 2;
 		}
 	}
+	
+#ifdef RENEWAL
+			uint8 skill_lv;
+
+			if ((skill_lv = pc->checkskill(sd, DC_DANCINGLESSON)) > 0)
+				st->cri += skill_lv *10;
+			if ((skill_lv = pc->checkskill(sd, PR_MACEMASTERY)) > 0 && (sd->weapontype == W_MACE || sd->weapontype == W_2HMACE))
+				st->cri += skill_lv *10;
+#endif
 
 	if(flag&SCB_FLEE2 && bst->flee2) {
 		if (st->luk == bst->luk)
@@ -5188,6 +5207,8 @@ static int status_calc_watk(struct block_list *bl, struct status_change *sc, int
 		watk += sc->data[SC_FLASHCOMBO]->val2;
 	if (sc->data[SC_CATNIPPOWDER])
 		watk -= watk * sc->data[SC_CATNIPPOWDER]->val2 / 100;
+	if (sc->data[SC_SHOUT])
+		watk += 30;
 
 	return cap_value(watk, battle_config.watk_min, battle_config.watk_max);
 }
@@ -5268,6 +5289,8 @@ static int status_calc_matk(struct block_list *bl, struct status_change *sc, int
 		matk += sc->data[SC_MTF_MATK]->val1;
 	if (sc->data[SC_MYSTICSCROLL])
 		matk += matk * sc->data[SC_MYSTICSCROLL]->val1 / 100;
+	if (sc->data[SC_IMPOSITIO])
+		matk += sc->data[SC_IMPOSITIO]->val2;
 
 	// Eden Crystal Synthesis
 	if (sc->data[SC_QUEST_BUFF1])
@@ -5320,6 +5343,8 @@ static int status_calc_critical(struct block_list *bl, struct status_change *sc,
 #ifdef RENEWAL
 	if (sc->data[SC_SPEARQUICKEN])
 		critical += 3*sc->data[SC_SPEARQUICKEN]->val1 * 10;
+	if (sc->data[SC_TWOHANDQUICKEN])
+		critical += (2 + sc->data[SC_TWOHANDQUICKEN]->val1) * 10;
 #endif
 
 	if (sc->data[SC__INVISIBILITY])
@@ -5383,6 +5408,12 @@ static int status_calc_hit(struct block_list *bl, struct status_change *sc, int 
 		hit -= hit * (5 + sc->data[SC_ILLUSIONDOPING]->val1) / 100; //custom
 	if (sc->data[SC_ACARAJE])
 		hit += sc->data[SC_ACARAJE]->val1;
+	if (sc->data[SC_BLESSING])
+		hit += sc->data[SC_BLESSING]->val1 * 2;
+	if (sc->data[SC_TWOHANDQUICKEN])
+		hit += sc->data[SC_TWOHANDQUICKEN]->val1 * 2;
+	if (sc->data[SC_ADRENALINE])
+		hit += sc->data[SC_ADRENALINE]->val1 * 3 + 5;
 	if (sc->data[SC_BUCHEDENOEL])
 		hit += sc->data[SC_BUCHEDENOEL]->val3;
 
@@ -6009,18 +6040,18 @@ static short status_calc_aspd(struct block_list *bl, struct status_change *sc, s
 			pots += sc->data[i]->val1;
 
 		if (!sc->data[SC_QUAGMIRE]) {
-			if(sc->data[SC_TWOHANDQUICKEN] && bonus < 7)
-				bonus = 7;
+			if(sc->data[SC_TWOHANDQUICKEN] && bonus < 4)
+				bonus = 4;
 			if(sc->data[SC_ONEHANDQUICKEN] && bonus < 7)
 				bonus = 7;
 			if(sc->data[SC_MER_QUICKEN] && bonus < 7) // needs more info
 				bonus = 7;
-			if(sc->data[SC_ADRENALINE2] && bonus < 6)
-				bonus = 6;
-			if(sc->data[SC_ADRENALINE] && bonus < 7)
-				bonus = 7;
-			if(sc->data[SC_SPEARQUICKEN] && bonus < 7)
-				bonus = 7;
+			if(sc->data[SC_ADRENALINE2] && bonus < 4)
+				bonus = 4;
+			if(sc->data[SC_ADRENALINE] && bonus < 4)
+				bonus = 4;
+			if(sc->data[SC_SPEARQUICKEN] && bonus < 4)
+				bonus = 4;
 			if(sc->data[SC_HLIF_FLEET] && bonus < 5)
 				bonus = 5;
 		}
@@ -6113,6 +6144,8 @@ static short status_calc_aspd(struct block_list *bl, struct status_change *sc, s
 			bonus += sc->data[SC_BATTLESCROLL]->val1;
 		if (sc->data[SC_STEAMPACK])
 			bonus += sc->data[SC_STEAMPACK]->val2;
+		if (sc->data[SC_INC_AGI])
+			bonus += sc->data[SC_INC_AGI]->val1;
 	}
 
 	return (bonus + pots);
@@ -6374,6 +6407,8 @@ static unsigned int status_calc_maxhp(struct block_list *bl, struct status_chang
 		maxhp += maxhp * sc->data[SC_ATKER_ASPD]->val1 / 100;
 	if (sc->data[SC_MVPCARD_TAOGUNKA])
 		maxhp += maxhp * sc->data[SC_MVPCARD_TAOGUNKA]->val1 / 100;
+	if (sc->data[SC_ANGELUS])
+		maxhp += sc->data[SC_ANGELUS]->val1 * 50;
 	if (sc->data[SC_GM_BATTLE])
 		maxhp -= maxhp * sc->data[SC_GM_BATTLE]->val1 / 100;
 	if (sc->data[SC_GM_BATTLE2])
@@ -7712,7 +7747,9 @@ static int status_change_start_sub(struct block_list *src, struct block_list *bl
 			break;
 			//Strip skills, need to divest something or it fails.
 		case SC_NOEQUIPWEAPON:
-			if (sd && !(flag&SCFLAG_LOADED)) { //apply sc anyway if loading saved sc_data
+			if (val2 == 1)
+				val2 = 0; // Brandish Spear/Bowling Bash effet. Do not take weapon off.
+			else if (sd && !(flag&SCFLAG_LOADED)) { //apply sc anyway if loading saved sc_data
 				int i;
 				opt_flag = 0; //Reuse to check success condition.
 				if(sd->bonus.unstripable_equip&EQP_WEAPON)
@@ -8645,7 +8682,7 @@ static int status_change_start_sub(struct block_list *src, struct block_list *bl
 				break;
 			case SC_OVERTHRUST:
 				//val2 holds if it was casted on self, or is bonus received from others
-				val3 = 5*val1; //Power increase
+				val3 = (val2) ? 5 * val1 : (val1 > 4) ? 15 : (val1 > 2) ? 10 : 5; // Power increase
 				if(sd && pc->checkskill(sd,BS_HILTBINDING)>0)
 					total_tick += total_tick / 10;
 				break;
@@ -8833,7 +8870,7 @@ static int status_change_start_sub(struct block_list *src, struct block_list *bl
 				val2 = val1*10; //Actual boost (since 100% = 1000)
 				break;
 			case SC_SUFFRAGIUM:
-				val2 = 15 * val1; //Speed cast decrease
+				val2 = 5 + val1 * 5; // Speed cast decrease
 				break;
 			case SC_HEALPLUS:
 				if (val1 < 1)

@@ -127,6 +127,7 @@ struct Damage {
 	int amotion,dmotion;
 	int blewcount; //nb of knockback
 	int flag; //chk BF_* flag, (enum below)
+	int miscflag;
 	enum damage_lv dmg_lv; //ATK_LUCKY,ATK_FLEE,ATK_DEF
 };
 

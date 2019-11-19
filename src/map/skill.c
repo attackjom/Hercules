@@ -1497,14 +1497,14 @@ static int skill_additional_effect(struct block_list *src, struct block_list *bl
 
 		case AM_ACIDTERROR:
 			sc_start2(src, bl, SC_BLOODING, (skill_lv * 3), skill_lv, src->id, skill->get_time2(skill_id, skill_lv));
-			if ( bl->type == BL_PC && rnd() % 1000 < 10 * skill->get_time(skill_id, skill_lv) ) {
+			if ( bl->type == BL_PC && rnd() % 1000 < (1000 * skill_lv + 500) ) {
 				skill->break_equip(bl, EQP_ARMOR, 10000, BCT_ENEMY);
 				clif->emotion(bl, E_OMG); // emote icon still shows even there is no armor equip.
 			}
 			break;
 
 		case AM_DEMONSTRATION:
-			skill->break_equip(bl, EQP_WEAPON, 100*skill_lv, BCT_ENEMY);
+			skill->break_equip(bl, EQP_WEAPON, 300*skill_lv, BCT_ENEMY);
 			break;
 
 		case CR_SHIELDCHARGE:
@@ -1983,8 +1983,8 @@ static int skill_additional_effect(struct block_list *src, struct block_list *bl
 			{
 				if(sc->data[SC_GIANTGROWTH])
 					rate += 10;
-				if(sc->data[SC_OVERTHRUST])
-					rate += 10;
+				//if(sc->data[SC_OVERTHRUST])
+					//rate += 10;
 				if(sc->data[SC_OVERTHRUSTMAX])
 					rate += 10;
 			}
@@ -4758,21 +4758,25 @@ static int skill_castend_damage_id(struct block_list *src, struct block_list *bl
 					// If target cell is a wall then break
 					if(map->getcell(bl->m, bl, tx, ty, CELL_CHKWALL))
 						break;
-					skill->blown(src,bl,1,dir,0);
+			
+					int count,count2 = 0;
+
 					// Splash around target cell, but only cells inside area; we first have to check the area is not negative
-					if((max(min_x,tx-1) <= min(max_x,tx+1)) &&
-						(max(min_y,ty-1) <= min(max_y,ty+1)) &&
-						(map->foreachinarea(skill->area_sub, bl->m, max(min_x,tx-1), max(min_y,ty-1), min(max_x,tx+1), min(max_y,ty+1), skill->splash_target(src), src, skill_id, skill_lv, tick, flag|BCT_ENEMY, skill->area_sub_count))) {
+					if((max(min_x,tx-2) <= min(max_x,tx+2)) &&
+						(max(min_y,ty-2) <= min(max_y,ty+2)) &&
+						(count = map->foreachinarea(skill->area_sub, bl->m, max(min_x,tx-2), max(min_y,ty-2), min(max_x,tx+2), min(max_y,ty+2), skill->splash_target(src), src, skill_id, skill_lv, tick, flag|BCT_ENEMY, skill->area_sub_count))) {
 						// Recursive call
-						map->foreachinarea(skill->area_sub, bl->m, max(min_x,tx-1), max(min_y,ty-1), min(max_x,tx+1), min(max_y,ty+1), skill->splash_target(src), src, skill_id, skill_lv, tick, (flag|BCT_ENEMY)+1, skill->castend_damage_id);
+						count2 = max(count,count2);
+						map->foreachinarea(skill->area_sub, bl->m, max(min_x,tx-2), max(min_y,ty-2), min(max_x,tx+2), min(max_y,ty+2), skill->splash_target(src), src, skill_id, skill_lv, tick, (flag|BCT_ENEMY)+1, skill->castend_damage_id);
 						// Self-collision
-						if(bl->x >= min_x && bl->x <= max_x && bl->y >= min_y && bl->y <= max_y)
-							skill->attack(BF_WEAPON,src,src,bl,skill_id,skill_lv,tick,(flag&0xFFF)>0?SD_ANIMATION:0);
+						//if(bl->x >= min_x && bl->x <= max_x && bl->y >= min_y && bl->y <= max_y)
+							skill->attack(BF_WEAPON,src,src,bl,skill_id,skill_lv,tick,(flag&0xFFF)>0?SD_ANIMATION|count2:count2);
+							skill->blown(src,bl,skill_get_blewcount(skill_id,skill_lv),dir,0);
 						break;
 					}
 				}
 				// Original hit or chain hit depending on flag
-				skill->attack(BF_WEAPON,src,src,bl,skill_id,skill_lv,tick,(flag&0xFFF)>0?SD_ANIMATION:0);
+				//skill->attack(BF_WEAPON,src,src,bl,skill_id,skill_lv,tick,(flag&0xFFF)>0?SD_ANIMATION:0);
 			}
 			break;
 
@@ -5792,13 +5796,23 @@ static int skill_castend_id(int tid, int64 tick, int id, intptr_t data)
 				break;
 			case CR_GRANDCROSS:
 			case NPC_GRANDDARKNESS:
-				if( (sc = status->get_sc(src)) && sc->data[SC_NOEQUIPSHIELD] ) {
-					const struct TimerData *td = timer->get(sc->data[SC_NOEQUIPSHIELD]->timer);
+			case KN_BRANDISHSPEAR:
+			case KN_BOWLINGBASH:
+			{
+				sc_type type;
+				if (ud->skill_id == KN_BRANDISHSPEAR || ud->skill_id == KN_BOWLINGBASH)
+					type = SC_NOEQUIPWEAPON;
+				else
+					type = SC_NOEQUIPSHIELD;
+
+				if( (sc = status->get_sc(src)) && sc->data[type] ) {
+					const struct TimerData *td = timer->get(sc->data[type]->timer);
 					if( td && td->func == status->change_timer && DIFF_TICK(td->tick,timer->gettick()+skill->get_time(ud->skill_id, ud->skill_lv)) > 0 )
 						break;
 				}
-				sc_start2(src,src, SC_NOEQUIPSHIELD, 100, 0, 1, skill->get_time(ud->skill_id, ud->skill_lv));
+				sc_start2(src,src, type, 100, 0, 1, skill->get_time(ud->skill_id, ud->skill_lv));
 				break;
+				}
 			}
 		}
 		if (skill->get_state(ud->skill_id) != ST_MOVE_ENABLE)
@@ -6555,7 +6569,7 @@ static int skill_castend_nodamage_id(struct block_list *src, struct block_list *
 		case PR_SLOWPOISON:
 		case PR_IMPOSITIO:
 		case PR_LEXAETERNA:
-		case PR_SUFFRAGIUM:
+		//case PR_SUFFRAGIUM:
 		case PR_BENEDICTIO:
 		case LK_BERSERK:
 		case MS_BERSERK:
@@ -6566,7 +6580,7 @@ static int skill_castend_nodamage_id(struct block_list *src, struct block_list *
 		case CR_REFLECTSHIELD:
 		case MS_REFLECTSHIELD:
 		case AS_POISONREACT:
-		case MC_LOUD:
+		//case MC_LOUD:
 		case MG_ENERGYCOAT:
 		case MO_EXPLOSIONSPIRITS:
 		case MO_STEELBODY:
@@ -7051,6 +7065,8 @@ static int skill_castend_nodamage_id(struct block_list *src, struct block_list *
 		case CASH_INCAGI:
 		case CASH_ASSUMPTIO:
 		case WM_FRIGG_SONG:
+		case MC_LOUD:
+		case PR_SUFFRAGIUM:
 			if( sd == NULL || sd->status.party_id == 0 || (flag & 1) )
 				clif->skill_nodamage(bl, bl, skill_id, skill_lv, sc_start(src,bl,type,100,skill_lv,skill->get_time(skill_id,skill_lv)));
 			else if( sd )
@@ -12854,8 +12870,10 @@ static int skill_unit_onplace_timer(struct skill_unit *src, struct block_list *b
 			break;
 
 		case UNT_MAGNUS:
+#ifndef RENEWAL
 			if (!battle->check_undead(tstatus->race,tstatus->def_ele) && tstatus->race!=RC_DEMON)
 				break;
+#endif
 			skill->attack(BF_MAGIC,ss,&src->bl,bl,sg->skill_id,sg->skill_lv,tick,0);
 			break;
 
@@ -15687,7 +15705,7 @@ static int skill_castfix_sc(struct block_list *bl, int time)
 			time += sc->data[SC_NEEDLE_OF_PARALYZE]->val3;
 		if (sc->data[SC_SUFFRAGIUM]) {
 			time -= time * sc->data[SC_SUFFRAGIUM]->val2 / 100;
-			status_change_end(bl, SC_SUFFRAGIUM, INVALID_TIMER);
+			//status_change_end(bl, SC_SUFFRAGIUM, INVALID_TIMER);
 		}
 		if (sc->data[SC_MEMORIZE]) {
 			time>>=1;

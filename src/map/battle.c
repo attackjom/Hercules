@@ -1646,17 +1646,14 @@ static int battle_calc_skillratio(int attack_type, struct block_list *src, struc
 				case WZ_METEOR:
 					skillratio += 25;
 					break;
+				case WZ_EARTHSPIKE:
+					skillratio += 100;
+					break;
 				case WZ_VERMILION:
-				{
-					int interval = 0, per = interval, ratio = per;
-					while( (per++) < skill_lv ){
-						ratio += interval;
-						if(per%3==0) interval += 20;
-					}
-					if( skill_lv > 9 )
-						ratio -= 10;
-					skillratio += ratio;
-				}
+					if(sd)
+						skillratio += -100 + 400 + 100 * skill_lv;
+					else
+						skillratio += 20 * skill_lv - 20; //Monsters use old formula
 					break;
 				case NJ_HUUJIN:
 					skillratio += 50;
@@ -1910,6 +1907,10 @@ static int battle_calc_skillratio(int attack_type, struct block_list *src, struc
 						pc->del_charm(sd, sd->charm_count, sd->charm_type);
 					}
 					break;
+				case PR_MAGNUS:
+					if (battle->check_undead(tst->race,tst->def_ele) || tst->race==RC_DEMON || tst->def_ele==ELE_DARK)
+						skillratio += skillratio * 30 / 100;
+					break;
 				case SU_SV_STEMSPEAR:
 					skillratio += 600;
 					break;
@@ -1976,7 +1977,7 @@ static int battle_calc_skillratio(int attack_type, struct block_list *src, struc
 				case KN_BRANDISHSPEAR:
 				case ML_BRANDISH:
 				{
-					int ratio = 100 + 20 * skill_lv;
+					int ratio = 400 + 100 * skill_lv + st->str * 2;
 					skillratio += ratio - 100;
 					if(skill_lv>3 && flag==1) skillratio += ratio / 2;
 					if(skill_lv>6 && flag==1) skillratio += ratio / 4;
@@ -1997,7 +1998,11 @@ static int battle_calc_skillratio(int attack_type, struct block_list *src, struc
 					skillratio += 30 * skill_lv;
 					break;
 				case AS_SONICBLOW:
-					skillratio += 300 + 40 * skill_lv;
+					skillratio += 100 + 100 * skill_lv;
+#ifdef RENEWAL
+					if (tst->hp < tst->max_hp >> 1)
+						skillratio += skillratio / 2;
+#endif
 					break;
 				case TF_SPRINKLESAND:
 					skillratio += 30;
@@ -2041,7 +2046,11 @@ static int battle_calc_skillratio(int attack_type, struct block_list *src, struc
 						skillratio += 200 + 40 * skill_lv;
 					break;
 				case RG_RAID:
+#ifdef RENEWAL
+					skillratio += -100 + 50 + skill_lv * 150;
+#else
 					skillratio += 40 * skill_lv;
+#endif
 					break;
 				case RG_INTIMIDATE:
 					skillratio += 30 * skill_lv;
@@ -2050,7 +2059,7 @@ static int battle_calc_skillratio(int attack_type, struct block_list *src, struc
 					skillratio += 20 * skill_lv;
 					break;
 				case CR_SHIELDBOOMERANG:
-					skillratio += 30 * skill_lv;
+					skillratio += -100 + skill_lv * 80;
 					break;
 				case NPC_DARKCROSS:
 				case CR_HOLYCROSS:
@@ -2064,11 +2073,11 @@ static int battle_calc_skillratio(int attack_type, struct block_list *src, struc
 					break;
 				}
 				case AM_DEMONSTRATION:
-					skillratio += 20 * skill_lv;
+					skillratio += -100 + 100 * skill_lv + ((sd) ? pc->checkskill(sd, AM_LEARNINGPOTION) : 1) * 20;
 					break;
 				case AM_ACIDTERROR:
 #ifdef RENEWAL
-					skillratio += 80 * skill_lv + 100;
+					skillratio += -100 + 200 * skill_lv + ((sd) ? pc->checkskill(sd, AM_LEARNINGPOTION) : 1) * 20;
 #else
 					skillratio += 40 * skill_lv;
 #endif
@@ -2132,7 +2141,7 @@ static int battle_calc_skillratio(int attack_type, struct block_list *src, struc
 					skillratio += 100 + 100 * skill_lv;
 					break;
 				case AS_SPLASHER:
-					skillratio += 400 + 50 * skill_lv;
+					skillratio += 300 + 100 * skill_lv;
 					if(sd)
 						skillratio += 20 * pc->checkskill(sd,AS_POISONREACT);
 					break;
@@ -2757,6 +2766,7 @@ static int64 battle_calc_damage(struct block_list *src, struct block_list *bl, s
 	struct status_change *s_sc, *sc;
 	struct status_change_entry *sce;
 	int div_, flag;
+	struct status_data *tstatus = status->get_status_data(bl);
 
 	nullpo_ret(bl);
 	nullpo_ret(d);
@@ -3016,7 +3026,9 @@ static int64 battle_calc_damage(struct block_list *src, struct block_list *bl, s
 
 #ifdef RENEWAL
 		if( sc->data[SC_RAID] ) {
-			damage += damage * 20 / 100;
+			if (!s_sd && (tstatus->mode&MD_BOSS))
+				damage += damage * 15 / 100;
+			else damage += damage * 30 / 100;
 
 			if (--sc->data[SC_RAID]->val1 == 0)
 				status_change_end(bl, SC_RAID, INVALID_TIMER);
@@ -3535,8 +3547,13 @@ static int battle_range_type(struct block_list *src, struct block_list *target, 
 	}
 
 	//based on used skill's range
-	if (skill->get_range2(src, skill_id, skill_lv) < 5)
+	if (skill->get_range2(src, skill_id, skill_lv) < 4) {
+
+		if (skill_id == KN_BRANDISHSPEAR || skill_id == ML_BRANDISH)
+			return BF_LONG;
+
 		return BF_SHORT;
+	}
 	return BF_LONG;
 }
 
@@ -3987,9 +4004,9 @@ static struct Damage battle_calc_misc_attack(struct block_list *src, struct bloc
 		//Blitz-beat Damage.
 		if(!sd || (temp = pc->checkskill(sd,HT_STEELCROW)) <= 0)
 			temp=0;
-		md.damage=(sstatus->dex/10+sstatus->int_/2+temp*3+40)*2;
-		if(mflag > 1) //Autocasted Blitz.
-			nk|=NK_SPLASHSPLIT;
+		md.damage=(sstatus->dex/10+sstatus->agi/2+temp*3+40)*2;
+		//if(mflag > 1) //Autocasted Blitz.
+			//nk|=NK_SPLASHSPLIT;
 
 		if (skill_id == SN_FALCONASSAULT) {
 			//Div fix of Blitzbeat
@@ -4411,6 +4428,7 @@ static struct Damage battle_calc_weapon_attack(struct block_list *src, struct bl
 		wd.amotion >>= 1;
 	wd.dmotion=tstatus->dmotion;
 	wd.blewcount = skill_id ? skill->get_blewcount(skill_id,skill_lv) : 0;
+	wd.miscflag = wflag;
 	wd.flag = BF_WEAPON; //Initial Flag
 	wd.flag |= (skill_id||wflag)?BF_SKILL:BF_NORMAL; // Baphomet card's splash damage is counted as a skill. [Inkfish]
 	wd.dmg_lv=ATK_DEF; //This assumption simplifies the assignation later
@@ -4477,6 +4495,10 @@ static struct Damage battle_calc_weapon_attack(struct block_list *src, struct bl
 			case GS_GROUNDDRIFT:
 			case KN_SPEARSTAB:
 			case KN_BOWLINGBASH:
+#ifdef RENEWAL
+				if (skill_id == KN_BOWLINGBASH && sd && sd->weapontype == W_2HSWORD)
+					wd.div_ = cap_value(wd.miscflag, 2, 4);
+#endif
 			case MS_BOWLINGBASH:
 			case MO_BALKYOUNG:
 			case TK_TURNKICK:
