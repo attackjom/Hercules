@@ -7684,7 +7684,8 @@ static void clif_autospell(struct map_session_data *sd, uint16 skill_lv)
 	int fd = sd->fd;
 #if PACKETVER_MAIN_NUM >= 20181128 || PACKETVER_RE_NUM >= 20181031
 	// reserve space for 7 skills
-	WFIFOHEAD(fd, sizeof(struct PACKET_ZC_AUTOSPELLLIST) + 4 * 7);
+	//WFIFOHEAD(fd, sizeof(struct PACKET_ZC_AUTOSPELLLIST) + 4 * 7);
+	WFIFOHEAD(fd, sizeof(struct PACKET_ZC_AUTOSPELLLIST) + 4 * 10);
 #else
 	WFIFOHEAD(fd, sizeof(struct PACKET_ZC_AUTOSPELLLIST));
 #endif

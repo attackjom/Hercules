@@ -4452,36 +4452,36 @@ static int skill_castend_damage_id(struct block_list *src, struct block_list *bl
 
 		case RG_BACKSTAP:
 			{
-#ifdef RENEWAL
-				uint8 dir = map->calc_dir(src, bl->x, bl->y);
-				short x, y;
+				if (!check_distance_bl(src, bl, 0)) {
+					uint8 dir = map->calc_dir(src, bl->x, bl->y);
+					short x, y;
 
-				if (dir > 0 && dir < 4)
-					x = -1;
-				else if (dir > 4)
-					x = 1;
-				else
-					x = 0;
+					if (dir > 0 && dir < 4)
+						x = -1;
+					else if (dir > 4)
+						x = 1;
+					else
+						x = 0;
 
-				if (dir > 2 && dir < 6)
-					y = -1;
-				else if (dir == 7 || dir < 2)
-					y = 1;
-				else
-					y = 0;
+					if (dir > 2 && dir < 6)
+						y = -1;
+					else if (dir == 7 || dir < 2)
+						y = 1;
+					else
+						y = 0;
 
 				if (battle->check_target(src, bl, BCT_ENEMY) > 0 && unit->movepos(src, bl->x + x, bl->y + y, 2, 1)) { // Display movement + animation.
-#else
-				uint8 dir = map->calc_dir(src, bl->x, bl->y), t_dir = unit->getdir(bl);
-				if ((!check_distance_bl(src, bl, 0) && !map->check_dir(dir, t_dir)) || bl->type == BL_SKILL) {
-#endif
 					status_change_end(src, SC_HIDING, INVALID_TIMER);
+#ifdef RENEWAL
+					clif->blown(src);
+#endif
 					skill->attack(BF_WEAPON, src, src, bl, skill_id, skill_lv, tick, flag);
 					dir = dir < 4 ? dir+4 : dir-4; // change direction [Celest]
 					unit->setdir(bl,dir);
 				}
 				else if (sd)
 					clif->skill_fail(sd, skill_id, USESKILL_FAIL_LEVEL, 0, 0);
+				}
 			}
 			break;
 
@@ -5680,8 +5680,7 @@ static int skill_castend_id(int tid, int64 tick, int id, intptr_t data)
 		}
 
 		if(ud->skill_id == RG_BACKSTAP) {
-			uint8 dir = map->calc_dir(src,target->x,target->y),t_dir = unit->getdir(target);
-			if(check_distance_bl(src, target, 0) || map->check_dir(dir,t_dir)) {
+			if(check_distance_bl(src, target, 0)) {
 				break;
 			}
 		}

@@ -2089,6 +2089,7 @@ static int battle_calc_skillratio(int attack_type, struct block_list *src, struc
 						skillratio += skillratio * 50 / 100;
 #else
 					skillratio+= 50 * skill_lv;
+#endif
 					break;
 				case MO_INVESTIGATE:
 #ifdef RENEWAL
@@ -2097,6 +2098,7 @@ static int battle_calc_skillratio(int attack_type, struct block_list *src, struc
 						skillratio += skillratio * 50 / 100;
 #else
 					skillratio += 75 * skill_lv;
+#endif
 					break;
 				case MO_EXTREMITYFIST:
 					skillratio += 100 * (7 + st->sp / 10);
@@ -6452,11 +6454,11 @@ static enum damage_lv battle_weapon_attack(struct block_list *src, struct block_
 		int sp = 0;
 		uint16 skill_id = sc->data[SC_AUTOSPELL]->val2;
 		uint16 skill_lv = sc->data[SC_AUTOSPELL]->val3;
-		int i = rnd()%100;
+		/*int i = rnd()%100;
 		if (sc->data[SC_SOULLINK] && sc->data[SC_SOULLINK]->val2 == SL_SAGE)
 			i = 0; //Max chance, no skill_lv reduction. [Skotlex]
 		if (i >= 50) skill_lv -= 2;
-		else if (i >= 15) skill_lv--;
+		else if (i >= 15) skill_lv--;*/
 		if (skill_lv < 1) skill_lv = 1;
 		sp = skill->get_sp(skill_id,skill_lv) * 2 / 3;
 

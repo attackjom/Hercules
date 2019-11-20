@@ -2941,7 +2941,7 @@ static int status_calc_pc_(struct map_session_data *sd, enum e_status_calc_opt o
 		bstatus->max_sp += (int64)bstatus->max_sp * skill_lv/100;
 	if((skill_lv=pc->checkskill(sd,HW_SOULDRAIN))>0)
 		bstatus->max_sp += (int64)bstatus->max_sp * 2*skill_lv/100;
-	if (skill_lv=pc->checkskill(sd, (sd->status.sex ? BA_MUSICALLESSON : DC_DANCINGLESSON))) > 0)
+	if ((skill_lv=pc->checkskill(sd, (sd->status.sex ? BA_MUSICALLESSON : DC_DANCINGLESSON))) > 0)
 		bstatus->max_sp += (int64)bstatus->max_sp *skill_lv/100;
 	if( (skill_lv = pc->checkskill(sd,RA_RESEARCHTRAP)) > 0 )
 		bstatus->max_sp += 200 + 20 * skill_lv;
