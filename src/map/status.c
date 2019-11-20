@@ -331,22 +331,22 @@ static void initChangeTables(void)
 	add_sc( SA_COMA              , SC_COMA            );
 	status->set_sc( BD_ENCORE            , SC_DANCING         , SI_BDPLAYING           , SCB_SPEED|SCB_REGEN );
 	status->set_sc( BD_ADAPTATION		 , SC_ADAPTATION	  , SI_ADAPTATION	   , SCB_NONE );
-	add_sc( BD_RICHMANKIM        , SC_RICHMANKIM      );
+	status->set_sc( BD_RICHMANKIM        , SC_RICHMANKIM	  , SI_RICHMANKIM      , SCB_NONE );
 	status->set_sc( BD_ETERNALCHAOS      , SC_ETERNALCHAOS    , SI_ETERNALCHAOS           , SCB_DEF2 );
-	status->set_sc( BD_DRUMBATTLEFIELD   , SC_DRUMBATTLE      , SI_DRUMBATTLE           , SCB_WATK|SCB_DEF );
-	status->set_sc( BD_RINGNIBELUNGEN    , SC_NIBELUNGEN      , SI_NIBELUNGEN           , SCB_WATK );
-	add_sc( BD_ROKISWEIL         , SC_ROKISWEIL       );
-	add_sc( BD_INTOABYSS         , SC_INTOABYSS       );
+	status->set_sc( BD_DRUMBATTLEFIELD   , SC_DRUMBATTLE      , SI_DRUMBATTLEFIELD		, SCB_WATK|SCB_DEF );
+	status->set_sc( BD_RINGNIBELUNGEN    , SC_NIBELUNGEN      , SI_RINGNIBELUNGEN		, SCB_WATK );
+	status->set_sc( BD_ROKISWEIL         , SC_ROKISWEIL		  , SI_ROKISWEIL			, SCB_NONE );
+	status->set_sc( BD_INTOABYSS         , SC_INTOABYSS  	  , SI_INTOABYSS			, SCB_NONE );
 	status->set_sc( BD_SIEGFRIED         , SC_SIEGFRIED       , SI_SIEGFRIED           , SCB_ALL );
 	add_sc( BA_FROSTJOKER        , SC_FREEZE          );
 	status->set_sc( BA_WHISTLE           , SC_WHISTLE         , SI_WHISTLE           , SCB_FLEE|SCB_FLEE2 );
-	status->set_sc( BA_ASSASSINCROSS     , SC_ASSNCROS        , SI_ASSNCROS           , SCB_ASPD );
-	add_sc( BA_POEMBRAGI         , SC_POEMBRAGI       );
+	status->set_sc( BA_ASSASSINCROSS     , SC_ASSNCROS        , SI_ASSASSINCROSS	 , SCB_ASPD );
+	status->set_sc( BA_POEMBRAGI         , SC_POEMBRAGI		  , SI_POEMBRAGI	     , SCB_NONE );
 	status->set_sc( BA_APPLEIDUN         , SC_APPLEIDUN       , SI_APPLEIDUN           , SCB_MAXHP );
 	add_sc( DC_SCREAM            , SC_STUN            );
 	status->set_sc( DC_HUMMING           , SC_HUMMING         , SI_HUMMING           , SCB_HIT );
 	status->set_sc( DC_DONTFORGETME      , SC_DONTFORGETME    , SI_DONTFORGETME           , SCB_SPEED|SCB_ASPD );
-	status->set_sc( DC_FORTUNEKISS       , SC_FORTUNE         , SI_FORTUNE           , SCB_ALL );
+	status->set_sc( DC_FORTUNEKISS       , SC_FORTUNE         , SI_FORTUNEKISS		 , SCB_ALL );
 	status->set_sc( DC_SERVICEFORYOU     , SC_SERVICEFORYOU   , SI_SERVICEFORYOU           , SCB_ALL );
 	add_sc( NPC_DARKCROSS        , SC_BLIND           );
 	add_sc( NPC_GRANDDARKNESS    , SC_BLIND           );
@@ -1943,6 +1943,7 @@ static int status_check_skilluse(struct block_list *src, struct block_list *targ
 				sc->data[SC_SILENCE] ||
 				sc->data[SC_STEELBODY] ||
 				sc->data[SC_BERSERK] ||
+				sc->data[SC_ROKISWEIL] ||
 				sc->data[SC_OBLIVIONCURSE] ||
 				sc->data[SC_WHITEIMPRISON] ||
 				sc->data[SC__INVISIBILITY] ||
@@ -11986,17 +11987,17 @@ static int status_change_timer(int tid, int64 tick, int id, intptr_t data)
 				//case BD_DRUMBATTLEFIELD:
 				//case BD_RINGNIBELUNGEN:
 				//case BD_SIEGFRIED:
-				case BA_DISSONANCE:
+				//case BA_DISSONANCE:
 				//case BA_ASSASSINCROSS:
 				//case DC_UGLYDANCE:
-					s=3;
-					break;
-				case BD_LULLABY:
+				//	s=3;
+				//	break;
+				//case BD_LULLABY:
 				//case BD_ETERNALCHAOS:
-				case BD_ROKISWEIL:
+				//case BD_ROKISWEIL:
 				//case DC_FORTUNEKISS:
-					s=4;
-					break;
+				//	s=4;
+				//	break;
 				//case CG_HERMODE:
 				//case BD_INTOABYSS:
 				//case BA_WHISTLE:

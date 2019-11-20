@@ -134,7 +134,7 @@ static int skill_get_index(int skill_id)
 			skill_id = (1077) + skill_id - 2201;
 		else if ( skill_id < 3036 ) // 2549 - 3000 are empty - 1020+57+348
 			skill_id = (1425) + skill_id - 3001;
-		else if ( skill_id < 5044 ) // 3036 - 5000 are empty - 1020+57+348+35
+		else if ( skill_id < 5100 ) // 3036 - 5000 are empty - 1020+57+348+35
 			skill_id = (1460) + skill_id - 5001;
 		else
 			ShowWarning("skill_get_index: skill id '%d' is not being handled!\n",skill_id);
@@ -1535,14 +1535,15 @@ static int skill_additional_effect(struct block_list *src, struct block_list *bl
 			break;
 
 		case BD_LULLABY:
-			sc_start(src,bl,SC_SLEEP,15,skill_lv,skill->get_time2(skill_id,skill_lv));
+			sc_start(src,bl,SC_SLEEP,15+sstatus->int_/3,skill_lv,skill->get_time2(skill_id,skill_lv));
 			break;
 
 		case DC_UGLYDANCE:
-			rate = 5+5*skill_lv;
-			if (sd && (temp=pc->checkskill(sd,DC_DANCINGLESSON)) > 0)
-				rate += 5+temp;
-			status_zap(bl, 0, rate);
+			rate = (sstatus->max_sp) * (10+2*skill_lv) / 100;
+			//if (sd && (temp=pc->checkskill(sd,DC_DANCINGLESSON)) > 0)
+				//rate += 5+temp;
+			if( rnd()%100 <= (20 + 5 * skill_lv) )
+				status_zap(bl, 0, rate);
 			break;
 		case SL_STUN:
 			if (tstatus->size==SZ_MEDIUM) //Only stuns mid-sized mobs.
@@ -3539,7 +3540,7 @@ static int skill_area_sub(struct block_list *bl, va_list ap)
 	tick = va_arg(ap,int64);
 	flag = va_arg(ap,int);
 	func = va_arg(ap,SkillFunc);
-	
+
 	if (flag&BCT_WOS && src == bl)
 		return 0;
 
@@ -4785,7 +4786,7 @@ static int skill_castend_damage_id(struct block_list *src, struct block_list *bl
 					// If target cell is a wall then break
 					if(map->getcell(bl->m, bl, tx, ty, CELL_CHKWALL))
 						break;
-			
+
 					int count,count2 = 0;
 
 					// Splash around target cell, but only cells inside area; we first have to check the area is not negative
@@ -5593,13 +5594,13 @@ static int skill_apply_songs(struct block_list* target, va_list ap)
 
 	if (battle->check_target(src, target, flag) > 0) {
 		switch (skill_id) {
-			// Attack type songs
-		/*case BA_DISSONANCE:
+		// Attack type songs
+		case BA_DISSONANCE:
 			skill_attack(BF_MAGIC, src, src, target, skill_id, skill_lv, tick, 0);
 			return 1;
 		case DC_UGLYDANCE:
 		case BD_LULLABY:
-			return skill_additional_effect(src, target, skill_id, skill_lv, BF_LONG | BF_SKILL | BF_MISC, ATK_DEF, tick);*/
+			return skill->additional_effect(src, target, skill_id, skill_lv, BF_LONG | BF_SKILL | BF_MISC, ATK_DEF, tick);
 		default: // Buff/Debuff type songs
 			if (skill_id == CG_HERMODE && src->id != target->id)
 				status->change_clear_buffs(target, 1); // Should dispell only allies.
@@ -5655,7 +5656,7 @@ static int skill_castend_song(struct block_list* src, uint16 skill_id, uint16 sk
 	sd->skill_id_dance = skill_id;
 	sd->skill_lv_dance = skill_lv;
 
-	if (skill_get_inf2(skill_id) & INF2_ENSEMBLE_SKILL) {
+	if (skill->get_inf2(skill_id) & INF2_ENSEMBLE_SKILL) {
 		sc_start(src, src, status->skill2sc(CG_SPECIALSINGER), 100, 1, skill_get_time(CG_SPECIALSINGER, skill_lv));
 		skill->check_pc_partner(sd, skill_id, &skill_lv, 4, 1);
 		// todo, apply ensemble fatigue if it hits you + ensemble partner.. ??
@@ -7371,7 +7372,7 @@ static int skill_castend_nodamage_id(struct block_list *src, struct block_list *
 				}
 			}
 			break;
-		
+
 #ifdef RENEWAL
 			case BD_LULLABY:
 			case BD_RICHMANKIM:
@@ -7394,7 +7395,7 @@ static int skill_castend_nodamage_id(struct block_list *src, struct block_list *
 				skill->castend_song(src, skill_id, skill_lv, tick);
 				break;
 #endif
-		
+
 		case TF_STEAL:
 			if(sd) {
 				if(pc->steal_item(sd,bl,skill_lv))
@@ -11311,12 +11312,11 @@ static int skill_castend_pos2(struct block_list *src, int x, int y, uint16 skill
 		case AC_SHOWER: //Ground-placed skill implementation.
 		case MA_SHOWER:
 		case SA_LANDPROTECTOR:
+#ifndef RENEWAL
 		case BD_ROKISWEIL:
 		case BA_DISSONANCE:
-#ifndef RENEWAL		
 		case BD_LULLABY:
 		case BD_RICHMANKIM:
-		case BD_ETERNALCHAOS:
 		case BD_DRUMBATTLEFIELD:
 		case BD_RINGNIBELUNGEN:
 		case BA_POEMBRAGI:
@@ -11326,11 +11326,12 @@ static int skill_castend_pos2(struct block_list *src, int x, int y, uint16 skill
 		case BD_INTOABYSS:
 		case BD_SIEGFRIED:
 		case DC_HUMMING:
-		case DC_DONTFORGETME:
 		case DC_FORTUNEKISS:
 		case DC_SERVICEFORYOU:
-#endif
+		case BD_ETERNALCHAOS:
 		case DC_UGLYDANCE:
+		case DC_DONTFORGETME:
+#endif
 		case CG_MOONLIT:
 		case GS_DESPERADO:
 		case NJ_KAENSIN:
@@ -14068,18 +14069,21 @@ static int skill_check_pc_partner(struct map_session_data *sd, uint16 skill_id, 
 			default: //Warning: Assuming Ensemble skills here (for speed)
 				if( is_chorus )
 					break;//Chorus skills are not to be parsed as ensambles
+				if (skill->get_inf2(skill_id)&INF2_ENSEMBLE_SKILL) {
 #ifdef RENEWAL
 					if (c > 0 && sd->sc.data[SC_LONGING] && (tsd = map->id2sd(p_sd[0])) != NULL) {
 						sd->sc.data[SC_LONGING]->val1 = tsd->bl.id;
 						sc_start(&sd->bl,&tsd->bl, status->skill2sc(CG_SPECIALSINGER), 100, 1, 10000);
-#else
-				if (c > 0 && sd->sc.data[SC_DANCING] && (tsd = map->id2sd(p_sd[0])) != NULL) {
-					sd->sc.data[SC_DANCING]->val4 = tsd->bl.id;
-					sc_start4(&tsd->bl,&tsd->bl,SC_DANCING,100,skill_id,sd->sc.data[SC_DANCING]->val2,*skill_lv,sd->bl.id,skill->get_time(skill_id,*skill_lv)+1000);
+
+					//if (c > 0 && sd->sc.data[SC_DANCING] && (tsd = map->id2sd(p_sd[0])) != NULL) {
+						//sd->sc.data[SC_DANCING]->val4 = tsd->bl.id;
+						//sc_start4(&tsd->bl,&tsd->bl,SC_DANCING,100,skill_id,sd->sc.data[SC_DANCING]->val2,*skill_lv,sd->bl.id,skill->get_time(skill_id,*skill_lv)+1000);
 #endif
-					clif->skill_nodamage(&tsd->bl, &sd->bl, skill_id, *skill_lv, 1);
-					tsd->skill_id_dance = skill_id;
-					tsd->skill_lv_dance = *skill_lv;
+						clif->skill_nodamage(&tsd->bl, &sd->bl, skill_id, *skill_lv, 1);
+						skill->blockpc_start(tsd, skill_id, skill->get_cooldown(skill_id,*skill_lv));
+						tsd->skill_id_dance = skill_id;
+						tsd->skill_lv_dance = *skill_lv;
+					}
 				}
 				return c;
 		}
@@ -15769,7 +15773,7 @@ static struct skill_condition skill_get_requirement(struct map_session_data *sd,
 					req.spiritball--;
 				else if( sc->data[SC_COMBOATTACK] )
 				{
-					
+
 #ifndef RENEWAL
 					switch (sc->data[SC_COMBOATTACK]->val1)
 					{
@@ -16514,7 +16518,7 @@ static int skill_autospell(struct map_session_data *sd, uint16 skill_id)
 
 	skill_lv = sd->menuskill_val;
 	lv=pc->checkskill(sd,skill_id);
-	
+
 	if (skill_id >= GD_SKILLBASE && skill_id < GD_MAX)
 		return 0;
 
