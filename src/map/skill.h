@@ -136,6 +136,22 @@ enum e_skill_display {
 	SD_PREAMBLE  = 0x8000, // skill_area_sub will transmit a 'magic' damage packet (-30000 dmg) for the first target selected
 };
 
+/// Ring of Nibelungen bonuses
+enum e_nibelungen_status {
+	RINGNBL_ASPDRATE = 1,		///< ASPD + 20%
+	RINGNBL_ATKRATE,		///< Physical damage + 20%
+	RINGNBL_MATKRATE,		///< MATK + 20%
+	RINGNBL_HPRATE,			///< Maximum HP + 30%
+	RINGNBL_SPRATE,			///< Maximum SP + 30%
+	RINGNBL_ALLSTAT,		///< All stats + 15
+	RINGNBL_HIT,			///< HIT + 50
+	RINGNBL_FLEE,			///< FLEE + 50
+	RINGNBL_SPCONSUM,		///< SP consumption - 30%
+	RINGNBL_HPREGEN,		///< HP recovery + 100%
+	RINGNBL_SPREGEN,		///< SP recovery + 100%
+	RINGNBL_MAX,
+};
+
 enum {
 	UF_NONE             = 0x0000,
 	UF_DEFNOTENEMY      = 0x0001, // If 'defunit_not_enemy' is set, the target is changed to 'friend'
@@ -1433,6 +1449,9 @@ enum e_skill {
 	SU_CHATTERING,
 	SU_SPIRITOFSEA,
 
+	// 5000+
+	CG_SPECIALSINGER = 5068,
+
 	HLIF_HEAL = 8001,
 	HLIF_AVOID,
 	HLIF_BRAIN,
@@ -2181,7 +2200,10 @@ struct skill_interface {
 	void (*get_requirement_unknown) (struct status_change *sc, struct map_session_data* sd, uint16 *skill_id, uint16 *skill_lv, struct skill_condition *req);
 	int (*splash_target) (struct block_list* bl);
 	int (*check_npc_chaospanic) (struct block_list *bl, va_list args);
+	int (*castend_song) (struct block_list* src, uint16 skill_id, uint16 skill_lv, int64 tick);
+	int (*apply_songs) (struct block_list *bl, va_list ap);
 	int (*count_wos) (struct block_list *bl, va_list ap);
+	
 };
 
 #ifdef HERCULES_CORE

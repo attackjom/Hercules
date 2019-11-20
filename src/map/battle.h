@@ -93,6 +93,7 @@ enum e_battle_check_target { //New definitions [Skotlex]
 	BCT_NOENEMY     =   0x3d0000, ///< This must be (~BCT_ENEMY&BCT_ALL)
 
 	BCT_ALL         =   0x3f0000, ///< Sum of BCT_NOONE to BCT_SAMEGUILD
+	BCT_WOS			=	0x400000, ///< Except self (currently used for skipping if src == bl in skill_area_sub)
 };
 
 /**

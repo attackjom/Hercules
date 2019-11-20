@@ -218,14 +218,14 @@
 #define MAX_FAME 1000000000
 #define MAX_CART 100
 #ifndef MAX_SKILL_DB
-#define MAX_SKILL_DB 1510 ///< Maximum number of skills in the skill DB (compacted array size)
+#define MAX_SKILL_DB 2000 ///< Maximum number of skills in the skill DB (compacted array size)
 #endif
 #ifndef MAX_SKILL_ID
 #define MAX_SKILL_ID 10015   // [Ind/Hercules] max used skill ID
 #endif
 #ifndef MAX_SKILL_TREE
 // Update this max as necessary. 86 is the value needed for Expanded Super Novice.
-#define MAX_SKILL_TREE 86
+#define MAX_SKILL_TREE 120
 #endif
 #ifndef DEFAULT_WALK_SPEED
 #define DEFAULT_WALK_SPEED 150

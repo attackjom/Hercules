@@ -1655,6 +1655,12 @@ static int battle_calc_skillratio(int attack_type, struct block_list *src, struc
 					else
 						skillratio += 20 * skill_lv - 20; //Monsters use old formula
 					break;
+				case BA_DISSONANCE:
+					skillratio += skill_lv * 10;
+					if (sd)
+						skillratio += 3 * pc->checkskill(sd, BA_MUSICALLESSON);
+					RE_LVL_DMOD(100);
+					break;
 				case NJ_HUUJIN:
 					skillratio += 50;
 					if (sd && sd->charm_type == CHARM_TYPE_WIND && sd->charm_count > 0)
@@ -4035,11 +4041,6 @@ static struct Damage battle_calc_misc_attack(struct block_list *src, struct bloc
 		break;
 	case TF_THROWSTONE:
 		md.damage=50;
-		break;
-	case BA_DISSONANCE:
-		md.damage=30+skill_lv*10;
-		if (sd)
-			md.damage+= 3*pc->checkskill(sd,BA_MUSICALLESSON);
 		break;
 	case NPC_SELFDESTRUCTION:
 		md.damage = sstatus->hp;

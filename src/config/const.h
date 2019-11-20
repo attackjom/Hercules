@@ -92,11 +92,11 @@
 /* Renewal's dmg level modifier, used as a macro for a easy way to turn off. */
 #ifdef RENEWAL_LVDMG
 	#define RE_LVL_DMOD(val) do { \
-		if( (val) > 0 ) \
+		if( status->get_lv(src) > 100 && (val) > 0 ) \
 			skillratio = skillratio * status->get_lv(src) / (val); \
 	} while(0)
 	#define RE_LVL_MDMOD(val) do { \
-		if ( (val) > 0 ) \
+		if ( status->get_lv(src) > 100 && (val) > 0 ) \
 			md.damage = md.damage * status->get_lv(src) / (val); \
 	} while(0)
 	/* ranger traps special */

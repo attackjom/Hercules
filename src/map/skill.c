@@ -874,15 +874,13 @@ static int skill_calc_heal(struct block_list *src, struct block_list *target, ui
 		case SU_TUNABELLY:
 			hp = status_get_max_hp(target) * ((20 * skill_lv) - 10) / 100;
 			break;
+#ifndef RENEWAL
 		case BA_APPLEIDUN:
-#ifdef RENEWAL
-			hp = 100+5*skill_lv+5*(status_get_vit(src)/10); // HP recovery
-#else // not RENEWAL
 			hp = 30+5*skill_lv+5*(status_get_vit(src)/10); // HP recovery
-#endif // RENEWAL
 			if( sd )
 				hp += 5*pc->checkskill(sd,BA_MUSICALLESSON);
 			break;
+#endif
 		case PR_SANCTUARY:
 			hp = (skill_lv>6)?777:skill_lv*100;
 			break;
@@ -3541,6 +3539,9 @@ static int skill_area_sub(struct block_list *bl, va_list ap)
 	tick = va_arg(ap,int64);
 	flag = va_arg(ap,int);
 	func = va_arg(ap,SkillFunc);
+	
+	if (flag&BCT_WOS && src == bl)
+		return 0;
 
 	if(battle->check_target(src,bl,flag) > 0) {
 		// several splash skills need this initial dummy packet to display correctly
@@ -5573,6 +5574,97 @@ static int skill_castend_damage_id(struct block_list *src, struct block_list *bl
 	return 0;
 }
 
+/**
+ * Give a song's buff/debuff or damage to all targets around
+ * @param target: Target
+ * @param ap: Argument list
+ * @return 1 on success or 0 otherwise
+ */
+static int skill_apply_songs(struct block_list* target, va_list ap)
+{
+	int flag = va_arg(ap, int);
+	struct block_list* src = va_arg(ap, struct block_list*);
+	int skill_id = va_arg(ap, int);
+	int skill_lv = va_arg(ap, int);
+	int64 tick = va_arg(ap, int64);
+
+	if (flag & BCT_WOS && src == target)
+		return 0;
+
+	if (battle->check_target(src, target, flag) > 0) {
+		switch (skill_id) {
+			// Attack type songs
+		/*case BA_DISSONANCE:
+			skill_attack(BF_MAGIC, src, src, target, skill_id, skill_lv, tick, 0);
+			return 1;
+		case DC_UGLYDANCE:
+		case BD_LULLABY:
+			return skill_additional_effect(src, target, skill_id, skill_lv, BF_LONG | BF_SKILL | BF_MISC, ATK_DEF, tick);*/
+		default: // Buff/Debuff type songs
+			if (skill_id == CG_HERMODE && src->id != target->id)
+				status->change_clear_buffs(target, 1); // Should dispell only allies.
+			return sc_start(src, target, status->skill2sc(skill_id), 100, skill_lv, skill_get_time(skill_id, skill_lv));
+		}
+	}
+
+	return 0;
+}
+
+/**
+ * Calculate a song's bonus values
+ * @param src: Caster
+ * @param skill_id: Song skill ID
+ * @param skill_lv: Song skill level
+ * @param tick: Timer tick
+ * @return Number of targets or 0 otherwise
+ */
+static int skill_castend_song(struct block_list* src, uint16 skill_id, uint16 skill_lv, int64 tick)
+{
+	nullpo_ret(src);
+
+	if (src->type != BL_PC) {
+		ShowWarning("skill_castend_song: Expected player type for src!\n");
+		return 0;
+	}
+
+	if (!(skill_get_inf2(skill_id) & (INF2_SONG_DANCE | INF2_ENSEMBLE_SKILL))) {
+		ShowWarning("skill_castend_song: Unknown song skill ID: %u\n", skill_id);
+		return 0;
+	}
+
+	struct map_session_data* sd = BL_CAST(BL_PC, src);
+	int flag = BCT_PARTY;
+
+	switch (skill_id) {
+		case BD_ROKISWEIL:
+			flag = BCT_ENEMY | BCT_WOS;
+			break;
+		case BD_LULLABY:
+		case BD_ETERNALCHAOS:
+		case BA_DISSONANCE:
+		case DC_UGLYDANCE:
+		case DC_DONTFORGETME:
+			flag = BCT_ENEMY;
+			break;
+		case CG_HERMODE:
+			flag |= BCT_GUILD;
+			break;
+	}
+
+	clif->skill_nodamage(src, src, skill_id, skill_lv, 1);
+	sd->skill_id_dance = skill_id;
+	sd->skill_lv_dance = skill_lv;
+
+	if (skill_get_inf2(skill_id) & INF2_ENSEMBLE_SKILL) {
+		sc_start(src, src, status->skill2sc(CG_SPECIALSINGER), 100, 1, skill_get_time(CG_SPECIALSINGER, skill_lv));
+		skill->check_pc_partner(sd, skill_id, &skill_lv, 4, 1);
+		// todo, apply ensemble fatigue if it hits you + ensemble partner.. ??
+		// or maybe we do that in skill_check_pc_partner or something ??
+	}
+
+	return map->foreachinrange(skill_apply_songs, src, skill_get_splash(skill_id, skill_lv), skill->splash_target(src), flag, src, skill_id, skill_lv, tick);
+}
+
 static bool skill_castend_damage_id_unknown(struct block_list *src, struct block_list *bl, uint16 *skill_id, uint16 *skill_lv, int64 *tick, int *flag, struct status_data *tstatus, struct status_change *sc)
 {
 	nullpo_retr(true, skill_id);
@@ -5870,9 +5962,10 @@ static int skill_castend_id(int tid, int64 tick, int id, intptr_t data)
 			 && ud->skill_id != WZ_WATERBALL
 			)
 				sc->data[SC_SOULLINK]->val3 = 0; //Clear bounced spell check.
-
+#ifndef RENEWAL
 			if( sc->data[SC_DANCING] && skill->get_inf2(ud->skill_id)&INF2_SONG_DANCE && sd )
 				skill->blockpc_start(sd,BD_ADAPTATION,3000);
+#endif
 		}
 
 		if( sd && ud->skill_id != SA_ABRACADABRA && ud->skill_id != WM_RANDOMIZESPELL ) // they just set the data so leave it as it is.[Inkfish]
@@ -7226,11 +7319,23 @@ static int skill_castend_nodamage_id(struct block_list *src, struct block_list *
 			}
 			break;
 
+		case CG_SPECIALSINGER:
+			if (tsc && tsc->data[SC_LONGING]) {
+				clif->skill_nodamage(src, bl, skill_id, skill_lv, 1);
+				status_change_end(bl, SC_LONGING, INVALID_TIMER);
+			}
+		break;
+
 		case BD_ADAPTATION:
+#ifdef RENEWAL
+			clif->skill_nodamage(src, bl, skill_id, skill_lv, 1);
+			sc_start(src, bl, type, 100, skill_lv, skill_get_time(skill_id, skill_lv));
+#else
 			if(tsc && tsc->data[SC_DANCING]){
 				clif->skill_nodamage(src,bl,skill_id,skill_lv,1);
 				status_change_end(bl, SC_DANCING, INVALID_TIMER);
 			}
+#endif
 			break;
 
 		case BA_FROSTJOKER:
@@ -7266,7 +7371,30 @@ static int skill_castend_nodamage_id(struct block_list *src, struct block_list *
 				}
 			}
 			break;
-
+		
+#ifdef RENEWAL
+			case BD_LULLABY:
+			case BD_RICHMANKIM:
+			case BD_ETERNALCHAOS:
+			case BD_DRUMBATTLEFIELD:
+			case BD_RINGNIBELUNGEN:
+			case BD_ROKISWEIL:
+			case BD_INTOABYSS:
+			case BD_SIEGFRIED:
+			case BA_DISSONANCE:
+			case BA_POEMBRAGI:
+			case BA_WHISTLE:
+			case BA_ASSASSINCROSS:
+			case BA_APPLEIDUN:
+			case DC_UGLYDANCE:
+			case DC_HUMMING:
+			case DC_DONTFORGETME:
+			case DC_FORTUNEKISS:
+			case DC_SERVICEFORYOU:
+				skill->castend_song(src, skill_id, skill_lv, tick);
+				break;
+#endif
+		
 		case TF_STEAL:
 			if(sd) {
 				if(pc->steal_item(sd,bl,skill_lv))
@@ -8455,7 +8583,7 @@ static int skill_castend_nodamage_id(struct block_list *src, struct block_list *
 		case RG_CLEANER: //AppleGirl
 			clif->skill_nodamage(src,bl,skill_id,skill_lv,1);
 			break;
-
+#ifndef RENEWAL
 		case CG_LONGINGFREEDOM:
 			{
 				if (tsc && !tsce && (tsce=tsc->data[SC_DANCING]) != NULL && tsce->val4
@@ -8466,6 +8594,7 @@ static int skill_castend_nodamage_id(struct block_list *src, struct block_list *
 				}
 			}
 			break;
+#endif
 
 		case CG_TAROTCARD:
 			{
@@ -11182,24 +11311,26 @@ static int skill_castend_pos2(struct block_list *src, int x, int y, uint16 skill
 		case AC_SHOWER: //Ground-placed skill implementation.
 		case MA_SHOWER:
 		case SA_LANDPROTECTOR:
+		case BD_ROKISWEIL:
+		case BA_DISSONANCE:
+#ifndef RENEWAL		
 		case BD_LULLABY:
 		case BD_RICHMANKIM:
 		case BD_ETERNALCHAOS:
 		case BD_DRUMBATTLEFIELD:
 		case BD_RINGNIBELUNGEN:
-		case BD_ROKISWEIL:
-		case BD_INTOABYSS:
-		case BD_SIEGFRIED:
-		case BA_DISSONANCE:
 		case BA_POEMBRAGI:
 		case BA_WHISTLE:
 		case BA_ASSASSINCROSS:
 		case BA_APPLEIDUN:
-		case DC_UGLYDANCE:
+		case BD_INTOABYSS:
+		case BD_SIEGFRIED:
 		case DC_HUMMING:
 		case DC_DONTFORGETME:
 		case DC_FORTUNEKISS:
 		case DC_SERVICEFORYOU:
+#endif
+		case DC_UGLYDANCE:
 		case CG_MOONLIT:
 		case GS_DESPERADO:
 		case NJ_KAENSIN:
@@ -12136,7 +12267,7 @@ static struct skill_unit_group *skill_unitsetting(struct block_list *src, uint16
 			//For some reason at level 10 the base delay reduction is 50%.
 			val2 = (skill_lv<10?3*skill_lv:50)+st->int_/5; // After-cast delay reduction
 			if(sd){
-				val1 += 2*pc->checkskill(sd,BA_MUSICALLESSON);
+				val1 += pc->checkskill(sd,BA_MUSICALLESSON);
 				val2 += 2*pc->checkskill(sd,BA_MUSICALLESSON);
 			}
 			break;
@@ -12153,11 +12284,13 @@ static struct skill_unit_group *skill_unitsetting(struct block_list *src, uint16
 				val2 += pc->checkskill(sd,DC_DANCINGLESSON);
 			}
 			break;
+#ifndef RENAWAL
 		case BA_APPLEIDUN:
 			val1 = 5+2*skill_lv+st->vit/10; // MaxHP percent increase
 			if(sd)
 				val1 += pc->checkskill(sd,BA_MUSICALLESSON);
 			break;
+#endif
 		case DC_SERVICEFORYOU:
 			val1 = 15+skill_lv+(st->int_/10); // MaxSP percent increase
 			val2 = 20+3*skill_lv+(st->int_/10); // SP cost reduction
@@ -13935,9 +14068,15 @@ static int skill_check_pc_partner(struct map_session_data *sd, uint16 skill_id, 
 			default: //Warning: Assuming Ensemble skills here (for speed)
 				if( is_chorus )
 					break;//Chorus skills are not to be parsed as ensambles
+#ifdef RENEWAL
+					if (c > 0 && sd->sc.data[SC_LONGING] && (tsd = map->id2sd(p_sd[0])) != NULL) {
+						sd->sc.data[SC_LONGING]->val1 = tsd->bl.id;
+						sc_start(&sd->bl,&tsd->bl, status->skill2sc(CG_SPECIALSINGER), 100, 1, 10000);
+#else
 				if (c > 0 && sd->sc.data[SC_DANCING] && (tsd = map->id2sd(p_sd[0])) != NULL) {
 					sd->sc.data[SC_DANCING]->val4 = tsd->bl.id;
 					sc_start4(&tsd->bl,&tsd->bl,SC_DANCING,100,skill_id,sd->sc.data[SC_DANCING]->val2,*skill_lv,sd->bl.id,skill->get_time(skill_id,*skill_lv)+1000);
+#endif
 					clif->skill_nodamage(&tsd->bl, &sd->bl, skill_id, *skill_lv, 1);
 					tsd->skill_id_dance = skill_id;
 					tsd->skill_lv_dance = *skill_lv;
@@ -14388,6 +14527,7 @@ static int skill_check_condition_castbegin(struct map_session_data *sd, uint16 s
 				return 0;
 			}
 			break; //Combo ready.
+#ifndef RENEWAL
 		case BD_ADAPTATION:
 			{
 				int time;
@@ -14405,6 +14545,31 @@ static int skill_check_condition_castbegin(struct map_session_data *sd, uint16 s
 					clif->skill_fail(sd, skill_id, USESKILL_FAIL_LEVEL, 0, 0);
 					return 0;
 				}
+			}
+			break;
+#endif
+
+		case BD_LULLABY:
+		case BD_RICHMANKIM:
+		case BD_ETERNALCHAOS:
+		case BD_DRUMBATTLEFIELD:
+		case BD_RINGNIBELUNGEN:
+		case BD_ROKISWEIL:
+		case BD_INTOABYSS:
+		case BD_SIEGFRIED:
+		case BA_DISSONANCE:
+		case BA_POEMBRAGI:
+		case BA_WHISTLE:
+		case BA_ASSASSINCROSS:
+		case BA_APPLEIDUN:
+		case DC_UGLYDANCE:
+		case DC_HUMMING:
+		case DC_DONTFORGETME:
+		case DC_FORTUNEKISS:
+		case DC_SERVICEFORYOU:
+			if((sc && sc->data[SC_LONGING])) {
+				clif->skill_fail(sd,skill_id,USESKILL_FAIL_LEVEL,0 , 0);
+				return false;
 			}
 			break;
 
@@ -15413,6 +15578,8 @@ static struct skill_condition skill_get_requirement(struct map_session_data *sd,
 			req.sp += req.sp / 4;
 		if (sc->data[SC_TELEKINESIS_INTENSE] && skill->get_ele(skill_id, skill_lv) == ELE_GHOST)
 			req.sp -= req.sp * sc->data[SC_TELEKINESIS_INTENSE]->val2 / 100;
+		if (sc->data[SC_ADAPTATION] && (skill->get_inf2(skill_id) & INF2_SONG_DANCE))
+			req.sp -= req.sp * 20 / 100;
 		if (sc->data[SC_TARGET_ASPD])
 			req.sp -= req.sp * sc->data[SC_TARGET_ASPD]->val1 / 100;
 		if (sc->data[SC_MVPCARD_MISTRESS])
@@ -21824,5 +21991,7 @@ void skill_defaults(void)
 	skill->get_requirement_unknown = skill_get_requirement_unknown;
 	skill->splash_target = skill_splash_target;
 	skill->check_npc_chaospanic = skill_check_npc_chaospanic;
+	skill->apply_songs = skill_apply_songs;
+	skill->castend_song = skill_castend_song;
 	skill->count_wos = skill_count_wos;
 }

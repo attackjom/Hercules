@@ -8779,6 +8779,10 @@ static int pc_itemheal(struct map_session_data *sd, int itemid, int hp, int sp)
 			sp += sp / 10;
 		}
 #ifdef RENEWAL
+		if (sd->sc.data[SC_APPLEIDUN])
+			hp += sd->sc.data[SC_APPLEIDUN]->val3 / 100;
+#endif
+#ifdef RENEWAL
 		if( sd->sc.data[SC_EXTREMITYFIST2] )
 			sp = 0;
 #endif
