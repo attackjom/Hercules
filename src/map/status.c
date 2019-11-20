@@ -319,7 +319,12 @@ static void initChangeTables(void)
 	status->set_sc( SA_FROSTWEAPON       , SC_PROPERTYWATER   , SI_PROPERTYWATER   , SCB_ATK_ELE );
 	status->set_sc( SA_LIGHTNINGLOADER   , SC_PROPERTYWIND    , SI_PROPERTYWIND    , SCB_ATK_ELE );
 	status->set_sc( SA_SEISMICWEAPON     , SC_PROPERTYGROUND  , SI_PROPERTYGROUND  , SCB_ATK_ELE );
-	status->set_sc( SA_VOLCANO           , SC_VOLCANO         , SI_GROUNDMAGIC       , SCB_WATK );
+	status->set_sc( SA_VOLCANO           , SC_VOLCANO         , SI_GROUNDMAGIC       , SCB_WATK
+#ifdef RENEWAL
+		|SCB_MATK );
+#else
+		);
+#endif
 	status->set_sc( SA_DELUGE            , SC_DELUGE          , SI_GROUNDMAGIC       , SCB_MAXHP );
 	status->set_sc( SA_VIOLENTGALE       , SC_VIOLENTGALE     , SI_GROUNDMAGIC       , SCB_FLEE );
 	add_sc( SA_REVERSEORCISH     , SC_ORCISH          );
@@ -1976,7 +1981,7 @@ static int status_check_skilluse(struct block_list *src, struct block_list *targ
 			switch (skill_id) { //Usable skills while hiding.
 				case TF_HIDING:
 				case AS_GRIMTOOTH:
-				case RG_BACKSTAP:
+				//case RG_BACKSTAP:
 				case RG_RAID:
 				case NJ_SHADOWJUMP:
 				case NJ_KIRIKAGE:
@@ -2936,6 +2941,8 @@ static int status_calc_pc_(struct map_session_data *sd, enum e_status_calc_opt o
 		bstatus->max_sp += (int64)bstatus->max_sp * skill_lv/100;
 	if((skill_lv=pc->checkskill(sd,HW_SOULDRAIN))>0)
 		bstatus->max_sp += (int64)bstatus->max_sp * 2*skill_lv/100;
+	if (skill_lv=pc->checkskill(sd, (sd->status.sex ? BA_MUSICALLESSON : DC_DANCINGLESSON))) > 0)
+		bstatus->max_sp += (int64)bstatus->max_sp *skill_lv/100;
 	if( (skill_lv = pc->checkskill(sd,RA_RESEARCHTRAP)) > 0 )
 		bstatus->max_sp += 200 + 20 * skill_lv;
 	if( (skill_lv = pc->checkskill(sd,WM_LESSON)) > 0 )
@@ -3270,6 +3277,15 @@ static int status_calc_pc_(struct map_session_data *sd, enum e_status_calc_opt o
 			sd->magic_addele[ELE_WIND] += 25;
 		if (sc->data[SC_EARTH_INSIGNIA] && sc->data[SC_EARTH_INSIGNIA]->val1 == 3)
 			sd->magic_addele[ELE_EARTH] += 25;
+		
+		if (sc->data[SC_PROPERTYFIRE])
+			sd->magic_atk_ele[ELE_FIRE] += sc->data[SC_PROPERTYFIRE]->val1;
+		if (sc->data[SC_PROPERTYWIND])
+			sd->magic_atk_ele[ELE_WIND] += sc->data[SC_PROPERTYWIND]->val1;
+		if (sc->data[SC_PROPERTYWATER])
+			sd->magic_atk_ele[ELE_WATER] += sc->data[SC_PROPERTYWATER]->val1;
+		if (sc->data[SC_PROPERTYGROUND])
+			sd->magic_atk_ele[ELE_EARTH] += sc->data[SC_PROPERTYGROUND]->val1;
 
 		// Geffen Scrolls
 		if (sc->data[SC_SKELSCROLL]) {
@@ -4445,6 +4461,10 @@ static int status_base_amotion_pc(struct map_session_data *sd, struct status_dat
 	temp = (float)(sqrt(temp) * 0.25f) + 0xc4;
 	if (sd->weapontype == W_BOOK && (skill_lv = pc->checkskill(sd, SA_ADVANCEDBOOK)) > 0)
 		val += (skill_lv - 1) / 2 + 1;
+	if ((skill_lv = pc->checkskill(sd,BA_MUSICALLESSON)) > 0)
+		val += skill_lv;
+	if (skill_lv = pc->checkskill(sd, RG_PLAGIARISM) > 0)
+		val += skill_lv;
 	if ( (skill_lv = pc->checkskill(sd, GS_SINGLEACTION)) > 0 )
 		val += ((skill_lv + 1) / 2);
 	amotion = ((int)(temp + ((float)(status->calc_aspd(&sd->bl, &sd->sc, 1) + val) * st->agi / 200)) - min(amotion, 200));
@@ -5238,6 +5258,8 @@ static int status_calc_ematk(struct block_list *bl, struct status_change *sc, in
 		matk += 25 * sc->data[SC_IZAYOI]->val1;
 	if (sc->data[SC_SHRIMP])
 		matk += matk * sc->data[SC_SHRIMP]->val2 / 100;
+	if (sc->data[SC_VOLCANO])
+		matk += sc->data[SC_VOLCANO]->val2;
 	return cap_value(matk, battle_config.matk_min, battle_config.matk_max);
 #else
 	return 0;
@@ -8161,7 +8183,7 @@ static int status_change_start_sub(struct block_list *src, struct block_list *bl
 				//Val1 Skill LV of Autospell
 				//Val2 Skill ID to cast
 				//Val3 Max Lv to cast
-				val4 = 5 + val1*2; //Chance of casting
+				val4 = val1 * 2; // Chance of casting
 				break;
 			case SC_VOLCANO:
 				val2 = val1*10; //Watk increase

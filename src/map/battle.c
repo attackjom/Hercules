@@ -2083,34 +2083,48 @@ static int battle_calc_skillratio(int attack_type, struct block_list *src, struc
 #endif
 					break;
 				case MO_FINGEROFFENSIVE:
+#ifdef RENEWAL
+					skillratio += 500 + 200 * skill_lv;
+					if (tsc && (tsc->data[SC_BLADESTOP] || tsc->data[SC_BLADESTOP_WAIT]))
+						skillratio += skillratio * 50 / 100;
+#else
 					skillratio+= 50 * skill_lv;
 					break;
 				case MO_INVESTIGATE:
+#ifdef RENEWAL
+					skillratio += -100 + 100* skill_lv;
+					if (tsc && (tsc->data[SC_BLADESTOP] || tsc->data[SC_BLADESTOP_WAIT]))
+						skillratio += skillratio * 50 / 100;
+#else
 					skillratio += 75 * skill_lv;
 					break;
 				case MO_EXTREMITYFIST:
-	#ifndef RENEWAL
-					{
-						//Overflow check. [Skotlex]
-						unsigned int ratio = skillratio + 100*(8 + st->sp/10);
-						//You'd need something like 6K SP to reach this max, so should be fine for most purposes.
-						if (ratio > 60000) ratio = 60000; //We leave some room here in case skillratio gets further increased.
-						skillratio = (unsigned short)ratio;
-					}
+					skillratio += 100 * (7 + st->sp / 10);
+#ifdef RENEWAL
+					if (flag==1)
+						skillratio *= 2; // More than 5 spirit balls active
 #endif
+					skillratio = min(500000,skillratio); //We stop at roughly 50k SP for overflow protection
 					break;
 				case MO_TRIPLEATTACK:
 					skillratio += 20 * skill_lv;
 					break;
 				case MO_CHAINCOMBO:
+#ifdef RENEWAL
+				if (sd && sd->weapontype == W_KNUCKLE)
+					skillratio += 2 * (150 + 50 * skill_lv);
+				else
+					skillratio += 150 + 50 * skill_lv;
+#else
 					skillratio += 50 + 50 * skill_lv;
+#endif
 					break;
 				case MO_COMBOFINISH:
 					skillratio += 140 + 60 * skill_lv;
 					break;
 				case BA_MUSICALSTRIKE:
 				case DC_THROWARROW:
-					skillratio += 25 + 25 * skill_lv;
+					skillratio += 10 + 40 * skill_lv;
 					break;
 				case CH_TIGERFIST:
 					skillratio += 100 * skill_lv - 60;
@@ -4533,6 +4547,17 @@ static struct Damage battle_calc_weapon_attack(struct block_list *src, struct bl
 					wd.div_ = tstatus->size + 2 + ( (rnd()%100 < 50-tstatus->size*10) ? 1 : 0 );
 				break;
 
+			case RG_BACKSTAP:
+			case SC_FATALMENACE:
+				if (sd && sd->weapontype == W_DAGGER)
+					wd.div_ = 2;
+				break;
+			
+			case MO_CHAINCOMBO:
+				if (sd && sd->weapontype == W_KNUCKLE)
+					wd.div_ = -6;
+				break;
+
 			case NPC_EARTHQUAKE:
 				wd.flag = (wd.flag&~(BF_WEAPON)) | BF_MAGIC;
 				break;
@@ -4831,6 +4856,9 @@ static struct Damage battle_calc_weapon_attack(struct block_list *src, struct bl
 			case KN_PIERCE:
 			case ML_PIERCE:
 				hitrate += hitrate * 5 * skill_lv / 100;
+				break;
+			case RG_BACKSTAP:
+				hitrate += skill_lv; // !TODO: What's the rate increase?
 				break;
 			case AS_SONICBLOW:
 				if(sd && pc->checkskill(sd,AS_SONICACCEL)>0)
@@ -6258,10 +6286,13 @@ static enum damage_lv battle_weapon_attack(struct block_list *src, struct block_
 			return ATK_BLOCK;
 		}
 	}
-	if( tsc && tsc->data[SC_BLADESTOP_WAIT] && !is_boss(src) && (src->type == BL_PC || tsd == NULL || distance_bl(src, target) <= (tsd->weapontype == W_FIST ? 1 : 2)) )
+	if( tsc && tsc->data[SC_BLADESTOP_WAIT] && (src->type == BL_PC || tsd == NULL || distance_bl(src, target) <= (tsd->weapontype == W_FIST ? 1 : 2)) )
 	{
 		uint16 skill_lv = tsc->data[SC_BLADESTOP_WAIT]->val1;
-		int duration = skill->get_time2(MO_BLADESTOP,skill_lv);
+		int duration = 0;
+		if (is_boss(src))
+			duration = 2000;
+		else duration = skill->get_time2(MO_BLADESTOP,skill_lv);
 		status_change_end(target, SC_BLADESTOP_WAIT, INVALID_TIMER);
 		if(sc_start4(target, src, SC_BLADESTOP, 100, sd?pc->checkskill(sd, MO_BLADESTOP):5, 0, 0, target->id, duration)) {
 			//Target locked.
@@ -6273,7 +6304,7 @@ static enum damage_lv battle_weapon_attack(struct block_list *src, struct block_
 	}
 
 	if(sd && (skillv = pc->checkskill(sd,MO_TRIPLEATTACK)) > 0) {
-		int triple_rate= 30 - skillv; //Base Rate
+		int triple_rate= 30; //Base Rate
 		if (sc && sc->data[SC_SKILLRATE_UP] && sc->data[SC_SKILLRATE_UP]->val1 == MO_TRIPLEATTACK) {
 			triple_rate+= triple_rate*(sc->data[SC_SKILLRATE_UP]->val2)/100;
 			status_change_end(src, SC_SKILLRATE_UP, INVALID_TIMER);

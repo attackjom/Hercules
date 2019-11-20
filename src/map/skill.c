@@ -4452,8 +4452,29 @@ static int skill_castend_damage_id(struct block_list *src, struct block_list *bl
 
 		case RG_BACKSTAP:
 			{
+#ifdef RENEWAL
+				uint8 dir = map->calc_dir(src, bl->x, bl->y);
+				short x, y;
+
+				if (dir > 0 && dir < 4)
+					x = -1;
+				else if (dir > 4)
+					x = 1;
+				else
+					x = 0;
+
+				if (dir > 2 && dir < 6)
+					y = -1;
+				else if (dir == 7 || dir < 2)
+					y = 1;
+				else
+					y = 0;
+
+				if (battle->check_target(src, bl, BCT_ENEMY) > 0 && unit->movepos(src, bl->x + x, bl->y + y, 2, 1)) { // Display movement + animation.
+#else
 				uint8 dir = map->calc_dir(src, bl->x, bl->y), t_dir = unit->getdir(bl);
 				if ((!check_distance_bl(src, bl, 0) && !map->check_dir(dir, t_dir)) || bl->type == BL_SKILL) {
+#endif
 					status_change_end(src, SC_HIDING, INVALID_TIMER);
 					skill->attack(BF_WEAPON, src, src, bl, skill_id, skill_lv, tick, flag);
 					dir = dir < 4 ? dir+4 : dir-4; // change direction [Celest]
@@ -4485,6 +4506,11 @@ static int skill_castend_damage_id(struct block_list *src, struct block_list *bl
 				short x, y, i = 2; // Move 2 cells for Issen(from target)
 				struct block_list *mbl = bl;
 				short dir = 0;
+
+#ifdef RENEWAL
+			if (skill_id == MO_EXTREMITYFIST && sd && sd->spiritball_old > 5)
+				flag |= 1; // Give +100% damage increase
+#endif
 
 				skill->attack(BF_WEAPON,src,src,bl,skill_id,skill_lv,tick,flag);
 
@@ -6489,7 +6515,7 @@ static int skill_castend_nodamage_id(struct block_list *src, struct block_list *
 				}
 			}
 			// 100% success rate at lv4 & 5, but lasts longer at lv5
-			if(!clif->skill_nodamage(src,bl,skill_id,skill_lv, sc_start(src,bl,type,(60+skill_lv*10),skill_lv, skill->get_time(skill_id,skill_lv)))) {
+			if(!clif->skill_nodamage(src,bl,skill_id,skill_lv, sc_start(src,bl,type,(100),skill_lv, skill->get_time(skill_id,skill_lv)))) {
 				if (sd)
 					clif->skill_fail(sd, skill_id, USESKILL_FAIL_LEVEL, 0, 0);
 				if (skill->break_equip(bl, EQP_WEAPON, 10000, BCT_PARTY) && sd && sd != dstsd)
@@ -14315,6 +14341,9 @@ static int skill_check_condition_castbegin(struct map_session_data *sd, uint16 s
 				clif->skill_fail(sd, skill_id, USESKILL_FAIL_LEVEL, 0, 0);
 				return 0;
 			}
+#ifdef RENEWAL
+			sd->spiritball_old = sd->spiritball;
+#endif
 			break;
 
 		case TK_MISSION:
@@ -15574,7 +15603,9 @@ static struct skill_condition skill_get_requirement(struct map_session_data *sd,
 					req.spiritball--;
 				else if( sc->data[SC_COMBOATTACK] )
 				{
-					switch( sc->data[SC_COMBOATTACK]->val1 )
+					
+#ifndef RENEWAL
+					switch (sc->data[SC_COMBOATTACK]->val1)
 					{
 						case MO_COMBOFINISH:
 							req.spiritball = 4;
@@ -15586,6 +15617,9 @@ static struct skill_condition skill_get_requirement(struct map_session_data *sd,
 							req.spiritball = sd->spiritball?sd->spiritball:1;
 							break;
 					}
+#else
+				req.spiritball = sd->spiritball ? sd->spiritball : 1;
+#endif
 				}else if( sc->data[SC_RAISINGDRAGON] && sd->spiritball > 5)
 					req.spiritball = sd->spiritball; // must consume all regardless of the amount required
 			}
@@ -16307,15 +16341,30 @@ static void skill_weaponrefine(struct map_session_data *sd, int idx)
 static int skill_autospell(struct map_session_data *sd, uint16 skill_id)
 {
 	uint16 skill_lv;
+	uint16 idx = 0;
 	int maxlv=1,lv;
 
 	nullpo_ret(sd);
 
 	skill_lv = sd->menuskill_val;
 	lv=pc->checkskill(sd,skill_id);
+	
+	if (skill_id >= GD_SKILLBASE && skill_id < GD_MAX)
+		return 0;
 
 	if(!skill_lv || !lv) return 0; // Player must learn the skill before doing auto-spell [Lance]
 
+#ifdef RENEWAL
+	if (sd->sc.data[SC_SOULLINK] && sd->sc.data[SC_SOULLINK]->val2 == SL_SAGE && (skill_id==MG_COLDBOLT || skill_id==MG_FIREBOLT || skill_id==MG_LIGHTNINGBOLT))
+		maxlv = 10; //Soul Linker bonus. [Skotlex]
+	else {
+		if (skill_id==WZ_EARTHSPIKE || skill_id==WZ_HEAVENDRIVE)
+			maxlv = (skill_lv+1) / 2;
+		else maxlv = skill_lv / 2; // Half of Autospell's level unless player learned a lower level
+		if (lv < maxlv)
+			maxlv = lv;
+	}
+#else
 	if(skill_id==MG_NAPALMBEAT) maxlv=3;
 	else if(skill_id==MG_COLDBOLT || skill_id==MG_FIREBOLT || skill_id==MG_LIGHTNINGBOLT){
 		if (sd->sc.data[SC_SOULLINK] && sd->sc.data[SC_SOULLINK]->val2 == SL_SAGE)
@@ -16335,6 +16384,7 @@ static int skill_autospell(struct map_session_data *sd, uint16 skill_id)
 	}
 	else if(skill_id==MG_FROSTDIVER) maxlv=1;
 	else return 0;
+#endif
 
 	if(maxlv > lv)
 		maxlv = lv;
