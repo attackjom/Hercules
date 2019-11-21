@@ -12535,7 +12535,7 @@ static void clif_parse_UseSkillToPos_homun(struct homun_data *hd, struct map_ses
 		return;
 	}
 
-	if( hd->sc.data[SC_BASILICA] )
+	if( hd->sc.data[SC_BASILICA_CELL] )
 		return;
 	lv = homun->checkskill(hd, skill_id);
 	if( skill_lv > lv )
@@ -12582,7 +12582,7 @@ static void clif_parse_UseSkillToPos_mercenary(struct mercenary_data *md, struct
 		return;
 	}
 
-	if( md->sc.data[SC_BASILICA] )
+	if( md->sc.data[SC_BASILICA_CELL] )
 		return;
 	lv = mercenary->checkskill(md, skill_id);
 	if( skill_lv > lv )
@@ -12658,8 +12658,8 @@ static void clif_useSkillToIdReal(int fd, struct map_session_data *sd, int skill
 	if (sd->sc.option & OPTION_COSTUME)
 		return;
 
-	if (sd->sc.data[SC_BASILICA] && (skill_id != HP_BASILICA || sd->sc.data[SC_BASILICA]->val4 != sd->bl.id))
-		return; // On basilica only caster can use Basilica again to stop it.
+	//if (sd->sc.data[SC_BASILICA_CELL] && (skill_id != HP_BASILICA || sd->sc.data[SC_BASILICA_CELL]->val4 != sd->bl.id))
+		//return; // On basilica only caster can use Basilica again to stop it.
 
 	if (sd->menuskill_id) {
 		if (sd->menuskill_id == SA_TAMINGMONSTER) {
@@ -12786,8 +12786,8 @@ static void clif_parse_UseSkillToPosSub(int fd, struct map_session_data *sd, uin
 	if( sd->sc.option&OPTION_COSTUME )
 		return;
 
-	if( sd->sc.data[SC_BASILICA] && (skill_id != HP_BASILICA || sd->sc.data[SC_BASILICA]->val4 != sd->bl.id) )
-		return; // On basilica only caster can use Basilica again to stop it.
+	//if( sd->sc.data[SC_BASILICA_CELL] && (skill_id != HP_BASILICA || sd->sc.data[SC_BASILICA_CELL]->val4 != sd->bl.id) )
+		//return; // On basilica only caster can use Basilica again to stop it.
 
 	if( sd->menuskill_id ) {
 		if( sd->menuskill_id == SA_TAMINGMONSTER ) {

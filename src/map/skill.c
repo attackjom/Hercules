@@ -907,6 +907,8 @@ static int skill_calc_heal(struct block_list *src, struct block_list *target, ui
 				hp += hp * 10 / 100;
 				if (pc->checkskill(sd, SU_TUNABELLY) == 5 && pc->checkskill(sd, SU_TUNAPARTY) == 5 && pc->checkskill(sd, SU_BUNCHOFSHRIMP) == 5 && pc->checkskill(sd, SU_FRESHSHRIMP) == 5)
 					hp += hp * 20 / 100;
+			if (sc->data[SC_ASSUMPTIO])
+				hp += hp * (2 * sc->data[SC_ASSUMPTIO]->val1) / 100;
 			}
 			break;
 	}
@@ -1984,8 +1986,8 @@ static int skill_additional_effect(struct block_list *src, struct block_list *bl
 					rate += 10;
 				//if(sc->data[SC_OVERTHRUST])
 					//rate += 10;
-				if(sc->data[SC_OVERTHRUSTMAX])
-					rate += 10;
+				//if(sc->data[SC_OVERTHRUSTMAX])
+					//rate += 10;
 			}
 			if( rate )
 				skill->break_equip(src, EQP_WEAPON, rate, BCT_SELF);
@@ -2656,7 +2658,7 @@ static int skill_blown(struct block_list *src, struct block_list *target, int co
 		case BL_PC:
 		{
 			struct map_session_data *sd = BL_UCAST(BL_PC, target);
-			if (sd->sc.data[SC_BASILICA] && sd->sc.data[SC_BASILICA]->val4 == sd->bl.id && !is_boss(src))
+			if (sd->sc.data[SC_BASILICA_CELL] && sd->sc.data[SC_BASILICA_CELL]->val4 == sd->bl.id && !is_boss(src))
 				return 0; // Basilica caster can't be knocked-back by normal monsters.
 			if (!(flag&0x2) && src != target && sd->special_state.no_knockback)
 				return 0;
@@ -2797,7 +2799,8 @@ static int skill_attack(int attack_type, struct block_list *src, struct block_li
 	 //Trick Dead protects you from damage, but not from buffs and the like, hence it's placed here.
 	if (sc && sc->data[SC_TRICKDEAD])
 		return 0;
-	if ( skill_id != HW_GRAVITATION ) {
+	//if ( skill_id != HW_GRAVITATION ) {
+	 if (skill_id) {
 		struct status_change *csc = status->get_sc(src);
 		if(csc && csc->data[SC_GRAVITATION] && csc->data[SC_GRAVITATION]->val3 == BCT_SELF )
 			return 0;
@@ -3153,9 +3156,9 @@ static int skill_attack(int attack_type, struct block_list *src, struct block_li
 		case HT_LANDMINE:
 			dmg.dmotion = clif->skill_damage(dsrc,bl,tick, dmg.amotion, dmg.dmotion, damage, dmg.div_, skill_id, -1, type);
 			break;
-		case HW_GRAVITATION:
+		/*case HW_GRAVITATION:
 			dmg.dmotion = clif->damage(bl, bl, 0, 0, damage, 1, BDT_ENDURE, 0);
-			break;
+			break;*/
 		case WZ_SIGHTBLASTER:
 			dmg.dmotion = clif->skill_damage(src,bl,tick, dmg.amotion, dmg.dmotion, damage, dmg.div_, skill_id, (flag&SD_LEVEL) ? -1 : skill_lv, BDT_SPLASH);
 			break;
@@ -3602,7 +3605,7 @@ static int skill_check_unit_range_sub(struct block_list *bl, va_list ap)
 		case HT_BLASTMINE:
 		case HT_CLAYMORETRAP:
 		case HT_TALKIEBOX:
-		case HP_BASILICA:
+		//case HP_BASILICA:
 		case RA_ELECTRICSHOCKER:
 		case RA_CLUSTERBOMB:
 		case RA_MAGENTATRAP:
@@ -3654,8 +3657,8 @@ static int skill_check_unit_range2_sub(struct block_list *bl, va_list ap)
 	if( status->isdead(bl) && skill_id != AL_WARP )
 		return 0;
 
-	if( skill_id == HP_BASILICA && bl->type == BL_PC )
-		return 0;
+	//if( skill_id == HP_BASILICA && bl->type == BL_PC )
+		//return 0;
 
 	if (skill_id == AM_DEMONSTRATION && bl->type == BL_MOB && BL_UCCAST(BL_MOB, bl)->class_ == MOBID_EMPELIUM)
 		return 0; //Allow casting Bomb/Demonstration Right under emperium [Skotlex]
@@ -6709,6 +6712,7 @@ static int skill_castend_nodamage_id(struct block_list *src, struct block_list *
 		case MS_PARRYING:
 		case LK_CONCENTRATION:
 		case WS_CARTBOOST:
+		case HP_BASILICA:
 		case SN_SIGHT:
 		case WS_MELTDOWN:
 		case WS_OVERTHRUSTMAX:
@@ -11050,7 +11054,7 @@ static int skill_castend_map(struct map_session_data *sd, uint16 skill_id, const
 		sd->sc.data[SC_STEELBODY] ||
 		(sd->sc.data[SC_DANCING] && skill_id < RK_ENCHANTBLADE && !pc->checkskill(sd, WM_LESSON)) ||
 		sd->sc.data[SC_BERSERK] ||
-		sd->sc.data[SC_BASILICA] ||
+		sd->sc.data[SC_BASILICA_CELL] ||
 		sd->sc.data[SC_MARIONETTE_MASTER] ||
 		sd->sc.data[SC_WHITEIMPRISON] ||
 		(sd->sc.data[SC_STASIS] && skill->block_check(&sd->bl, SC_STASIS, skill_id)) ||
@@ -11342,6 +11346,7 @@ static int skill_castend_pos2(struct block_list *src, int x, int y, uint16 skill
 		case NJ_KAMAITACHI:
 	#ifdef RENEWAL
 		case NJ_HUUMA:
+		case HW_GRAVITATION:
 	#endif
 		case NPC_EARTHQUAKE:
 		case NPC_EVILLAND:
@@ -11405,9 +11410,9 @@ static int skill_castend_pos2(struct block_list *src, int x, int y, uint16 skill
 			skill->unitsetting(src,skill_id,skill_lv,x,y,0);
 			flag|=1;
 			break;
-		case HP_BASILICA:
-			if( sc && sc->data[SC_BASILICA] )
-				status_change_end(src, SC_BASILICA, INVALID_TIMER); // Cancel Basilica
+		/*case HP_BASILICA:
+			if( sc && sc->data[SC_BASILICA_CELL] )
+				status_change_end(src, SC_BASILICA_CELL, INVALID_TIMER); // Cancel Basilica
 			else { // Create Basilica. Start SC on caster. Unit timer start SC on others.
 				if( map->foreachinrange(skill->count_wos, src, 2, BL_MOB|BL_PC, src) ) {
 					if( sd )
@@ -11420,7 +11425,7 @@ static int skill_castend_pos2(struct block_list *src, int x, int y, uint16 skill
 					sc_start4(src,src,type,100,skill_lv,0,0,src->id,skill->get_time(skill_id,skill_lv));
 				flag|=1;
 			}
-			break;
+			break;*/
 		case CG_HERMODE:
 			skill->clear_unitgroup(src);
 			if ((sg = skill->unitsetting(src,skill_id,skill_lv,x,y,0)))
@@ -11626,11 +11631,11 @@ static int skill_castend_pos2(struct block_list *src, int x, int y, uint16 skill
 			}
 			break;
 
-		case HW_GRAVITATION:
+		/*case HW_GRAVITATION:
 			if ((sg = skill->unitsetting(src,skill_id,skill_lv,x,y,0)))
 				sc_start4(src,src,type,100,skill_lv,0,BCT_SELF,sg->group_id,skill->get_time(skill_id,skill_lv));
 			flag|=1;
-			break;
+			break;*/
 
 		// Plant Cultivation [Celest]
 		case CR_CULTIVATION:
@@ -12152,9 +12157,9 @@ static struct skill_unit_group *skill_unitsetting(struct block_list *src, uint16
 				val3 = group->val3; //as well as the mapindex to warp to.
 			}
 			break;
-		case HP_BASILICA:
+		/*case HP_BASILICA:
 			val1 = src->id; // Store caster id.
-			break;
+			break;*/
 
 		case PR_SANCTUARY:
 		case NPC_EVILLAND:
@@ -12807,10 +12812,10 @@ static int skill_unit_onplace(struct skill_unit *src, struct block_list *bl, int
 			}
 			break;
 
-		case UNT_GRAVITATION:
+		/*case UNT_GRAVITATION:
 			if (!sce)
 				sc_start4(ss,bl,type,100,sg->skill_lv,0,BCT_ENEMY,sg->group_id,sg->limit);
-			break;
+			break;*/
 
 #if 0 // officially, icewall has no problems existing on occupied cells [ultramage]
 		case UNT_ICEWALL: //Destroy the cell. [Skotlex]
@@ -13380,7 +13385,7 @@ static int skill_unit_onplace_timer(struct skill_unit *src, struct block_list *b
 			}
 			break;
 
-		case UNT_BASILICA:
+		/*case UNT_BASILICA:
 			{
 				int i = battle->check_target(&src->bl, bl, BCT_ENEMY);
 				if( i > 0 && !(status_get_mode(bl)&MD_BOSS) )
@@ -13392,7 +13397,7 @@ static int skill_unit_onplace_timer(struct skill_unit *src, struct block_list *b
 				if( sg->src_id != bl->id && i <= 0 )
 					sc_start4(ss, bl, type, 100, 0, 0, 0, src->bl.id, sg->interval + 100);
 			}
-			break;
+			break;*/
 
 		case UNT_GRAVITATION:
 		case UNT_EARTHSTRAIN:
@@ -13719,10 +13724,10 @@ static int skill_unit_onout(struct skill_unit *src, struct block_list *bl, int64
 				status_change_end(bl, type, INVALID_TIMER);
 			break;
 
-		case UNT_BASILICA:
+		/*case UNT_BASILICA:
 			if( sce && sce->val4 == src->bl.id )
 				status_change_end(bl, type, INVALID_TIMER);
-			break;
+			break;*/
 		case UNT_HERMODE:
 			//Clear Hermode if the owner moved.
 			if (sce && sce->val3 == BCT_SELF && sce->val4 == sg->group_id)
@@ -13803,7 +13808,7 @@ static int skill_unit_onleft(uint16 skill_id, struct block_list *bl, int64 tick)
 		case SA_DELUGE:
 		case SA_VIOLENTGALE:
 		case CG_HERMODE:
-		case HW_GRAVITATION:
+		//case HW_GRAVITATION:
 		case NJ_SUITON:
 		case SC_MAELSTROM:
 		case EL_WATER_BARRIER:
@@ -16009,7 +16014,7 @@ static int skill_vfcastfix(struct block_list *bl, double time, uint16 skill_id, 
 						if(skill_lv < 5)
 							break;
 						FALLTHROUGH
-					case HW_GRAVITATION:
+					//case HW_GRAVITATION:
 					case MG_SAFETYWALL:
 					case MG_STONECURSE:
 					case BA_MUSICALSTRIKE:
@@ -16101,10 +16106,10 @@ static int skill_delay_fix(struct block_list *bl, uint16 skill_id, uint16 skill_
 		case SR_FALLENEMPIRE:
 			time -= 4*status_get_agi(bl) - 2*status_get_dex(bl);
 			break;
-		case HP_BASILICA:
-			if( sc && !sc->data[SC_BASILICA] )
+		/*case HP_BASILICA:
+			if( sc && !sc->data[SC_BASILICA_CELL] )
 				time = 0; // There is no Delay on Basilica creation, only on cancel
-			break;
+			break;*/
 		default:
 			if (battle_config.delay_dependon_dex && !(delaynodex&1)) {
 				// if skill delay is allowed to be reduced by dex
@@ -16989,7 +16994,7 @@ static int skill_cell_overlap(struct block_list *bl, va_list ap)
 			}
 			break;
 		case WZ_ICEWALL:
-		case HP_BASILICA:
+		//case HP_BASILICA:
 			if (su->group->skill_id == skill_id) {
 				//These can't be placed on top of themselves (duration can't be refreshed)
 				(*alive) = 0;
@@ -17361,9 +17366,9 @@ static struct skill_unit *skill_initunit(struct skill_unit_group *group, int idx
 		case SA_LANDPROTECTOR:
 			skill->unitsetmapcell(su,SA_LANDPROTECTOR,group->skill_lv,CELL_LANDPROTECTOR,true);
 			break;
-		case HP_BASILICA:
+		/*case HP_BASILICA:
 			skill->unitsetmapcell(su,HP_BASILICA,group->skill_lv,CELL_BASILICA,true);
-			break;
+			break;*/
 		default:
 			if (group->state.song_dance&0x1) //Check for dissonance.
 				skill->dance_overlap(su, 1);
@@ -17421,9 +17426,9 @@ static int skill_delunit(struct skill_unit *su)
 		case SA_LANDPROTECTOR:
 			skill->unitsetmapcell(su,SA_LANDPROTECTOR,group->skill_lv,CELL_LANDPROTECTOR,false);
 			break;
-		case HP_BASILICA:
+		/*case HP_BASILICA:
 			skill->unitsetmapcell(su,HP_BASILICA,group->skill_lv,CELL_BASILICA,false);
-			break;
+			break;*/
 		case RA_ELECTRICSHOCKER: {
 				struct block_list* target = map->id2bl(group->val2);
 				if( target )

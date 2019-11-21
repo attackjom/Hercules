@@ -116,6 +116,7 @@
 	//script->set_constant("SI_GOSPEL", SI_GOSPEL, false, false);
 	script->set_constant("SI_ASSUMPTIO", SI_ASSUMPTIO, false, false);
 	//script->set_constant("SI_BASILICA", SI_BASILICA, false, false);
+	script->set_constant("SI_BASILICA_BUFF", SI_BASILICA_BUFF, false, false);
 	script->set_constant("SI_GROUNDMAGIC", SI_GROUNDMAGIC, false, false);
 	script->set_constant("SI_MAGICPOWER", SI_MAGICPOWER, false, false);
 	script->set_constant("SI_EDP", SI_EDP, false, false);
@@ -196,6 +197,7 @@
 	script->set_constant("SI_OVERTHRUSTMAX", SI_OVERTHRUSTMAX, false, false);
 	script->set_constant("SI_LONGING", SI_LONGING, false, false);
 	script->set_constant("SI_ADAPTATION", SI_ADAPTATION, false, false);
+	//script->set_constant("SI_BASILICA_CELL", SI_BASILICA_CELL, false, false);
 	script->set_constant("SI_ENSEMBLEFATIGUE", SI_ENSEMBLEFATIGUE, false, false);
 	//script->set_constant("SI_HERMODE", SI_HERMODE, false, false);
 	script->set_constant("SI_TAROTCARD", SI_TAROTCARD, false, false);

@@ -837,6 +837,9 @@ typedef enum sc_type {
 	// Rodex
 	SC_DAILYSENDMAILCNT,
 
+	// Custom
+	SC_BASILICA_CELL,
+
 	// Clan System
 	SC_CLAN_INFO,
 #ifndef SC_MAX
@@ -1988,7 +1991,7 @@ enum si_type {
 	//	SI_ = 1119,
 	//	SI_ = 1120,
 	//	SI_ASSUMPTIO_BUFF = 1121,
-	//	SI_BASILICA_BUFF = 1122,
+		SI_BASILICA_BUFF = 1122,
 	//	SI_OVERLAPEXPUP2 = 1123,
 	//	SI_ = 1124,
 		SI_SOULCURSE = 1125,

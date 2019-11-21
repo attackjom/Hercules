@@ -500,7 +500,7 @@ static int64 battle_calc_weapon_damage(struct block_list *src, struct block_list
 		struct status_data *tstatus;
 		tstatus = status->get_status_data(bl);
 		eatk += damage * 0x19 * battle->attr_fix_table[tstatus->ele_lv - 1][ELE_POISON][tstatus->def_ele] / 10000;
-		damage += (eatk + damage) * sc->data[SC_EDP]->val3 / 100 + eatk;
+		damage += (eatk + damage) * sc->data[SC_EDP]->val4 / 100 + eatk;
 	} else /* fall through */
 #endif
 	damage += eatk;
@@ -1591,7 +1591,7 @@ static int battle_calc_skillratio(int attack_type, struct block_list *src, struc
 					skillratio += 40 * skill_lv;
 					break;
 				case HW_NAPALMVULCAN:
-					skillratio += 10 * skill_lv - 30;
+					skillratio += -100 + 70 * skill_lv;
 					break;
 				case SL_STIN:
 					skillratio += (tst->size!=SZ_SMALL?-99:10*skill_lv); //target size must be small (0) for full damage.
@@ -1659,6 +1659,10 @@ static int battle_calc_skillratio(int attack_type, struct block_list *src, struc
 					skillratio += skill_lv * 10;
 					if (sd)
 						skillratio += 3 * pc->checkskill(sd, BA_MUSICALLESSON);
+					RE_LVL_DMOD(100);
+					break;
+				case HW_GRAVITATION:
+					skillratio += -100 + 50 * skill_lv;
 					RE_LVL_DMOD(100);
 					break;
 				case NJ_HUUJIN:
@@ -2157,7 +2161,8 @@ static int battle_calc_skillratio(int attack_type, struct block_list *src, struc
 					break;
 				case SN_SHARPSHOOTING:
 				case MA_SHARPSHOOTING:
-					skillratio += 100 + 50 * skill_lv;
+					skillratio += 50 + 200 * skill_lv;
+					RE_LVL_DMOD(100);
 					break;
 				case CG_ARROWVULCAN:
 					skillratio += 100 + 100 * skill_lv;
@@ -2173,7 +2178,8 @@ static int battle_calc_skillratio(int attack_type, struct block_list *src, struc
 	#else
 				case LK_SPIRALPIERCE:
 				case ML_SPIRALPIERCE:
-					skillratio += 50 * skill_lv;
+					skillratio += 50 + 50 * skill_lv;
+					RE_LVL_DMOD(100);
 	#endif
 					break;
 				case PA_SACRIFICE:
@@ -2727,7 +2733,7 @@ static int battle_calc_skillratio(int attack_type, struct block_list *src, struc
 			}
 			//Skill damage modifiers that stack linearly
 			if(sc && skill_id != PA_SACRIFICE){
-#ifdef RENEWAL_EDP
+#ifndef RENEWAL_EDP
 				if( sc->data[SC_EDP] ){
 					if( skill_id == AS_SONICBLOW ||
 						skill_id == GC_COUNTERSLASH ||
@@ -2830,12 +2836,13 @@ static int64 battle_calc_damage(struct block_list *src, struct block_list *bl, s
 	if( sc && sc->count )
 	{
 		//First, sc_*'s that reduce damage to 0.
-		if( sc->data[SC_BASILICA] && !(status_get_mode(src)&MD_BOSS) )
+		if( sc->data[SC_BASILICA_CELL] && !(status_get_mode(src)&MD_BOSS) )
 		{
 			d->dmg_lv = ATK_BLOCK;
 			return 0;
 		}
-		if( sc->data[SC_WHITEIMPRISON] && skill_id != HW_GRAVITATION ) { // Gravitation and Pressure do damage without removing the effect
+		//if( sc->data[SC_WHITEIMPRISON] && skill_id != HW_GRAVITATION ) { // Gravitation and Pressure do damage without removing the effect
+		if( sc->data[SC_WHITEIMPRISON] ) { // Gravitation and Pressure do damage without removing the effect
 			if( skill_id == MG_NAPALMBEAT ||
 				skill_id == MG_SOULSTRIKE ||
 				skill_id == WL_SOULEXPANSION ||
@@ -3402,7 +3409,7 @@ static int64 battle_calc_pc_damage(struct block_list *src, struct block_list *bl
 
 	switch (skill_id) {
 		//case PA_PRESSURE: /* pressure also belongs to this list but it doesn't reach this area -- so don't worry about it */
-		case HW_GRAVITATION:
+		//case HW_GRAVITATION:
 		case NJ_ZENYNAGE:
 		case KO_MUCHANAGE:
 			break;
@@ -3494,8 +3501,8 @@ static int64 battle_calc_gvg_damage(struct block_list *src, struct block_list *b
 	}
 
 	switch (skill_id) {
-		case PA_PRESSURE:
-		case HW_GRAVITATION:
+		//case PA_PRESSURE:
+		//case HW_GRAVITATION:
 		case NJ_ZENYNAGE:
 		case KO_MUCHANAGE:
 		case NC_SELFDESTRUCTION:
@@ -4143,7 +4150,7 @@ static struct Damage battle_calc_misc_attack(struct block_list *src, struct bloc
 		int64 matk = battle->calc_magic_attack(src, target, skill_id, skill_lv, mflag).damage;
 		short totaldef = status->get_total_def(target) + status->get_total_mdef(target);
 		int64 atk = battle->calc_base_damage(src, target, skill_id, skill_lv, nk, false, s_ele, ELE_NEUTRAL, EQI_HAND_R, (sc && sc->data[SC_MAXIMIZEPOWER] ? 1 : 0) | (sc && sc->data[SC_WEAPONPERFECT] ? 8 : 0), md.flag);
-#ifdef RENEWAL_EDP
+#ifndef RENEWAL_EDP
 		if( sc && sc->data[SC_EDP] )
 			ratio >>= 1;
 #endif
@@ -4152,10 +4159,10 @@ static struct Damage battle_calc_misc_attack(struct block_list *src, struct bloc
 #endif
 		}
 		break;
-	case HW_GRAVITATION:
+	/*case HW_GRAVITATION:
 		md.damage = 200+200*skill_lv;
 		md.dmotion = 0; //No flinch animation.
-		break;
+		break;*/
 	case NPC_EVILLAND:
 		md.damage = skill->calc_heal(src,target,skill_id,skill_lv,false);
 		break;
@@ -4750,7 +4757,7 @@ static struct Damage battle_calc_weapon_attack(struct block_list *src, struct bl
 				break;
 			case SN_SHARPSHOOTING:
 			case MA_SHARPSHOOTING:
-				cri += 200;
+				cri += 300;
 				break;
 			case NJ_KIRIKAGE:
 				cri += 250 + 50*skill_lv;
@@ -5489,10 +5496,7 @@ static struct Damage battle_calc_weapon_attack(struct block_list *src, struct bl
 #endif
 			){
 				int lv = sc->data[SC_AURABLADE]->val1;
-#ifdef RENEWAL
-				lv *= ((skill_id == LK_SPIRALPIERCE || skill_id == ML_SPIRALPIERCE)?wd.div_:1); // +100 per hit in lv 5
-#endif
-				ATK_ADD(20*lv);
+				ATK_ADD(status->get_lv(src)*(lv+3));
 			}
 
 			if( !skill_id ) {

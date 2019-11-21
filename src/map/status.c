@@ -367,7 +367,7 @@ static void initChangeTables(void)
 	status->set_sc( LK_TENSIONRELAX      , SC_TENSIONRELAX    , SI_TENSIONRELAX    , SCB_REGEN );
 	status->set_sc( LK_BERSERK           , SC_BERSERK         , SI_BERSERK         , SCB_DEF|SCB_DEF2|SCB_MDEF|SCB_MDEF2|SCB_FLEE|SCB_SPEED|SCB_ASPD|SCB_MAXHP|SCB_REGEN );
 	status->set_sc( HP_ASSUMPTIO         , SC_ASSUMPTIO       , SI_ASSUMPTIO       , SCB_NONE );
-	add_sc( HP_BASILICA          , SC_BASILICA        );
+	status->set_sc( HP_BASILICA          , SC_BASILICA        , SI_BASILICA_BUFF   , SCB_ALL  );
 	status->set_sc( HW_MAGICPOWER        , SC_MAGICPOWER      , SI_MAGICPOWER      , SCB_MATK );
 	add_sc( PA_SACRIFICE         , SC_SACRIFICE       );
 	status->set_sc( PA_GOSPEL            , SC_GOSPEL          , SI_BLANK           , SCB_SPEED|SCB_ASPD );
@@ -3296,6 +3296,15 @@ static int status_calc_pc_(struct map_session_data *sd, enum e_status_calc_opt o
 			sd->magic_atk_ele[ELE_WATER] += sc->data[SC_PROPERTYWATER]->val1;
 		if (sc->data[SC_PROPERTYGROUND])
 			sd->magic_atk_ele[ELE_EARTH] += sc->data[SC_PROPERTYGROUND]->val1;
+		
+		if (sc->data[SC_BASILICA]) {
+			i = sc->data[SC_BASILICA]->val1 * 5;
+			sd->right_weapon.addele[ELE_DARK] += i;
+			sd->right_weapon.addele[ELE_UNDEAD] += i;
+			sd->left_weapon.addele[ELE_DARK] += i;
+			sd->left_weapon.addele[ELE_UNDEAD] += i;
+			sd->magic_atk_ele[ELE_HOLY] += sc->data[SC_BASILICA]->val1 * 3;
+		}
 
 		// Geffen Scrolls
 		if (sc->data[SC_SKELSCROLL]) {
@@ -5730,7 +5739,7 @@ static signed short status_calc_def2(struct block_list *bl, struct status_change
 		/* some statuses that are hidden in the status window */
 #ifdef RENEWAL
 		if (sc->data[SC_ASSUMPTIO])
-			def2 <<= 1;
+			def2 += 50 * sc->data[SC_ASSUMPTIO]->val1;
 #endif
 		if (sc->data[SC_CAMOUFLAGE])
 			def2 -= def2 * 5 * (10-sc->data[SC_CAMOUFLAGE]->val4) / 100;
@@ -5867,7 +5876,7 @@ static signed short status_calc_mdef2(struct block_list *bl, struct status_chang
 			mdef2 -= mdef2 * sc->data[SC_MINDBREAKER]->val3/100;
 #ifdef RENEWAL
 		if (sc->data[SC_ASSUMPTIO])
-			mdef2 <<= 1;
+			mdef2 += 50 * sc->data[SC_ASSUMPTIO]->val1;
 		return (short)cap_value(mdef2,SHRT_MIN,SHRT_MAX);
 #else
 		return (short)cap_value(mdef2,1,SHRT_MAX);
@@ -8157,6 +8166,7 @@ static int status_change_start_sub(struct block_list *src, struct block_list *bl
 				val2 = val1 + 2;
 #endif
 				val3 = 50 * (val1 + 1); //Damage increase (+50 +50*lv%)
+				val4 = 50 * (val1 - 1);
 				if( sd )//[Ind] - iROwiki says each level increases its duration by 3 seconds
 					total_tick += pc->checkskill(sd,GC_RESEARCHNEWPOISON)*3000;
 				break;
@@ -8830,9 +8840,9 @@ static int status_change_start_sub(struct block_list *src, struct block_list *bl
 					total_tick += total_tick / 10;
 				break;
 			case SC_LKCONCENTRATION:
-				val2 = 5*val1; //Batk/Watk Increase
+				val2 = 5+(2*val1); //Batk/Watk Increase
 				val3 = 10*val1; //Hit Increase
-				val4 = 5*val1; //Def reduction
+				val4 = 5+(2*val1); //Def reduction
 				sc_start(src, bl, SC_ENDURE, 100, 1, total_tick); //Endure effect
 				break;
 			case SC_ANGELUS:
@@ -10576,10 +10586,10 @@ static bool status_end_sc_before_start(struct block_list *bl, struct status_data
 			//Cancels Normal Overthrust. [Skotlex]
 			status_change_end(bl, SC_OVERTHRUST, INVALID_TIMER);
 			break;
-		case SC_KYRIE:
+		/*case SC_KYRIE:
 			//Cancels Assumptio
 			status_change_end(bl, SC_ASSUMPTIO, INVALID_TIMER);
-			break;
+			break;*/
 		case SC_MAGNIFICAT:
 			//Cancels Offertorium
 			status_change_end(bl, SC_OFFERTORIUM, INVALID_TIMER);
@@ -10618,7 +10628,7 @@ static bool status_end_sc_before_start(struct block_list *bl, struct status_data
 	#endif
 			break;
 		case SC_ASSUMPTIO:
-			status_change_end(bl, SC_KYRIE, INVALID_TIMER);
+			//status_change_end(bl, SC_KYRIE, INVALID_TIMER);
 			status_change_end(bl, SC_KAITE, INVALID_TIMER);
 			break;
 		case SC_KAITE:
@@ -11300,7 +11310,7 @@ static int status_change_end_(struct block_list *bl, enum sc_type type, int tid,
 			if(sce->val3 == BCT_SELF)
 				skill->clear_unitgroup(bl);
 			break;
-		case SC_BASILICA: //Clear the skill area. [Skotlex]
+		case SC_BASILICA_CELL: //Clear the skill area. [Skotlex]
 			skill->clear_unitgroup(bl);
 			break;
 #endif
