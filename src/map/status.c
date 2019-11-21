@@ -430,7 +430,7 @@ static void initChangeTables(void)
 	add_sc( WS_CARTTERMINATION   , SC_STUN            );
 	status->set_sc( WS_OVERTHRUSTMAX     , SC_OVERTHRUSTMAX   , SI_OVERTHRUSTMAX   , SCB_NONE );
 	status->set_sc( CG_SPECIALSINGER    , SC_LONGING         , SI_ENSEMBLEFATIGUE           , SCB_SPEED|SCB_ASPD );
-	add_sc( CG_HERMODE           , SC_HERMODE         );
+	status->set_sc( CG_HERMODE           , SC_HERMODE         , SI_HERMODE         , SCB_NONC );
 	status->set_sc( CG_TAROTCARD         , SC_TAROTCARD       , SI_TAROTCARD       , SCB_NONE );
 	status->set_sc( ITEM_ENCHANTARMS     , SC_ENCHANTARMS     , SI_BLANK           , SCB_ATK_ELE );
 	status->set_sc( SL_HIGH              , SC_SOULLINK        , SI_SOULLINK        , SCB_ALL );
@@ -1839,14 +1839,14 @@ static int status_check_skilluse(struct block_list *src, struct block_list *targ
 		}
 
 		switch( skill_id ) {
-			case PA_PRESSURE:
+			/*case PA_PRESSURE:
 				if( flag && target ) {
 					//Gloria Avoids pretty much everything....
 					tsc = status->get_sc(target);
 					if(tsc && tsc->option&OPTION_HIDE)
 						return 0;
 				}
-				break;
+				break;*/
 			case GN_WALLOFTHORN:
 				if( target && status->isdead(target) )
 					return 0;

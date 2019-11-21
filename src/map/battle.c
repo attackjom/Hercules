@@ -302,7 +302,7 @@ static int battle_delay_damage(int64 tick, int amotion, struct block_list *src, 
 	if (sc && sc->data[SC_DEVOTION] && sc->data[SC_DEVOTION]->val1)
 		d_tbl = map->id2bl(sc->data[SC_DEVOTION]->val1);
 
-	if (d_tbl && sc && check_distance_bl(target, d_tbl, sc->data[SC_DEVOTION]->val3) && damage > 0 && skill_id != PA_PRESSURE && skill_id != CR_REFLECTSHIELD)
+	if (d_tbl && sc && check_distance_bl(target, d_tbl, sc->data[SC_DEVOTION]->val3) && damage > 0 && skill_id != CR_REFLECTSHIELD)
 		damage = 0;
 
 	if ( !battle_config.delay_battle_damage || amotion <= 1 ) {
@@ -1665,6 +1665,10 @@ static int battle_calc_skillratio(int attack_type, struct block_list *src, struc
 					skillratio += -100 + 50 * skill_lv;
 					RE_LVL_DMOD(100);
 					break;
+				case PA_PRESSURE:
+					skillratio += -100 + 500 + 150 * skill_lv;
+					RE_LVL_DMOD(100);
+					break;
 				case NJ_HUUJIN:
 					skillratio += 50;
 					if (sd && sd->charm_type == CHARM_TYPE_WIND && sd->charm_count > 0)
@@ -2139,13 +2143,16 @@ static int battle_calc_skillratio(int attack_type, struct block_list *src, struc
 					skillratio += 10 + 40 * skill_lv;
 					break;
 				case CH_TIGERFIST:
-					skillratio += 100 * skill_lv - 60;
+					skillratio += 400 + 150 * skill_lv;
+					RE_LVL_DMOD(100);
 					break;
 				case CH_CHAINCRUSH:
-					skillratio += 300 + 100 * skill_lv;
+					skillratio += -100 + 200 * skill_lv;
+					RE_LVL_DMOD(100);
 					break;
 				case CH_PALMSTRIKE:
-					skillratio += 100 + 100 * skill_lv;
+					skillratio += 100 + 100 * skill_lv + st->str; // !TODO: How does STR play a role?
+					RE_LVL_DMOD(100);
 					break;
 				case LK_HEADCRUSH:
 					skillratio += 40 * skill_lv;
@@ -2165,7 +2172,8 @@ static int battle_calc_skillratio(int attack_type, struct block_list *src, struc
 					RE_LVL_DMOD(100);
 					break;
 				case CG_ARROWVULCAN:
-					skillratio += 100 + 100 * skill_lv;
+					skillratio += 400 + 100 * skill_lv;
+					RE_LVL_DMOD(100);
 					break;
 				case AS_SPLASHER:
 					skillratio += 300 + 100 * skill_lv;
@@ -2186,7 +2194,8 @@ static int battle_calc_skillratio(int attack_type, struct block_list *src, struc
 					skillratio += 10 * skill_lv - 10;
 					break;
 				case PA_SHIELDCHAIN:
-					skillratio += 30 * skill_lv;
+					skillratio += 200 + 200 * skill_lv;
+					RE_LVL_DMOD(100);
 					break;
 				case WS_CARTTERMINATION:
 					i = 10 * (16 - skill_lv);
@@ -2830,8 +2839,8 @@ static int64 battle_calc_damage(struct block_list *src, struct block_list *bl, s
 	if( sc && sc->data[SC_INVINCIBLE] && !sc->data[SC_INVINCIBLEOFF] )
 		return 1;
 
-	if (skill_id == PA_PRESSURE)
-		return damage; //This skill bypass everything else.
+	//if (skill_id == PA_PRESSURE)
+		//return damage; //This skill bypass everything else.
 
 	if( sc && sc->count )
 	{
@@ -4044,6 +4053,7 @@ static struct Damage battle_calc_misc_attack(struct block_list *src, struct bloc
 
 			//Falcon Assault Modifier
 			md.damage=md.damage*(150+70*skill_lv)/100;
+			RE_LVL_MDMOD(100);
 		}
 		break;
 	case TF_THROWSTONE:
@@ -4059,9 +4069,9 @@ static struct Damage battle_calc_misc_attack(struct block_list *src, struct bloc
 		md.damage = 500 + (skill_lv-1)*1000 + rnd()%1000;
 		if(md.damage > 9999) md.damage = 9999;
 		break;
-	case PA_PRESSURE:
-		md.damage=500+300*skill_lv;
-		break;
+	//case PA_PRESSURE:
+		//md.damage=500+300*skill_lv;
+		//break;
 	case PA_GOSPEL:
 		md.damage = 1+rnd()%9999;
 		break;

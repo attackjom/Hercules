@@ -1511,9 +1511,9 @@ static int skill_additional_effect(struct block_list *src, struct block_list *bl
 			sc_start(src,bl,SC_STUN,(15+skill_lv*5),skill_lv,skill->get_time2(skill_id,skill_lv));
 			break;
 
-		case PA_PRESSURE:
+		/*case PA_PRESSURE:
 			status_percent_damage(src, bl, 0, 15+5*skill_lv, false);
-			break;
+			break;*/
 
 		case RG_RAID:
 			sc_start(src,bl,SC_STUN,(10+3*skill_lv),skill_lv,skill->get_time(skill_id,skill_lv));
@@ -3362,7 +3362,8 @@ static int skill_attack(int attack_type, struct block_list *src, struct block_li
 			battle->delay_damage(tick, dmg.amotion,src,bl,dmg.flag,skill_id,skill_lv,damage,dmg.dmg_lv,dmg.dmotion, additional_effects);
 	}
 
-	if( sc && sc->data[SC_DEVOTION] && skill_id != PA_PRESSURE ) {
+	//if( sc && sc->data[SC_DEVOTION] && skill_id != PA_PRESSURE ) {
+	if( sc && sc->data[SC_DEVOTION] ) {
 		struct status_change_entry *sce = sc->data[SC_DEVOTION];
 		struct block_list *d_bl = map->id2bl(sce->val1);
 		struct mercenary_data *d_md = BL_CAST(BL_MER, d_bl);
@@ -4870,6 +4871,7 @@ static int skill_castend_damage_id(struct block_list *src, struct block_list *bl
 		case NPC_DARKTHUNDER:
 		case PR_ASPERSIO:
 		case MG_FROSTDIVER:
+		case PA_PRESSURE:
 		case WZ_SIGHTBLASTER:
 		case WZ_SIGHTRASHER:
 		case NJ_KOUENKA:
@@ -4961,7 +4963,7 @@ static int skill_castend_damage_id(struct block_list *src, struct block_list *bl
 			clif->emotion(src,E_AG);
 			/* Fall through */
 		case SN_FALCONASSAULT:
-		case PA_PRESSURE:
+		//case PA_PRESSURE:
 		case CR_ACIDDEMONSTRATION:
 		case TF_THROWSTONE:
 		case NPC_SMOKING:
@@ -11427,11 +11429,15 @@ static int skill_castend_pos2(struct block_list *src, int x, int y, uint16 skill
 			}
 			break;*/
 		case CG_HERMODE:
+#ifdef RENEWAL
+			skill->castend_song(src, skill_id, skill_lv, tick);
+#else
 			skill->clear_unitgroup(src);
 			if ((sg = skill->unitsetting(src,skill_id,skill_lv,x,y,0)))
 				sc_start4(src,src,SC_DANCING,100,
 					skill_id,0,skill_lv,sg->group_id,skill->get_time(skill_id,skill_lv));
 			flag|=1;
+#endif
 			break;
 		case RG_CLEANER: // [Valaris]
 			r = skill->get_splash(skill_id, skill_lv);
@@ -14600,13 +14606,13 @@ static int skill_check_condition_castbegin(struct map_session_data *sd, uint16 s
 				return 0;
 			break;
 
-		case CG_HERMODE:
+		/*case CG_HERMODE:
 			if(!npc->check_areanpc(1,sd->bl.m,sd->bl.x,sd->bl.y,skill->get_splash(skill_id, skill_lv)))
 			{
 				clif->skill_fail(sd, skill_id, USESKILL_FAIL_LEVEL, 0, 0);
 				return 0;
 			}
-			break;
+			break;*/
 		case CG_MOONLIT: //Check there's no wall in the range+1 area around the caster. [Skotlex]
 			{
 				int i,range = skill->get_splash(skill_id, skill_lv)+1;

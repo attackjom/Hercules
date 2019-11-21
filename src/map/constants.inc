@@ -199,7 +199,7 @@
 	script->set_constant("SI_ADAPTATION", SI_ADAPTATION, false, false);
 	//script->set_constant("SI_BASILICA_CELL", SI_BASILICA_CELL, false, false);
 	script->set_constant("SI_ENSEMBLEFATIGUE", SI_ENSEMBLEFATIGUE, false, false);
-	//script->set_constant("SI_HERMODE", SI_HERMODE, false, false);
+	script->set_constant("SI_HERMODE", SI_HERMODE, false, false);
 	script->set_constant("SI_TAROTCARD", SI_TAROTCARD, false, false);
 	//script->set_constant("SI_HLIF_AVOID", SI_HLIF_AVOID, false, false);
 	//script->set_constant("SI_HFLI_FLEET", SI_HFLI_FLEET, false, false);
