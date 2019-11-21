@@ -430,7 +430,7 @@ static void initChangeTables(void)
 	add_sc( WS_CARTTERMINATION   , SC_STUN            );
 	status->set_sc( WS_OVERTHRUSTMAX     , SC_OVERTHRUSTMAX   , SI_OVERTHRUSTMAX   , SCB_NONE );
 	status->set_sc( CG_SPECIALSINGER    , SC_LONGING         , SI_ENSEMBLEFATIGUE           , SCB_SPEED|SCB_ASPD );
-	status->set_sc( CG_HERMODE           , SC_HERMODE         , SI_HERMODE         , SCB_NONC );
+	status->set_sc( CG_HERMODE           , SC_HERMODE         , SI_HERMODE         , SCB_NONE );
 	status->set_sc( CG_TAROTCARD         , SC_TAROTCARD       , SI_TAROTCARD       , SCB_NONE );
 	status->set_sc( ITEM_ENCHANTARMS     , SC_ENCHANTARMS     , SI_BLANK           , SCB_ATK_ELE );
 	status->set_sc( SL_HIGH              , SC_SOULLINK        , SI_SOULLINK        , SCB_ALL );
@@ -3143,10 +3143,12 @@ static int status_calc_pc_(struct map_session_data *sd, enum e_status_calc_opt o
 		sd->max_weight += sd->max_weight*sc->data[SC_KNOWLEDGE]->val1/10;
 	if((skill_lv=pc->checkskill(sd,ALL_INCCARRY))>0)
 		sd->max_weight += 2000*skill_lv;
+	if (pc_ismadogear(sd))
+		sd->max_weight += 15000;
 
 	sd->cart_weight_max = battle_config.max_cart_weight + (pc->checkskill(sd, GN_REMODELING_CART)*5000);
 
-	if (pc->checkskill(sd,SM_MOVINGRECOVERY)>0)
+	if (pc->checkskill(sd,SM_MOVINGRECOVERY)>0 || pc_ismadogear(sd))
 		sd->regen.state.walk = 1;
 	else
 		sd->regen.state.walk = 0;
@@ -3287,7 +3289,7 @@ static int status_calc_pc_(struct map_session_data *sd, enum e_status_calc_opt o
 			sd->magic_addele[ELE_WIND] += 25;
 		if (sc->data[SC_EARTH_INSIGNIA] && sc->data[SC_EARTH_INSIGNIA]->val1 == 3)
 			sd->magic_addele[ELE_EARTH] += 25;
-		
+
 		if (sc->data[SC_PROPERTYFIRE])
 			sd->magic_atk_ele[ELE_FIRE] += sc->data[SC_PROPERTYFIRE]->val1;
 		if (sc->data[SC_PROPERTYWIND])
@@ -3296,7 +3298,7 @@ static int status_calc_pc_(struct map_session_data *sd, enum e_status_calc_opt o
 			sd->magic_atk_ele[ELE_WATER] += sc->data[SC_PROPERTYWATER]->val1;
 		if (sc->data[SC_PROPERTYGROUND])
 			sd->magic_atk_ele[ELE_EARTH] += sc->data[SC_PROPERTYGROUND]->val1;
-		
+
 		if (sc->data[SC_BASILICA]) {
 			i = sc->data[SC_BASILICA]->val1 * 5;
 			sd->right_weapon.addele[ELE_DARK] += i;
@@ -4031,7 +4033,7 @@ static void status_calc_bl_main(struct block_list *bl, /*enum scb_flag*/int flag
 			st->cri *= 2;
 		}
 	}
-	
+
 #ifdef RENEWAL
 			uint8 skill_lv;
 
@@ -5906,6 +5908,20 @@ static unsigned short status_calc_speed(struct block_list *bl, struct status_cha
 	if( sc == NULL || ( sd && sd->state.permanent_speed ) )
 		return (unsigned short)cap_value(speed,MIN_WALK_SPEED,MAX_WALK_SPEED);
 
+	if (sd && pc_ismadogear(sd)) { // Mado speed is not affected by other statuses
+		int val = 0;
+
+		if (pc->checkskill(sd, NC_MADOLICENCE) < 5)
+			val = 50 - 10 * pc->checkskill(sd, NC_MADOLICENCE);
+		else
+			val -= 25;
+		if (sc->data[SC_ACCELERATION])
+			val -= 25;
+		speed += speed * val / 100;
+
+		return (unsigned short)cap_value(speed, MIN_WALK_SPEED, MAX_WALK_SPEED);
+	}
+
 	if (sd && sd->ud.skilltimer != INVALID_TIMER)
 	{
 		if (sd->ud.skill_id == LG_EXEEDBREAK) {
@@ -5933,11 +5949,6 @@ static unsigned short status_calc_speed(struct block_list *bl, struct status_cha
 					val = sd->sc.data[SC_ALL_RIDING]->val1;
 				else if (pc_isridingwug(sd))
 					val = 15 + 5 * pc->checkskill(sd, RA_WUGRIDER);
-				else if (pc_ismadogear(sd)) {
-					val = (- 10 * (5 - pc->checkskill(sd,NC_MADOLICENCE)));
-					if (sc->data[SC_ACCELERATION])
-						val += 25;
-				}
 			}
 
 			speed_rate -= val;
@@ -10071,6 +10082,9 @@ static int status_get_val_flag(enum sc_type type)
 		case SC_ROLLINGCUTTER:
 			val_flag |= 1;
 			break;
+		case SC_OVERHEAT:
+			val_flag |= 1;
+			break;
 		case SC_CLOAKINGEXCEED:
 			val_flag |= 1 | 2 | 4;
 			break;
@@ -12449,15 +12463,24 @@ static int status_change_timer(int tid, int64 tick, int id, intptr_t data)
 			break;
 
 		case SC_OVERHEAT_LIMITPOINT:
-			if( --(sce->val1) > 0 ) { // Cooling
-				sc_timer_next(30000 + tick, status->change_timer, bl->id, data);
+			if (--(sce->val1) >= 0) { // Cooling
+			int16 limit[] = { 150, 200, 280, 360, 450 };
+			uint16 skill_lv = (sd ? pc->checkskill(sd, NC_MAINFRAME) : 0);
+
+			if (sc && sc->data[SC_OVERHEAT])
+				status_change_end(bl,SC_OVERHEAT,INVALID_TIMER);
+			if (sce->val1 > limit[skill_lv])
+				sc_start(bl, bl, SC_OVERHEAT, 100, sce->val1, 1000);
+			sc_timer_next(1000 + tick, status->change_timer, bl->id, data);
+			return 0;
 			}
 			break;
 
 		case SC_OVERHEAT:
 			{
 				int damage = st->max_hp / 100; // Suggestion 1% each second
-				if( damage >= st->hp ) damage = st->hp - 1; // Do not kill, just keep you with 1 hp minimum
+				if( damage >= st->hp ) 
+					damage = st->hp - 1; // Do not kill, just keep you with 1 hp minimum
 				map->freeblock_lock();
 				status_fix_damage(NULL,bl,damage,clif->damage(bl,bl,0,0,damage,0,BDT_NORMAL,0));
 				if( sc->data[type] ) {
@@ -13599,7 +13622,7 @@ static void status_read_job_db(void)
 	struct config_t job_db_conf;
 	struct config_setting_t *jdb = NULL;
 	char config_filename[256];
-	
+
 #ifdef RENEWAL_ASPD
 	libconfig->format_db_path(DBPATH_RE"job_db.conf", config_filename, sizeof(config_filename));
 #else

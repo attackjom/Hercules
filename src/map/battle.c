@@ -3387,8 +3387,8 @@ static int64 battle_calc_damage(struct block_list *src, struct block_list *bl, s
 			mob->skill_event(md, src, timer->gettick(), MSC_SKILLUSED|(skill_id<<16));
 	}
 	if (t_sd && pc_ismadogear(t_sd) && rnd()%100 < 50) {
-		int element = -1;
-		if (!skill_id || (element = skill->get_ele(skill_id, skill_lv)) == -1) {
+		int element = skill->get_ele(skill_id, skill_lv);
+		if (!skill_id || element  == -1) {
 			// Take weapon's element
 			struct status_data *sstatus = NULL;
 			if (s_sd != NULL && s_sd->bonus.arrow_ele != 0) {
@@ -3403,10 +3403,7 @@ static int64 battle_calc_damage(struct block_list *src, struct block_list *bl, s
 			// Use random element
 			element = rnd()%ELE_MAX;
 		}
-		if (element == ELE_FIRE)
-			pc->overheat(t_sd, 1);
-		else if (element == ELE_WATER)
-			pc->overheat(t_sd, -1);
+		pc->overheat(t_sd, (element == ELE_FIRE ? 3 : 1));
 	}
 
 	return damage;

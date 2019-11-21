@@ -867,6 +867,7 @@ static int skill_calc_heal(struct block_list *src, struct block_list *target, ui
 	struct map_session_data *sd = BL_CAST(BL_PC, src);
 	struct map_session_data *tsd = BL_CAST(BL_PC, target);
 	struct status_change* sc;
+	sc = status->get_sc(src);
 
 	nullpo_ret(src);
 
@@ -4353,18 +4354,13 @@ static int skill_castend_damage_id(struct block_list *src, struct block_list *bl
 		case GN_SLINGITEM_RANGEMELEEATK:
 		case KO_SETSUDAN:
 		case GC_DARKCROW:
+		case NC_BOOSTKNUCKLE:
+		case NC_PILEBUNKER:
 		case LG_OVERBRAND_BRANDISH:
 		case LG_OVERBRAND:
 			skill->attack(BF_WEAPON,src,src,bl,skill_id,skill_lv,tick,flag);
 		break;
 
-		/**
-		 * Mechanic (MADO GEAR)
-		 **/
-		case NC_BOOSTKNUCKLE:
-		case NC_PILEBUNKER:
-		case NC_COLDSLOWER:
-			if (sd) pc->overheat(sd,1);
 			/* Fall through */
 		case RK_WINDCUTTER:
 			skill->attack(BF_WEAPON,src,src,bl,skill_id,skill_lv,tick,flag|SD_ANIMATION);
@@ -4426,7 +4422,6 @@ static int skill_castend_damage_id(struct block_list *src, struct block_list *bl
 			break;
 
 		case NC_FLAMELAUNCHER:
-			if (sd) pc->overheat(sd,1);
 			/* Fall through */
 		case SN_SHARPSHOOTING:
 		case MA_SHARPSHOOTING:
@@ -4607,6 +4602,7 @@ static int skill_castend_damage_id(struct block_list *src, struct block_list *bl
 		case WL_JACKFROST:
 		case RA_ARROWSTORM:
 		case RA_WUGDASH:
+		case NC_COLDSLOWER:
 		case NC_VULCANARM:
 		case NC_ARMSCANNON:
 		case NC_SELFDESTRUCTION:
@@ -5295,7 +5291,6 @@ static int skill_castend_damage_id(struct block_list *src, struct block_list *bl
 			} else {
 				map->foreachinrange(skill->area_sub, bl, skill->get_splash(skill_id, skill_lv), skill->splash_target(src), src, skill_id, skill_lv, tick, flag|BCT_ENEMY|SD_SPLASH|1, skill->castend_damage_id);
 				clif->skill_damage(src,src,tick, status_get_amotion(src), 0, -30000, 1, skill_id, skill_lv, BDT_SKILL);
-				if( sd ) pc->overheat(sd,1);
 			}
 			break;
 
@@ -7121,11 +7116,11 @@ static int skill_castend_nodamage_id(struct block_list *src, struct block_list *
 		}
 			break;
 
-		case NC_EMERGENCYCOOL:
+		/*case NC_EMERGENCYCOOL:
 			clif->skill_nodamage(src,bl,skill_id,skill_lv,1);
 			status_change_end(src,SC_OVERHEAT_LIMITPOINT,INVALID_TIMER);
 			status_change_end(src,SC_OVERHEAT,INVALID_TIMER);
-			break;
+			break;*/
 		case SR_WINDMILL:
 		case GN_CART_TORNADO:
 			clif->skill_nodamage(src,bl,skill_id,skill_lv,1);
@@ -7282,11 +7277,6 @@ static int skill_castend_nodamage_id(struct block_list *src, struct block_list *
 		case KO_YAMIKUMO:
 			if (tsce) {
 				clif->skill_nodamage(src,bl,skill_id,-1,status_change_end(bl, type, INVALID_TIMER)); //Hide skill-scream animation.
-				map->freeblock_unlock();
-				return 0;
-			} else if( tsc && tsc->option&OPTION_MADOGEAR ) {
-				//Mado Gear cannot hide
-				if( sd ) clif->skill_fail(sd, skill_id, USESKILL_FAIL_LEVEL, 0, 0);
 				map->freeblock_unlock();
 				return 0;
 			}
@@ -9616,11 +9606,28 @@ static int skill_castend_nodamage_id(struct block_list *src, struct block_list *
 				status->set_sp(src, 0, STATUS_HEAL_DEFAULT);
 			}
 			break;
-
+		
+		case NC_EMERGENCYCOOL:
+			clif->skill_nodamage(src, bl, skill_id, skill_lv, 1);
+			if (sd) {
+				struct skill_condition req = skill->get_requirement(sd, skill_id, skill_lv);
+				int16 limit[] = { -45, -75, -105 };
+				uint8 i = 0,j = 10;
+				
+				for (i = 0; i < 3; i++) {
+					if (pc->search_inventory(sd, req.itemid[i]) != INDEX_NOT_FOUND) {
+							j = i;
+					}
+				}
+				if (j==10)
+					break;
+				pc->overheat(sd, limit[j]);
+			}
+			break;
+		
 		case NC_ANALYZE:
 			clif->skill_damage(src, bl, tick, status_get_amotion(src), 0, -30000, 1, skill_id, skill_lv, BDT_SKILL);
-			clif->skill_nodamage(src, bl, skill_id, skill_lv,
-				sc_start(src,bl,type, 30 + 12 * skill_lv,skill_lv,skill->get_time(skill_id,skill_lv)));
+			sc_start(src,bl,type, 30 + 12 * skill_lv,skill_lv,skill_get_time(skill_id,skill_lv));
 			if( sd ) pc->overheat(sd,1);
 			break;
 
@@ -9631,7 +9638,6 @@ static int skill_castend_nodamage_id(struct block_list *src, struct block_list *
 			{
 				map->foreachinrange(skill->area_sub,src,skill->get_splash(skill_id,skill_lv),skill->splash_target(src),src,skill_id,skill_lv,tick,flag|BCT_ENEMY|SD_SPLASH|1,skill->castend_damage_id);;
 				clif->skill_damage(src,src,tick,status_get_amotion(src),0,-30000,1,skill_id,skill_lv,BDT_SKILL);
-				if (sd) pc->overheat(sd,1);
 			}
 			clif->skill_nodamage(src,src,skill_id,skill_lv,failure);
 		}
@@ -11795,7 +11801,6 @@ static int skill_castend_pos2(struct block_list *src, int x, int y, uint16 skill
 			skill->clear_unitgroup(src); // To remove previous skills - cannot used combined
 			if( (sg = skill->unitsetting(src,skill_id,skill_lv,src->x,src->y,0)) != NULL ) {
 				sc_start2(src,src,skill_id == NC_NEUTRALBARRIER ? SC_NEUTRALBARRIER_MASTER : SC_STEALTHFIELD_MASTER,100,skill_lv,sg->group_id,skill->get_time(skill_id,skill_lv));
-				if( sd ) pc->overheat(sd,1);
 			}
 			break;
 
@@ -14366,6 +14371,7 @@ static int skill_check_condition_castbegin(struct map_session_data *sd, uint16 s
 				case NC_MAGMA_ERUPTION:
 				case ALL_FULL_THROTTLE:
 				case NC_MAGMA_ERUPTION_DOTDAMAGE:
+				case AL_TELEPORT:
 					break;
 				default:
 				{
@@ -14959,12 +14965,6 @@ static int skill_check_condition_castbegin(struct map_session_data *sd, uint16 s
 		case SO_EL_CONTROL:
 			if( !sd->status.ele_id || !sd->ed ) {
 				clif->skill_fail(sd, skill_id, USESKILL_FAIL_EL_SUMMON, 0, 0);
-				return 0;
-			}
-			break;
-		case RETURN_TO_ELDICASTES:
-			if( pc_ismadogear(sd) ) { //Cannot be used if Mado is equipped.
-				clif->skill_fail(sd, skill_id, USESKILL_FAIL_LEVEL, 0, 0);
 				return 0;
 			}
 			break;
@@ -15709,6 +15709,7 @@ static struct skill_condition skill_get_requirement(struct map_session_data *sd,
 	/* requirements are level-dependent */
 	switch( skill_id ) {
 		case NC_SHAPESHIFT:
+		case NC_EMERGENCYCOOL:
 		case GN_FIRE_EXPANSION:
 		case SO_SUMMON_AGNI:
 		case SO_SUMMON_AQUA:
