@@ -4846,5 +4846,10 @@ packetLen(0x0b66, 25)
 packetLen(0x0b67, 32)
 #endif
 
+// Packet: 0x0b68
+#if PACKETVER >= 20191120
+packetLen(0x0b68, 12)
+#endif
+
 
 #endif /* COMMON_PACKETS2019_LEN_MAIN_H */
