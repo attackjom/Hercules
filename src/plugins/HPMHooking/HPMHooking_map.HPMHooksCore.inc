@@ -2336,6 +2336,8 @@ struct {
 	struct HPMHookPoint *HP_clif_plapineDdukDdak_ack_post;
 	struct HPMHookPoint *HP_clif_plapineDdukDdak_close_pre;
 	struct HPMHookPoint *HP_clif_plapineDdukDdak_close_post;
+	struct HPMHookPoint *HP_clif_pReqGearOff_pre;
+	struct HPMHookPoint *HP_clif_pReqGearOff_post;
 	struct HPMHookPoint *HP_cmdline_init_pre;
 	struct HPMHookPoint *HP_cmdline_init_post;
 	struct HPMHookPoint *HP_cmdline_final_pre;
@@ -6282,10 +6284,12 @@ struct {
 	struct HPMHookPoint *HP_status_sc2skill_post;
 	struct HPMHookPoint *HP_status_sc2scb_flag_pre;
 	struct HPMHookPoint *HP_status_sc2scb_flag_post;
-	struct HPMHookPoint *HP_status_type2relevant_bl_types_pre;
-	struct HPMHookPoint *HP_status_type2relevant_bl_types_post;
+	struct HPMHookPoint *HP_status_get_sc_relevant_bl_types_pre;
+	struct HPMHookPoint *HP_status_get_sc_relevant_bl_types_post;
 	struct HPMHookPoint *HP_status_get_sc_type_pre;
 	struct HPMHookPoint *HP_status_get_sc_type_post;
+	struct HPMHookPoint *HP_status_get_sc_icon_pre;
+	struct HPMHookPoint *HP_status_get_sc_icon_post;
 	struct HPMHookPoint *HP_status_damage_pre;
 	struct HPMHookPoint *HP_status_damage_post;
 	struct HPMHookPoint *HP_status_charge_pre;
@@ -9165,6 +9169,8 @@ struct {
 	int HP_clif_plapineDdukDdak_ack_post;
 	int HP_clif_plapineDdukDdak_close_pre;
 	int HP_clif_plapineDdukDdak_close_post;
+	int HP_clif_pReqGearOff_pre;
+	int HP_clif_pReqGearOff_post;
 	int HP_cmdline_init_pre;
 	int HP_cmdline_init_post;
 	int HP_cmdline_final_pre;
@@ -13111,10 +13117,12 @@ struct {
 	int HP_status_sc2skill_post;
 	int HP_status_sc2scb_flag_pre;
 	int HP_status_sc2scb_flag_post;
-	int HP_status_type2relevant_bl_types_pre;
-	int HP_status_type2relevant_bl_types_post;
+	int HP_status_get_sc_relevant_bl_types_pre;
+	int HP_status_get_sc_relevant_bl_types_post;
 	int HP_status_get_sc_type_pre;
 	int HP_status_get_sc_type_post;
+	int HP_status_get_sc_icon_pre;
+	int HP_status_get_sc_icon_post;
 	int HP_status_damage_pre;
 	int HP_status_damage_post;
 	int HP_status_charge_pre;
