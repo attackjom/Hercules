@@ -42,7 +42,7 @@
 /**
  * Defines
  **/
-#define MAX_PC_BONUS 10
+#define MAX_PC_BONUS 25
 #define MAX_PC_FEELHATE 3
 #define MAX_PC_DEVOTION 5          ///< Max amount of devotion targets
 #define PVP_CALCRANK_INTERVAL 1000 ///< PVP calculation interval

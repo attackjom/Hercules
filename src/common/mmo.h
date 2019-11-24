@@ -64,7 +64,7 @@
 // 20120307 - 2012-03-07aRagexeRE+ - 0x970
 
 #ifndef PACKETVER
-	#define PACKETVER 20191002
+	#define PACKETVER 20191120
 #endif // PACKETVER
 
 //Uncomment the following line if your client is ragexeRE instead of ragexe (required because of conflicting packets in ragexe vs ragexeRE).
@@ -213,7 +213,7 @@
 #define MAX_BANK_ZENY INT_MAX
 
 #ifndef MAX_LEVEL
-#define MAX_LEVEL 175
+#define MAX_LEVEL 200
 #endif
 #define MAX_FAME 1000000000
 #define MAX_CART 100
