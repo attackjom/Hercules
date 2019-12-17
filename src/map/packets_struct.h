@@ -3687,6 +3687,13 @@ struct PACKET_ZC_LAPINEDDUKDDAK_OPEN {
 DEFINE_PACKET_HEADER(ZC_LAPINEDDUKDDAK_OPEN, 0x0a4e);
 #endif // PACKETVER_MAIN_NUM >= 20160601 || PACKETVER_RE_NUM >= 20160525 || defined(PACKETVER_ZERO)
 
+#if PACKETVER_MAIN_NUM >= 20160504 || PACKETVER_RE_NUM >= 20160504 || defined(PACKETVER_ZERO)
+struct PACKET_CZ_LAPINEDDUKDDAK_CLOSE {
+	int16 packetType;
+} __attribute__((packed));
+DEFINE_PACKET_HEADER(CZ_LAPINEDDUKDDAK_CLOSE, 0x0a70);
+#endif // PACKETVER_MAIN_NUM >= 20160504 || PACKETVER_RE_NUM >= 20160504 || defined(PACKETVER_ZERO)
+
 #if PACKETVER >= 20160302
 struct PACKET_CZ_LAPINEDDUKDDAK_ACK_sub {
 	int16 index;
@@ -3713,6 +3720,46 @@ struct PACKET_ZC_LAPINEDDUKDDAK_RESULT {
 } __attribute__((packed));
 DEFINE_PACKET_HEADER(ZC_LAPINEDDUKDDAK_RESULT, 0x0a50);
 #endif // PACKETVER_MAIN_NUM >= 20160601 || PACKETVER_RE_NUM >= 20160525 || defined(PACKETVER_ZERO)
+
+#if PACKETVER_MAIN_NUM >= 20190703 || PACKETVER_RE_NUM >= 20190703 || PACKETVER_ZERO_NUM >= 20190709
+struct PACKET_CZ_REQ_MOUNTOFF {
+	int16 packetType;
+	uint8 action;
+} __attribute__((packed));
+DEFINE_PACKET_HEADER(CZ_REQ_MOUNTOFF, 0x0b35);
+#endif
+
+// in 3 clients from same version
+#if PACKETVER >= 20191127
+struct PACKET_ZC_NOTIFY_EFFECT3 {
+	int16 packetType;
+	uint32 aid;
+	uint32 effectId;
+	uint64 num;
+} __attribute__((packed));
+DEFINE_PACKET_HEADER(ZC_NOTIFY_EFFECT3, 0x0b69);
+#elif PACKETVER_MAIN_NUM >= 20060911 || PACKETVER_AD_NUM >= 20060911 || PACKETVER_SAK_NUM >= 20060911 || defined(PACKETVER_RE) || defined(PACKETVER_ZERO)
+struct PACKET_ZC_NOTIFY_EFFECT3 {
+	int16 packetType;
+	uint32 aid;
+	uint32 effectId;
+	uint32 num;
+} __attribute__((packed));
+DEFINE_PACKET_HEADER(ZC_NOTIFY_EFFECT3, 0x0284);
+#endif
+
+#if PACKETVER >= 20190724
+struct PACKET_CZ_SE_CASHSHOP_OPEN {
+	int16 packetType;
+} __attribute__((packed));
+DEFINE_PACKET_HEADER(CZ_SE_CASHSHOP_OPEN, 0x0b4c);
+CHECK_PACKET_HEADER(CZ_SE_CASHSHOP_OPEN, 0x0844);
+#elif PACKETVER >= 20100824
+struct PACKET_CZ_SE_CASHSHOP_OPEN {
+	int16 packetType;
+} __attribute__((packed));
+DEFINE_PACKET_HEADER(CZ_SE_CASHSHOP_OPEN, 0x0844);
+#endif
 
 #if !defined(sun) && (!defined(__NETBSD__) || __NetBSD_Version__ >= 600000000) // NetBSD 5 and Solaris don't like pragma pack but accept the packed attribute
 #pragma pack(pop)

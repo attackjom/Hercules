@@ -733,6 +733,16 @@ enum lapineddukddak_result {
 	LAPINEDDKUKDDAK_INVALID_ITEM = 7,
 };
 
+enum removeGear_flag {
+	REMOVE_MOUNT_0 = 0,  // unused
+	REMOVE_MOUNT_DRAGON = 1,
+	REMOVE_MOUNT_2 = 2,  // unused
+	REMOVE_MOUNT_MADO = 3,
+	REMOVE_MOUNT_PECO = 4,
+	REMOVE_MOUNT_FALCON = 5,
+	REMOVE_MOUNT_CART = 6,
+};
+
 /**
  * Clif.c Interface
  **/
@@ -902,8 +912,8 @@ struct clif_interface {
 	void (*cooking_list) (struct map_session_data *sd, int trigger, uint16 skill_id, int qty, int list_type);
 	void (*autospell) (struct map_session_data *sd,uint16 skill_lv);
 	void (*combo_delay) (struct block_list *bl,int wait);
-	void (*status_change) (struct block_list *bl, int type, int flag, int total_tick, int val1, int val2, int val3);
-	void (*status_change_sub) (struct block_list *bl, int type, int flag, int tick, int total_tick, int val1, int val2, int val3);
+	void (*status_change) (struct block_list *bl, int relevant_bl, int type, int flag, int total_tick, int val1, int val2, int val3);
+	void (*status_change_sub) (struct block_list *bl, int type, int relevant_bl, int flag, int tick, int total_tick, int val1, int val2, int val3);
 	void (*insert_card) (struct map_session_data *sd,int idx_equip,int idx_card,int flag);
 	void (*inventoryList) (struct map_session_data *sd);
 	void (*inventoryItems) (struct map_session_data *sd, enum inventory_type type);
@@ -1020,7 +1030,8 @@ struct clif_interface {
 	void (*weather) (int16 m);
 	void (*specialeffect) (struct block_list* bl, int type, enum send_target target);
 	void (*specialeffect_single) (struct block_list* bl, int type, int fd);
-	void (*specialeffect_value) (struct block_list* bl, int effect_id, int num, send_target target);
+	void (*specialeffect_value) (struct block_list* bl, int effect_id, uint64 num, send_target target);
+	void (*specialeffect_value_single) (struct block_list *bl, int effect_id, uint64 num, int fd);
 	void (*removeSpecialEffect) (struct block_list *bl, int effectId, enum send_target target);
 	void (*removeSpecialEffect_single) (struct block_list *bl, int effectId, struct block_list *targetBl);
 	void (*millenniumshield) (struct block_list *bl, short shields );
@@ -1670,6 +1681,7 @@ struct clif_interface {
 	bool (*lapineDdukDdak_result) (struct map_session_data *sd, enum lapineddukddak_result result);
 	void (*plapineDdukDdak_ack) (int fd, struct map_session_data *sd);
 	void (*plapineDdukDdak_close) (int fd, struct map_session_data *sd);
+	void (*pReqGearOff) (int fd, struct map_session_data *sd);
 };
 
 #ifdef HERCULES_CORE

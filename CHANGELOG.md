@@ -9,7 +9,87 @@ and this project does not adhere to [Semantic Versioning](http://semver.org/spec
 If you are reading this in a text editor, simply ignore this section
 -->
 
-### [v2019.10.20] `October 20 2019`
+## [v2019.12.15] `December 15 2019`
+
+### Added
+
+- Added/updated packets, encryption keys and message tables for clients up to 2019-12-11. (#2585)
+- Added new version of packet `ZC_NOTIFY_EFFECT3`. (part of #2583)
+- Added script function `specialeffectnum()`. (part of #2583)
+
+### Changed
+
+- Reduced the IP ban column length to 13 characters, matching the length of the inserted data. A database migration is required. (#2583, issue #2349)
+- Converted packet `CZ_SE_CASHSHOP_OPEN` into a struct. (part of #2583)
+- Replaced the old MySQL Connector with MariaDB C Connector 3.1.5 / Client Lib 10.4.3, for the Windows VS builds. (#2580)
+- Moved the functionalities of `mob_avail.txt` to the mob database, expanding it with more fields (see the `mob_db` documentation for details). (#2572)
+
+### Fixed
+
+- Fixed incompatibilities with MySQL 8. (part of #2580)
+- Fixed errors when `guild_skill_relog_delay` is set to 1 (reset on relog). (#2592, issue #2591)
+- Fixed Tarot Card equipment breaking behavior to match the official, targeting only Left Hand (Shield), Armor and Helm. (#2589)
+- Fixed racial crit bonuses not being affected by katar crit bonus. (#2588)
+- Fixed interaction between Lex Aetherna and Stone/Freezing, now mutually exclusive. (#2598, issue #2559)
+
+### Deprecated
+
+### Removed
+
+- Removed `mob_avail.txt`, since its functionality has been moved to the mob database. (part of #2572)
+
+## [v2019.11.17+1] `November 17 2019` `PATCH 1`
+
+### Added
+
+- Added an SQL linter. The `./tools/checksql.sh` script can be used to automatically validate the syntax of every file in the `sql-files` folder (note: dependencies might need to be installed through composer). The script is also executed in the Travis builds. (#2582)
+
+### Fixed
+
+- Fixed a syntax error in the `2019-10-12--14-21.sql` migration file. (part of #2582)
+
+## [v2019.11.17] `November 17 2019`
+
+### Added
+
+- Added/updated packets, encryption keys and message tables for clients up to 2019-11-13. (#2568)
+- Added support for packet `CZ_REQ_MOUNTOFF`. (part of #2568)
+- Added a missing building entrance portal in Juno and in Lighthalzen. (#2542)
+- Added the script command `getguildinfo()` and its related constants `GUILDINFO_*`, to lookup information about a guild. (#2566)
+- Added a separate configuration flag in `map_log.enable` to control the logging of `LOG_TYPE_LOOT`. (part of #2560, issue #2414)
+- Added a new log type, `LOG_TYPE_ACHIEVEMENT` and its configuration flag, to control the logging of achievement-granted items. A database migration is required. (#2560, issue #2414)
+- De-hardcoded the boss monsters' resistance to some status effects. It's now controlled by a new `NoBoss` flag in `sc_config`. (#2570)
+- De-hardcoded the combo skills chaining check. It's now controlled by a new `IsCombo` flag in `skill_db`. (#2573)
+- De-hardcoded the status icons. They are now defined through a new `Icon` field in `sc_config`. (#2577)
+
+### Changed
+
+- Added error details to the python converter tools when a libconfig parsing error is encountered. (part of #2568)
+- Converted packet `CZ_LAPINEDDUKDDAK_CLOSE` into a struct. (part of #2568)
+- Updated the location of various NPCs: portals in Juno, sign post in Brasilis, Young Man in Payon (pre-renewal). (part of #2542)
+- Reordered the loading of the stylist DB to be before the loading of NPC scripts, for consistence with the other DB files. (#2571)
+
+### Fixed
+
+- Fixed an incorrect nullpo check when slave monsters are summoned by an alchemist. (#2574, issue #2576)
+- Fixed the Steal skill not showing the HP bar of the targeted monster right away but only when leaving and re-entering sight range. (part of #2567)
+- Fixed a regression in the Steal skill that caused it to allow stealing of some cards. Card stealing prevention is now enforced by item type rather than by position in the drop list. (#2567)
+- Fixed the `@fakename` to display the overridden name regardless of whether the character is disguised. (#2548, issue #2539)
+- Fixed the `target_to` field not being cleared appropriately, causing monsters to get stuck in a loop walking to their previous target that has died, and causing hunters with auto-attack to be unable to walk away from their target and cancel their attack action. (#2564)
+- Fixed the handling of HULD .po translations that contain the `\r` escape sequence. (#2569)
+- Fixed the unintended clearing of status changes granted by passive guild skills, via `sc_end(SC_ALL)`. (#2575, issue #1147)
+
+### Deprecated
+
+- Deprecated the script command `getguildname()`, use `getguildinfo(GUILDINFO_NAME, <guild id>)` instead. (part of #2566)
+- Deprecated the script command `getguildmaster()`, use `getguildinfo(GUILDINFO_MASTER_NAME, <guild id>)` instead. (part of #2566)
+- Deprecated the script command `getguildmasterid()`, use `getguildinfo(GUILDINFO_MASTER_CID, <guild id>)` instead. (part of #2566)
+
+### Removed
+
+- Removed the `SI_*` constants from the source code, now available through `constants.conf`. (part of #2577)
+
+## [v2019.10.20] `October 20 2019`
 
 ### Added
 
@@ -51,7 +131,7 @@ If you are reading this in a text editor, simply ignore this section
 
 - Removed the legacy, unused, `castle_defense_rate` option from `battle/guild.conf`. (#2552)
 
-### [v2019.09.22] `September 22 2019`
+## [v2019.09.22] `September 22 2019`
 
 ### Added
 
@@ -95,7 +175,7 @@ If you are reading this in a text editor, simply ignore this section
 - Fixed a minor C standard compliance error, mixing function pointers and non-function pointers. (part of #2536)
 - Fixed the (commented out by default) custom Venom Splasher countdown timer code. (part of #2536)
 
-### [v2019.08.25] `August 25 2019`
+## [v2019.08.25] `August 25 2019`
 
 ### Added
 
@@ -122,7 +202,7 @@ If you are reading this in a text editor, simply ignore this section
 - Removed Visual Studio 2013 solution. (part of #2520)
 - Removed round-trips to the inter-server for packets related to whisper messages, reports to GMs, GM broadcasts, party, guild and main chat, previously needed for, now unsupported, multi-zone setups. (#2522)
 
-### [v2019.07.28] `July 28 2019`
+## [v2019.07.28] `July 28 2019`
 
 ### Added
 
@@ -152,7 +232,7 @@ If you are reading this in a text editor, simply ignore this section
 - Corrected the cooldown after killing Wounded Morroc. (#2503)
 - Corrected `isequipped()` and `isequippedcnt()` to correctly handle costume equipment. (#2508)
 
-### [v2019.06.30] `June 30 2019`
+## [v2019.06.30] `June 30 2019`
 
 ### Added
 
@@ -173,7 +253,7 @@ If you are reading this in a text editor, simply ignore this section
 - Fixed monster spawns disregarding the custom names specified. (#2496, #2491, issue #2495)
 - Fixed the style range in `stylist.txt`, now starting from 1 instead of 0. (part of #2357, issue #2356)
 
-### [v2019.06.02] `June 2 2019`
+## [v2019.06.02] `June 2 2019`
 
 ### Added
 
@@ -973,6 +1053,9 @@ If you are reading this in a text editor, simply ignore this section
 - New versioning scheme and project changelogs/release notes (#1853)
 
 [Unreleased]: https://github.com/HerculesWS/Hercules/compare/stable...master
+[v2019.12.15]: https://github.com/HerculesWS/Hercules/compare/v2019.11.17+1...v2019.12.15
+[v2019.11.17+1]: https://github.com/HerculesWS/Hercules/compare/v2019.11.17...v2019.11.17+1
+[v2019.11.17]: https://github.com/HerculesWS/Hercules/compare/v2019.10.20...v2019.11.17
 [v2019.10.20]: https://github.com/HerculesWS/Hercules/compare/v2019.09.22...v2019.10.20
 [v2019.09.22]: https://github.com/HerculesWS/Hercules/compare/v2019.08.25...v2019.09.22
 [v2019.08.25]: https://github.com/HerculesWS/Hercules/compare/v2019.07.28...v2019.08.25

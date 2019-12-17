@@ -4294,7 +4294,11 @@ packetLen(0x0af8, 11)
 packetLen(0x0af9, 6)
 
 // Packet: 0x0afa
+#if PACKETVER >= 20191204
+packetLen(0x0afa, 58)
+#elif PACKETVER >= 20190116
 packetLen(0x0afa, 54)
+#endif
 
 // Packet: 0x0afb
 packetLen(0x0afb, -1)
@@ -4783,6 +4787,66 @@ packetLen(0x0b5d, 2)
 // Packet: 0x0b5e
 #if PACKETVER >= 20191008
 packetLen(0x0b5e, 33)
+#endif
+
+// Packet: 0x0b5f
+#if PACKETVER >= 20191023
+packetLen(0x0b5f, -1)
+#endif
+
+// Packet: 0x0b60
+#if PACKETVER >= 20191023
+packetLen(0x0b60, -1)
+#endif
+
+// Packet: 0x0b61
+#if PACKETVER >= 20191023
+packetLen(0x0b61, -1)
+#endif
+
+// Packet: 0x0b62
+#if PACKETVER >= 20191106
+packetLen(0x0b62, -1)
+#endif
+
+// Packet: 0x0b63
+#if PACKETVER >= 20191106
+packetLen(0x0b63, -1)
+#endif
+
+// Packet: 0x0b64
+#if PACKETVER >= 20191106
+packetLen(0x0b64, -1)
+#endif
+
+// Packet: 0x0b65
+#if PACKETVER >= 20191106
+packetLen(0x0b65, -1)
+#endif
+
+// Packet: 0x0b66
+#if PACKETVER >= 20191106
+packetLen(0x0b66, 25)
+#endif
+
+// Packet: 0x0b67
+#if PACKETVER >= 20191106
+packetLen(0x0b67, 32)
+#endif
+
+// Packet: 0x0b68
+#if PACKETVER >= 20191127
+packetLen(0x0b68, 12)
+#endif
+
+// Packet: 0x0b69
+#if PACKETVER >= 20191127
+packetLen(0x0b69, 18)
+#endif
+
+// Packet: 0x0b6a
+#if PACKETVER >= 20191204
+packetLen(0x0b6a, -1)
 #endif
 
 
