@@ -833,13 +833,10 @@ typedef enum sc_type {
 
 	SC_DRESS_UP,
 
-	SC_ADAPTATION,
+	
 
 	// Rodex
 	SC_DAILYSENDMAILCNT,
-
-	// Custom
-	SC_BASILICA_CELL,
 
 	// Clan System
 	SC_CLAN_INFO,
@@ -858,6 +855,10 @@ typedef enum sc_type {
 	SC_RESIST_PROPERTY_FIRE,
 	SC_RESIST_PROPERTY_WIND,
 	SC_CLIENT_ONLY_EQUIP_ARROW,
+	
+	// Custom
+	SC_BASILICA_CELL,
+	SC_ADAPTATION,
 #ifndef SC_MAX
 	SC_MAX, //Automatically updated max, used in for's to check we are within bounds.
 #endif
