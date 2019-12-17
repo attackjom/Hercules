@@ -1562,8 +1562,10 @@ typedef void (*HPMHOOK_pre_clif_specialeffect) (struct block_list **bl, int *typ
 typedef void (*HPMHOOK_post_clif_specialeffect) (struct block_list *bl, int type, enum send_target target);
 typedef void (*HPMHOOK_pre_clif_specialeffect_single) (struct block_list **bl, int *type, int *fd);
 typedef void (*HPMHOOK_post_clif_specialeffect_single) (struct block_list *bl, int type, int fd);
-typedef void (*HPMHOOK_pre_clif_specialeffect_value) (struct block_list **bl, int *effect_id, int *num, send_target *target);
-typedef void (*HPMHOOK_post_clif_specialeffect_value) (struct block_list *bl, int effect_id, int num, send_target target);
+typedef void (*HPMHOOK_pre_clif_specialeffect_value) (struct block_list **bl, int *effect_id, uint64 *num, send_target *target);
+typedef void (*HPMHOOK_post_clif_specialeffect_value) (struct block_list *bl, int effect_id, uint64 num, send_target target);
+typedef void (*HPMHOOK_pre_clif_specialeffect_value_single) (struct block_list **bl, int *effect_id, uint64 *num, int *fd);
+typedef void (*HPMHOOK_post_clif_specialeffect_value_single) (struct block_list *bl, int effect_id, uint64 num, int fd);
 typedef void (*HPMHOOK_pre_clif_removeSpecialEffect) (struct block_list **bl, int *effectId, enum send_target *target);
 typedef void (*HPMHOOK_post_clif_removeSpecialEffect) (struct block_list *bl, int effectId, enum send_target target);
 typedef void (*HPMHOOK_pre_clif_removeSpecialEffect_single) (struct block_list **bl, int *effectId, struct block_list **targetBl);
@@ -5480,10 +5482,12 @@ typedef struct optdrop_group* (*HPMHOOK_pre_mob_read_db_drops_option) (struct mo
 typedef struct optdrop_group* (*HPMHOOK_post_mob_read_db_drops_option) (struct optdrop_group* retVal___, struct mob_db *entry, const char *item_name, struct config_setting_t *drop, int *drop_rate);
 typedef void (*HPMHOOK_pre_mob_read_db_stats_sub) (struct mob_db **entry, struct config_setting_t **t);
 typedef void (*HPMHOOK_post_mob_read_db_stats_sub) (struct mob_db *entry, struct config_setting_t *t);
+typedef void (*HPMHOOK_pre_mob_read_db_viewdata_sub) (struct mob_db **entry, struct config_setting_t **t);
+typedef void (*HPMHOOK_post_mob_read_db_viewdata_sub) (struct mob_db *entry, struct config_setting_t *t);
 typedef void (*HPMHOOK_pre_mob_name_constants) (void);
 typedef void (*HPMHOOK_post_mob_name_constants) (void);
-typedef bool (*HPMHOOK_pre_mob_readdb_mobavail) (char **str[], int *columns, int *current);
-typedef bool (*HPMHOOK_post_mob_readdb_mobavail) (bool retVal___, char *str[], int columns, int current);
+typedef void (*HPMHOOK_pre_mob_mobavail_removal_notice) (void);
+typedef void (*HPMHOOK_post_mob_mobavail_removal_notice) (void);
 typedef int (*HPMHOOK_pre_mob_read_randommonster) (void);
 typedef int (*HPMHOOK_post_mob_read_randommonster) (int retVal___);
 typedef bool (*HPMHOOK_pre_mob_parse_row_chatdb) (char ***str, const char **source, int *line, int **last_msg_id);
