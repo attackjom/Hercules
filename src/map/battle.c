@@ -6490,7 +6490,7 @@ static enum damage_lv battle_weapon_attack(struct block_list *src, struct block_
 		}
 	}
 	if (sd) {
-		if( wd.flag&BF_SHORT && sc
+		if( wd.flag&BF_WEAPON && sc
 		 && sc->data[SC__AUTOSHADOWSPELL] && rnd()%100 < sc->data[SC__AUTOSHADOWSPELL]->val3
 		 && sd->status.skill[skill->get_index(sc->data[SC__AUTOSHADOWSPELL]->val1)].id != 0
 		 && sd->status.skill[skill->get_index(sc->data[SC__AUTOSHADOWSPELL]->val1)].flag == SKILL_FLAG_PLAGIARIZED

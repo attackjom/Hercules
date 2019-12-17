@@ -15590,6 +15590,9 @@ static struct skill_condition skill_get_requirement(struct map_session_data *sd,
 	ARR_FIND(0, ARRAYLENGTH(sd->skillusesp), i, sd->skillusesp[i].id == skill_id);
 	if( i < ARRAYLENGTH(sd->skillusesp) )
 		req.sp -= sd->skillusesp[i].val;
+	
+	if (skill_id == sd->status.skill[skill->get_index(sd->reproduceskill_id)].id)
+		req.sp += req.sp * 30 / 100;
 
 	req.sp = cap_value(req.sp * sp_skill_rate_bonus / 100, 0, SHRT_MAX);
 
@@ -19138,7 +19141,7 @@ static int skill_select_menu(struct map_session_data *sd, uint16 skill_id)
 		return 0;
 	}
 
-	lv = (aslvl + 1) / 2; // The level the skill will be autocasted
+	lv = (aslvl + 5) / 2; // The level the skill will be autocasted
 	lv = min(lv,sd->status.skill[idx].lv);
 	prob = (aslvl == 10) ? 15 : (32 - 2 * aslvl); // Probability at level 10 was increased to 15.
 	sc_start4(&sd->bl,&sd->bl,SC__AUTOSHADOWSPELL,100,id,lv,prob,0,skill->get_time(SC_AUTOSHADOWSPELL,aslvl));
