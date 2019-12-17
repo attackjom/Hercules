@@ -9610,14 +9610,13 @@ static int skill_castend_nodamage_id(struct block_list *src, struct block_list *
 		case NC_EMERGENCYCOOL:
 			clif->skill_nodamage(src, bl, skill_id, skill_lv, 1);
 			if (sd) {
-				struct skill_condition req = skill->get_requirement(sd, skill_id, skill_lv);
+				int16 req[] = {ITEMID_COOLING_DEVICE, ITEMID_HIGH_QUALITY_COOLER, ITEMID_SPECIAL_COOLER};
 				int16 limit[] = { -45, -75, -105 };
 				uint8 i = 0,j = 10;
 				
 				for (i = 0; i < 3; i++) {
-					if (pc->search_inventory(sd, req.itemid[i]) != INDEX_NOT_FOUND) {
+					if (sd->status.inventory[sd->equip_index[EQI_ACC_R]].nameid == req[i] || sd->status.inventory[sd->equip_index[EQI_ACC_L]].nameid == req[i])
 							j = i;
-					}
 				}
 				if (j==10)
 					break;
@@ -14936,6 +14935,34 @@ static int skill_check_condition_castbegin(struct map_session_data *sd, uint16 s
 			return 0;
 			}
 			break;
+		case NC_EMERGENCYCOOL:
+			if ( sd->equip_index[EQI_ACC_L] >= 0 || sd->equip_index[EQI_ACC_R] >= 0 ) {
+				switch(sd->status.inventory[sd->equip_index[EQI_ACC_L]].nameid) {
+					case ITEMID_COOLING_DEVICE:
+					case ITEMID_HIGH_QUALITY_COOLER:
+					case ITEMID_SPECIAL_COOLER:
+						break;
+					
+					default:
+						switch(sd->status.inventory[sd->equip_index[EQI_ACC_R]].nameid) {
+							case ITEMID_COOLING_DEVICE:
+							case ITEMID_HIGH_QUALITY_COOLER:
+							case ITEMID_SPECIAL_COOLER:
+								break;
+							
+							default:
+								clif->skill_fail(sd, skill_id, USESKILL_FAIL_LEVEL, 0, 0);
+								return 0;
+								break;
+						}
+					break;
+				}
+			}
+			else {
+				clif->skill_fail(sd, skill_id, USESKILL_FAIL_LEVEL, 0, 0);
+				return 0;
+			}
+			break;
 		case SO_FIREWALK:
 		case SO_ELECTRICWALK: // Can't be casted until you've walked all cells.
 			if( sc && sc->data[SC_PROPERTYWALK] &&
@@ -15691,7 +15718,6 @@ static struct skill_condition skill_get_requirement(struct map_session_data *sd,
 	/* requirements are level-dependent */
 	switch( skill_id ) {
 		case NC_SHAPESHIFT:
-		case NC_EMERGENCYCOOL:
 		case GN_FIRE_EXPANSION:
 		case SO_SUMMON_AGNI:
 		case SO_SUMMON_AQUA:

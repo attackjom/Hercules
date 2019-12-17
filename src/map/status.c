@@ -8984,6 +8984,11 @@ static int status_change_start_sub(struct block_list *src, struct block_list *bl
 				val4 = total_tick / 1000;
 				tick_time = 2000 + (1000 * val1);
 				break;
+			case SC_OVERHEAT:
+			case SC_OVERHEAT_LIMITPOINT:
+				tick_time = total_tick;
+				total_tick = INFINITE_DURATION;
+				break;
 			case SC_ELECTRICSHOCKER:
 			case SC_COLD:
 			case SC_MEIKYOUSISUI:
