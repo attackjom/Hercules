@@ -2329,7 +2329,7 @@ static int battle_calc_skillratio(int attack_type, struct block_list *src, struc
 						skillratio += 100 * skill_lv;
 					break;
 				case RK_STORMBLAST:
-					skillratio = ((sd ? pc->checkskill(sd,RK_RUNEMASTERY) : 1) + status_get_int(src) / 8) * 100;
+					skillratio = ((sd ? pc->checkskill(sd,RK_RUNEMASTERY) : 1) + status_get_str(src) / 8) * 100;
 					break;
 				case RK_PHANTOMTHRUST:
 					skillratio = 50 * skill_lv + 10 * (sd ? pc->checkskill(sd,KN_SPEARMASTERY) : 10);
@@ -5518,8 +5518,15 @@ static struct Damage battle_calc_weapon_attack(struct block_list *src, struct bl
 					if( i )
 						ATK_ADD(i);
 				}
-				if( sc->data[SC_GIANTGROWTH] && rnd()%100 < 15 )
-					ATK_ADDRATE(200); // Triple Damage
+				if( sc->data[SC_GIANTGROWTH] && rnd()%100 < 15 ) {
+					ATK_ADDRATE(100); // Triple Damage
+					if (!sc->data[SC_CRUSHSTRIKE]) { // Increase damage again if Crush Strike is not active
+						if (map_flag_vs(src->m)) // Only half of the 2.5x increase on versus-type maps
+							wd.damage += wd.damage * 125 / 100;
+						else
+							wd.damage += wd.damage * 250 / 100;
+					}
+				}
 			}
 		}
 #ifndef RENEWAL
