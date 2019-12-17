@@ -726,6 +726,11 @@ packet(0x96e,clif->ackmergeitems);
 	packet(0x0843,clif->pGMRemove2,2);
 #endif
 
+// all versions
+#if PACKETVER >= 20100824
+	packet(0x0844,clif->pCashShopOpen,2);
+#endif
+
 //2010-11-24aRagexeRE
 #if PACKETVER >= 20101124
 	packet(0x0288,clif->pcashshop_buy,4,8);
@@ -776,7 +781,6 @@ packet(0x96e,clif->ackmergeitems);
 //2011-07-18aRagexe (Thanks to Yommy!)
 #if PACKETVER >= 20110718
 // shuffle packets not added
-	packet(0x0844,clif->pCashShopOpen,2);/* tell server cashshop window is being open */
 	packet(0x084a,clif->pCashShopClose,2);/* tell server cashshop window is being closed */
 	packet(0x0846,clif->pCashShopReqTab,2);
 	packet(0x0848,clif->pCashShopBuy,2);
@@ -1796,6 +1800,14 @@ packet(0x96e,clif->ackmergeitems);
 // changed packet sizes
 #endif
 
+#if PACKETVER >= 20160302
+	packet(0x0a4f,clif->plapineDdukDdak_ack);
+#endif
+
+#if PACKETVER_MAIN_NUM >= 20160504 || PACKETVER_RE_NUM >= 20160504 || defined(PACKETVER_ZERO)
+	packet(0x0a70,clif->plapineDdukDdak_close);
+#endif
+
 // all 2016-05-25
 #if PACKETVER >= 20160525
 	packet(0x0a77,clif->pCameraInfo); // CZ_CAMERA_INFO
@@ -1959,12 +1971,16 @@ packet(0x96e,clif->ackmergeitems);
 	packet(0x0b2c,clif->pGuildCastleInfoRequest);
 #endif
 
-#if PACKETVER >= 20160302
-	packet(0x0a4f,clif->plapineDdukDdak_ack);
+#if PACKETVER_MAIN_NUM >= 20190703 || PACKETVER_RE_NUM >= 20190703
+	packet(0x0b35,clif->pReqGearOff);
 #endif
 
-#if PACKETVER >= 20160504
-	packet(0x0a70,clif->plapineDdukDdak_close);
+#if PACKETVER_ZERO_NUM >= 20190709
+	packet(0x0b35,clif->pReqGearOff);
+#endif
+
+#if PACKETVER >= 20190724
+	packet(0x0b4c,clif->pCashShopOpen,2);
 #endif
 
 #endif /* MAP_PACKETS_H */

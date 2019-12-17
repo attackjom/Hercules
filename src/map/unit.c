@@ -459,10 +459,10 @@ static int unit_walktoxy_timer(int tid, int64 tick, int id, intptr_t data)
 		}
 		if (tbl->m == bl->m && check_distance_bl(bl, tbl, ud->chaserange)) {
 			//Reached destination.
+			ud->target_to = 0;
 			if (ud->state.attack_continue) {
 				//Aegis uses one before every attack, we should
 				//only need this one for syncing purposes. [Skotlex]
-				ud->target_to = 0;
 				clif->fixpos(bl);
 				unit->attack(bl, tbl->id, ud->state.attack_continue);
 			}
@@ -544,6 +544,8 @@ static int unit_walktoxy(struct block_list *bl, short x, short y, int flag)
 	ud->to_x = x;
 	ud->to_y = y;
 	unit->stop_attack(bl); //Sets target to 0
+	if ((flag & 8) == 0) // Stepaction might be delayed due to occupied cell
+		unit->stop_stepaction(bl); // unit->walktoxy removes any remembered stepaction and resets ud->target_to
 
 	sc = status->get_sc(bl);
 	if( sc ) {
@@ -661,7 +663,7 @@ static void unit_run_hit(struct block_list *bl, struct status_change *sc, struct
 	lv = sc->data[type]->val1;
 	//If you can't run forward, you must be next to a wall, so bounce back. [Skotlex]
 	if( type == SC_RUN )
-		clif->sc_load(bl,bl->id,AREA,SI_TING,0,0,0);
+		clif->sc_load(bl, bl->id, AREA, status->get_sc_icon(SC_TING), 0, 0, 0);
 
 	ud = unit->bl2ud(bl);
 	nullpo_retv(ud);
@@ -673,7 +675,7 @@ static void unit_run_hit(struct block_list *bl, struct status_change *sc, struct
 		if (lv > 0)
 			skill->blown(bl, bl, skill->get_blewcount(TK_RUN, lv), unit->getdir(bl), 0);
 		clif->fixpos(bl); //Why is a clif->slide (skill->blown) AND a fixpos needed? Ask Aegis.
-		clif->sc_end(bl, bl->id, AREA, SI_TING);
+		clif->sc_end(bl, bl->id, AREA, status->get_sc_icon(SC_TING));
 	} else if (sd) {
 		clif->fixpos(bl);
 		skill->castend_damage_id(bl, &sd->bl, RA_WUGDASH, lv, timer->gettick(), SD_LEVEL);

@@ -1586,7 +1586,8 @@ static bool clif_spawn(struct block_list *bl)
 			if (sd->bg_id != 0 && map->list[sd->bl.m].flag.battleground)
 				clif->sendbgemblem_area(sd);
 			for (i = 0; i < sd->sc_display_count; i++) {
-				clif->sc_continue(&sd->bl, sd->bl.id,AREA,status->dbs->IconChangeTable[sd->sc_display[i]->type],sd->sc_display[i]->val1,sd->sc_display[i]->val2,sd->sc_display[i]->val3);
+				clif->sc_continue(&sd->bl, sd->bl.id, AREA, status->get_sc_icon(sd->sc_display[i]->type), sd->sc_display[i]->val1, sd->sc_display[i]->val2, sd->sc_display[i]->val3);
+
 			}
 			if (sd->charm_type != CHARM_TYPE_NONE && sd->charm_count > 0)
 				clif->spiritcharm(sd);
@@ -1612,7 +1613,7 @@ static bool clif_spawn(struct block_list *bl)
 			else if (nd->size == SZ_MEDIUM)
 				clif->specialeffect(&nd->bl,421,AREA);
 			if (nd->clan_id > 0)
-				clif->sc_load(&nd->bl, nd->bl.id, AREA, status->dbs->IconChangeTable[SC_CLAN_INFO], 0, nd->clan_id, 0);
+				clif->sc_load(&nd->bl, nd->bl.id, AREA, status->get_sc_icon(SC_CLAN_INFO), 0, nd->clan_id, 0);
 		}
 			break;
 		case BL_PET:
@@ -3873,7 +3874,7 @@ static void clif_arrowequip(struct map_session_data *sd, int val)
 	nullpo_retv(sd);
 
 #if PACKETVER >= 20121128
-	clif->status_change(&sd->bl, SI_CLIENT_ONLY_EQUIP_ARROW, 1, INVALID_TIMER, 0, 0, 0);
+	clif->status_change(&sd->bl, status->get_sc_icon(SC_CLIENT_ONLY_EQUIP_ARROW), status->get_sc_relevant_bl_types(SC_CLIENT_ONLY_EQUIP_ARROW), 1, INVALID_TIMER, 0, 0, 0);
 #endif
 	fd=sd->fd;
 	WFIFOHEAD(fd, packet_len(0x013c));
@@ -4676,7 +4677,7 @@ static void clif_getareachar_pc(struct map_session_data *sd, struct map_session_
 		clif->charm_single(sd->fd, dstsd);
 
 	for( i = 0; i < dstsd->sc_display_count; i++ ) {
-		clif->sc_continue(&sd->bl,dstsd->bl.id,SELF,status->dbs->IconChangeTable[dstsd->sc_display[i]->type],dstsd->sc_display[i]->val1,dstsd->sc_display[i]->val2,dstsd->sc_display[i]->val3);
+		clif->sc_continue(&sd->bl, dstsd->bl.id, SELF, status->get_sc_icon(dstsd->sc_display[i]->type), dstsd->sc_display[i]->val1, dstsd->sc_display[i]->val2, dstsd->sc_display[i]->val3);
 	}
 	if( (sd->status.party_id && dstsd->status.party_id == sd->status.party_id) || //Party-mate, or hpdisp setting.
 		(sd->bg_id && sd->bg_id == dstsd->bg_id) || //BattleGround
@@ -4757,7 +4758,7 @@ static void clif_getareachar_unit(struct map_session_data *sd, struct block_list
 			else if (nd->size == SZ_MEDIUM)
 				clif->specialeffect_single(bl,421,sd->fd);
 			if (nd->clan_id > 0)
-				clif->sc_load(&nd->bl, nd->bl.id, AREA, status->dbs->IconChangeTable[SC_CLAN_INFO], 0, nd->clan_id, 0);
+				clif->sc_load(&nd->bl, nd->bl.id, AREA, status->get_sc_icon(SC_CLAN_INFO), 0, nd->clan_id, 0);
 		}
 			break;
 		case BL_MOB:
@@ -6041,7 +6042,7 @@ static void clif_cooking_list(struct map_session_data *sd, int trigger, uint16 s
 	}
 }
 
-static void clif_status_change_notick(struct block_list *bl, int type, int flag, int tick, int total_tick, int val1, int val2, int val3)
+static void clif_status_change_notick(struct block_list *bl, int type, int relevant_bl, int flag, int tick, int total_tick, int val1, int val2, int val3)
 {
 	struct packet_sc_notick p;
 	struct map_session_data *sd;
@@ -6051,7 +6052,7 @@ static void clif_status_change_notick(struct block_list *bl, int type, int flag,
 	if (type == SI_BLANK)  //It shows nothing on the client...
 		return;
 
-	if (!(status->type2relevant_bl_types(type)&bl->type)) // only send status changes that actually matter to the client
+	if (!(relevant_bl & bl->type)) // only send status changes that actually matter to the client
 		return;
 
 	sd = BL_CAST(BL_PC, bl);
@@ -6070,7 +6071,7 @@ static void clif_status_change_notick(struct block_list *bl, int type, int flag,
 /// 08ff <id>.L <index>.W <remain msec>.L { <val>.L }*3  (PACKETVER >= 20111108)
 /// 0983 <index>.W <id>.L <state>.B <total msec>.L <remain msec>.L { <val>.L }*3 (PACKETVER >= 20120618)
 /// 0984 <id>.L <index>.W <total msec>.L <remain msec>.L { <val>.L }*3 (PACKETVER >= 20120618)
-static void clif_status_change_sub(struct block_list *bl, int type, int flag, int tick, int total_tick, int val1, int val2, int val3)
+static void clif_status_change_sub(struct block_list *bl, int type, int relevant_bl, int flag, int tick, int total_tick, int val1, int val2, int val3)
 {
 	struct packet_status_change p;
 	struct map_session_data *sd;
@@ -6080,7 +6081,7 @@ static void clif_status_change_sub(struct block_list *bl, int type, int flag, in
 
 	nullpo_retv(bl);
 
-	if (!(status->type2relevant_bl_types(type)&bl->type)) // only send status changes that actually matter to the client
+	if (!(relevant_bl & bl->type)) // only send status changes that actually matter to the client
 		return;
 
 	if ( tick < 0 )
@@ -6107,9 +6108,9 @@ static void clif_status_change_sub(struct block_list *bl, int type, int flag, in
 
 /// Notifies clients of a status change.
 /// @see clif_status_change_sub
-static void clif_status_change(struct block_list *bl, int type, int flag, int total_tick, int val1, int val2, int val3)
+static void clif_status_change(struct block_list *bl, int type, int relevant_bl, int flag, int total_tick, int val1, int val2, int val3)
 {
-	clif->status_change_sub(bl, type, flag, total_tick, total_tick, val1, val2, val3);
+	clif->status_change_sub(bl, type, relevant_bl, flag, total_tick, total_tick, val1, val2, val3);
 }
 
 /// Send message (modified by [Yor]) (ZC_NOTIFY_PLAYERCHAT).
@@ -9086,21 +9087,44 @@ static void clif_specialeffect_single(struct block_list *bl, int type, int fd)
 ///     @see doc/effect_list.txt
 /// num data:
 ///     effect-dependent value
-static void clif_specialeffect_value(struct block_list *bl, int effect_id, int num, send_target target)
+static void clif_specialeffect_value(struct block_list *bl, int effect_id, uint64 num, send_target target)
 {
-	uint8 buf[14];
+#if PACKETVER_MAIN_NUM >= 20060911 || PACKETVER_AD_NUM >= 20060911 || PACKETVER_SAK_NUM >= 20060911 || defined(PACKETVER_RE) || defined(PACKETVER_ZERO)
+	struct PACKET_ZC_NOTIFY_EFFECT3 packet;
+	packet.packetType = HEADER_ZC_NOTIFY_EFFECT3;
+	packet.aid = bl->id;
+	packet.effectId = effect_id;
+#if PACKETVER >= 20191127
+	packet.num = num;
+#else
+	packet.num = (uint32)num;
+#endif
 
-	WBUFW(buf,0) = 0x284;
-	WBUFL(buf,2) = bl->id;
-	WBUFL(buf,6) = effect_id;
-	WBUFL(buf,10) = num;
-
-	clif->send(buf, packet_len(0x284), bl, target);
+	clif->send(&packet, sizeof(struct PACKET_ZC_NOTIFY_EFFECT3), bl, target);
 
 	if (clif->isdisguised(bl)) {
-		WBUFL(buf,2) = -bl->id;
-		clif->send(buf, packet_len(0x284), bl, SELF);
+		packet.aid = -bl->id;
+		clif->send(&packet, sizeof(struct PACKET_ZC_NOTIFY_EFFECT3), bl, SELF);
 	}
+#endif
+}
+
+static void clif_specialeffect_value_single(struct block_list *bl, int effect_id, uint64 num, int fd)
+{
+#if PACKETVER_MAIN_NUM >= 20060911 || defined(PACKETVER_RE) || defined(PACKETVER_ZERO)
+	WFIFOHEAD(fd, sizeof(struct PACKET_ZC_NOTIFY_EFFECT3));
+
+	struct PACKET_ZC_NOTIFY_EFFECT3 *packet = WFIFOP(fd, 0);
+	packet->packetType = HEADER_ZC_NOTIFY_EFFECT3;
+	packet->aid = bl->id;
+	packet->effectId = effect_id;
+#if PACKETVER >= 20191127
+	packet->num = num;
+#else
+	packet->num = (uint32)num;
+#endif
+	WFIFOSET(fd, sizeof(struct PACKET_ZC_NOTIFY_EFFECT3));
+#endif
 }
 
 /// Remove special effects (ZC_REMOVE_EFFECT).
@@ -9314,6 +9338,8 @@ static void clif_refresh(struct map_session_data *sd)
 
 	mail->clear(sd);
 
+	clif->loadConfirm(sd);
+
 	if (clif->isdisguised(&sd->bl)) {/* refresh-da */
 		short disguise = sd->disguise;
 		pc->disguise(sd, -1);
@@ -9354,7 +9380,7 @@ static void clif_pcname_ack(int fd, struct block_list *bl)
 
 	const struct map_session_data *ssd = BL_UCCAST(BL_PC, bl);
 
-	if (ssd->fakename[0] != '\0' && ssd->disguise != -1) {
+	if (ssd->fakename[0] != '\0') {
 		packet.packet_id = reqName;
 		len = sizeof(struct packet_reqname_ack);
 	} else {
@@ -9367,7 +9393,7 @@ static void clif_pcname_ack(int fd, struct block_list *bl)
 		packet.gid = -bl->id;
 	}
 
-	if (ssd->fakename[0] != '\0' && ssd->disguise != -1) {
+	if (ssd->fakename[0] != '\0') {
 		memcpy(packet.name, ssd->fakename, NAME_LENGTH);
 	} else {
 #if PACKETVER_MAIN_NUM >= 20150225 || PACKETVER_RE_NUM >= 20141126 || defined(PACKETVER_ZERO)
@@ -10681,11 +10707,11 @@ static void clif_parse_LoadEndAck(int fd, struct map_session_data *sd)
 		clif->initialstatus(sd);
 
 		if (pc_isfalcon(sd))
-			clif->status_change(&sd->bl, SI_FALCON, 1, 0, 0, 0, 0);
+			clif->status_change(&sd->bl, status->get_sc_icon(SC_FALCON), status->get_sc_relevant_bl_types(SC_FALCON), 1, 0, 0, 0, 0);
 		if (pc_isridingpeco(sd) || pc_isridingdragon(sd))
-			clif->status_change(&sd->bl, SI_RIDING, 1, 0, 0, 0, 0);
+			clif->status_change(&sd->bl, status->get_sc_icon(SC_RIDING), status->get_sc_relevant_bl_types(SC_RIDING), 1, 0, 0, 0, 0);
 		else if (pc_isridingwug(sd))
-			clif->status_change(&sd->bl, SI_WUGRIDER, 1, 0, 0, 0, 0);
+			clif->status_change(&sd->bl, status->get_sc_icon(SC_WUGRIDER), status->get_sc_relevant_bl_types(SC_WUGRIDER), 1, 0, 0, 0, 0);
 
 		if(sd->status.manner < 0)
 			sc_start(NULL,&sd->bl,SC_NOCHAT,100,0,0);
@@ -10709,7 +10735,7 @@ static void clif_parse_LoadEndAck(int fd, struct map_session_data *sd)
 
 		if (map->night_flag && map->list[sd->bl.m].flag.nightenabled) {
 			sd->state.night = 1;
-			clif->status_change(&sd->bl, SI_SKE, 1, 0, 0, 0, 0);
+			clif->status_change(&sd->bl, status->get_sc_icon(SC_SKE), status->get_sc_relevant_bl_types(SC_SKE), 1, 0, 0, 0, 0);
 		}
 
 		// Notify everyone that this char logged in [Skotlex].
@@ -10761,11 +10787,11 @@ static void clif_parse_LoadEndAck(int fd, struct map_session_data *sd)
 			//Display night.
 			if( !sd->state.night ) {
 				sd->state.night = 1;
-				clif->status_change(&sd->bl, SI_SKE, 1, 0, 0, 0, 0);
+				clif->status_change(&sd->bl, status->get_sc_icon(SC_SKE), status->get_sc_relevant_bl_types(SC_SKE), 1, 0, 0, 0, 0);
 			}
 		} else if( sd->state.night ) { //Clear night display.
 			sd->state.night = 0;
-			clif->sc_end(&sd->bl, sd->bl.id, SELF, SI_SKE);
+			clif->sc_end(&sd->bl, sd->bl.id, SELF, status->get_sc_icon(SC_SKE));
 		}
 
 		if( map->list[sd->bl.m].flag.battleground ) {
@@ -10813,7 +10839,7 @@ static void clif_parse_LoadEndAck(int fd, struct map_session_data *sd)
 		npc->script_event(sd, NPCE_LOADMAP);
 
 	if (pc->checkskill(sd, SG_DEVIL) && !pc->nextjobexp(sd)) //blindness [Komurka]
-		clif->sc_end(&sd->bl, sd->bl.id, SELF, SI_DEVIL1);
+		clif->sc_end(&sd->bl, sd->bl.id, SELF, status->get_sc_icon(SC_DEVIL1));
 
 	if (sd->sc.opt2) //Client loses these on warp.
 		clif->changeoption(&sd->bl);
@@ -12375,6 +12401,42 @@ static void clif_parse_RemoveOption(int fd, struct map_session_data *sd)
 		pc->setoption(sd,sd->sc.option&~OPTION_CART);
 #endif // NEW_CARTS
 	}
+}
+
+static void clif_parse_reqGearOff(int fd, struct map_session_data *sd) __attribute__((nonnull (2)));
+static void clif_parse_reqGearOff(int fd, struct map_session_data *sd)
+{
+#if PACKETVER_MAIN_NUM >= 20190703 || PACKETVER_RE_NUM >= 20190703 || PACKETVER_ZERO_NUM >= 20190709
+	const struct PACKET_CZ_REQ_MOUNTOFF *p = RFIFOP(fd, 0);
+	switch (p->action) {
+	case REMOVE_MOUNT_DRAGON:
+		if (pc_isridingdragon(sd))
+			pc->setoption(sd, sd->sc.option &~ OPTION_DRAGON);
+		break;
+	case REMOVE_MOUNT_MADO:
+		if (pc_ismadogear(sd))
+			pc->setoption(sd, sd->sc.option &~ OPTION_MADOGEAR);
+		break;
+	case REMOVE_MOUNT_PECO:
+		if (pc_isridingpeco(sd))
+			pc->setoption(sd, sd->sc.option &~ OPTION_RIDING);
+		break;
+	case REMOVE_MOUNT_FALCON:
+		if (pc_isfalcon(sd))
+			pc->setoption(sd, sd->sc.option &~ OPTION_FALCON);
+		break;
+	case REMOVE_MOUNT_CART:
+		// this packet exists in clients with only new carts [4144]
+		if (sd->sc.data[SC_PUSH_CART])
+			pc->setcart(sd, 0);
+		break;
+	case REMOVE_MOUNT_0:
+	case REMOVE_MOUNT_2:
+	default:
+		ShowError("Unknown action in remove mount packet: %d\n", p->action);
+		break;
+	}
+#endif
 }
 
 static void clif_parse_ChangeCart(int fd, struct map_session_data *sd) __attribute__((nonnull (2)));
@@ -19923,6 +19985,7 @@ static void clif_parse_dull(int fd, struct map_session_data *sd)
 static void clif_parse_CashShopOpen(int fd, struct map_session_data *sd) __attribute__((nonnull (2)));
 static void clif_parse_CashShopOpen(int fd, struct map_session_data *sd)
 {
+#if PACKETVER >= 20100824
 	if (sd->state.trading || pc_isdead(sd) || pc_isvending(sd))
 		return;
 
@@ -19936,6 +19999,7 @@ static void clif_parse_CashShopOpen(int fd, struct map_session_data *sd)
 	WFIFOL(fd, 2) = sd->cashPoints; //[Ryuuzaki] - switched positions to reflect proper values
 	WFIFOL(fd, 6) = sd->kafraPoints;
 	WFIFOSET(fd, 10);
+#endif
 }
 
 static void clif_parse_CashShopClose(int fd, struct map_session_data *sd) __attribute__((nonnull (2)));
@@ -24027,6 +24091,7 @@ void clif_defaults(void)
 	clif->specialeffect = clif_specialeffect;
 	clif->specialeffect_single = clif_specialeffect_single;
 	clif->specialeffect_value = clif_specialeffect_value;
+	clif->specialeffect_value_single = clif_specialeffect_value_single;
 	clif->removeSpecialEffect = clif_removeSpecialEffect;
 	clif->removeSpecialEffect_single = clif_removeSpecialEffect_single;
 	clif->millenniumshield = clif_millenniumshield;
@@ -24683,4 +24748,5 @@ void clif_defaults(void)
 	clif->lapineDdukDdak_result = clif_lapineDdukDdak_result;
 	clif->plapineDdukDdak_ack = clif_parse_lapineDdukDdak_ack;
 	clif->plapineDdukDdak_close = clif_parse_lapineDdukDdak_close;
+	clif->pReqGearOff = clif_parse_reqGearOff;
 }

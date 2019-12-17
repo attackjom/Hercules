@@ -2043,7 +2043,7 @@ static int skill_additional_effect(struct block_list *src, struct block_list *bl
 				if (DIFF_TICK(ud->canact_tick, tick + rate) < 0){
 					ud->canact_tick = tick+rate;
 					if ( battle_config.display_status_timers )
-						clif->status_change(src, SI_POSTDELAY, 1, rate, 0, 0, 0);
+						clif->status_change(src, status->get_sc_icon(SC_POSTDELAY), status->get_sc_relevant_bl_types(SC_POSTDELAY), 1, rate, 0, 0, 0);
 				}
 			}
 		}
@@ -2129,7 +2129,7 @@ static int skill_additional_effect(struct block_list *src, struct block_list *bl
 				if (DIFF_TICK(ud->canact_tick, tick + rate) < 0){
 					ud->canact_tick = tick+rate;
 					if (battle_config.display_status_timers)
-						clif->status_change(src, SI_POSTDELAY, 1, rate, 0, 0, 0);
+						clif->status_change(src, status->get_sc_icon(SC_POSTDELAY), status->get_sc_relevant_bl_types(SC_POSTDELAY), 1, rate, 0, 0, 0);
 				}
 			}
 		}
@@ -2470,7 +2470,7 @@ static int skill_counter_additional_effect(struct block_list *src, struct block_
 				if (DIFF_TICK(ud->canact_tick, tick + rate) < 0){
 					ud->canact_tick = tick+rate;
 					if (battle_config.display_status_timers)
-						clif->status_change(bl, SI_POSTDELAY, 1, rate, 0, 0, 0);
+						clif->status_change(bl, status->get_sc_icon(SC_POSTDELAY), status->get_sc_relevant_bl_types(SC_POSTDELAY), 1, rate, 0, 0, 0);
 				}
 			}
 		}
@@ -5168,7 +5168,7 @@ static int skill_castend_damage_id(struct block_list *src, struct block_list *bl
 
 					skill->castend_type(skill->get_casttype(spell_skill_id), src, bl, spell_skill_id, spell_skill_lv, tick, 0);
 					sd->ud.canact_tick = tick + skill->delay_fix(src, spell_skill_id, spell_skill_lv);
-					clif->status_change(src, SI_POSTDELAY, 1, skill->delay_fix(src, spell_skill_id, spell_skill_lv), 0, 0, 0);
+					clif->status_change(src, status->get_sc_icon(SC_POSTDELAY), status->get_sc_relevant_bl_types(SC_POSTDELAY), 1, skill->delay_fix(src, spell_skill_id, spell_skill_lv), 0, 0, 0);
 
 					cooldown = skill->get_cooldown(spell_skill_id, spell_skill_lv);
 					for (i = 0; i < ARRAYLENGTH(sd->skillcooldown) && sd->skillcooldown[i].id; i++) {
@@ -5782,7 +5782,7 @@ static int skill_castend_id(int tid, int64 tick, int id, intptr_t data)
 				skill->blockpc_start(sd, ud->skill_id, cooldown);
 		}
 		if( battle_config.display_status_timers && sd )
-			clif->status_change(src, SI_POSTDELAY, 1, skill->delay_fix(src, ud->skill_id, ud->skill_lv), 0, 0, 0);
+			clif->status_change(src, status->get_sc_icon(SC_POSTDELAY), status->get_sc_relevant_bl_types(SC_POSTDELAY), 1, skill->delay_fix(src, ud->skill_id, ud->skill_lv), 0, 0, 0);
 		if( sd )
 		{
 			switch( ud->skill_id )
@@ -8463,7 +8463,7 @@ static int skill_castend_nodamage_id(struct block_list *src, struct block_list *
 							status_fix_damage(src, bl, 1000, 0);
 							clif->damage(src,bl,0,0,1000,0,BDT_NORMAL,0);
 							if( !status->isdead(bl) ) {
-								int where[] = { EQP_ARMOR, EQP_SHIELD, EQP_HELM, EQP_SHOES, EQP_GARMENT };
+								int where[] = {EQP_ARMOR, EQP_SHIELD, EQP_HELM};
 								skill->break_equip(bl, where[rnd() % ARRAYLENGTH(where)], 10000, BCT_ENEMY);
 							}
 						}
@@ -10783,7 +10783,7 @@ static int skill_castend_pos(int tid, int64 tick, int id, intptr_t data)
 				skill->blockpc_start(sd, ud->skill_id, cooldown);
 		}
 		if( battle_config.display_status_timers && sd )
-			clif->status_change(src, SI_POSTDELAY, 1, skill->delay_fix(src, ud->skill_id, ud->skill_lv), 0, 0, 0);
+			clif->status_change(src, status->get_sc_icon(SC_POSTDELAY), status->get_sc_relevant_bl_types(SC_POSTDELAY), 1, skill->delay_fix(src, ud->skill_id, ud->skill_lv), 0, 0, 0);
 #if 0
 		if (sd) {
 			switch (ud->skill_id) {
@@ -13962,27 +13962,9 @@ static int skill_isammotype(struct map_session_data *sd, int skill_id)
  **/
 static bool skill_is_combo(int skill_id)
 {
-	switch( skill_id )
-	{
-		case MO_CHAINCOMBO:
-		case MO_COMBOFINISH:
-		case CH_TIGERFIST:
-		case CH_CHAINCRUSH:
-		case MO_EXTREMITYFIST:
-		case TK_TURNKICK:
-		case TK_STORMKICK:
-		case TK_DOWNKICK:
-		case TK_COUNTER:
-		case TK_JUMPKICK:
-		case HT_POWER:
-		case GC_COUNTERSLASH:
-		case GC_WEAPONCRUSH:
-		case SR_FALLENEMPIRE:
-		case SR_DRAGONCOMBO:
-		case SR_TIGERCANNON:
-		case SR_GATEOFHELL:
-			return true;
-	}
+	if (skill->get_inf2(skill_id) & INF2_IS_COMBO_SKILL)
+		return true;
+
 	return false;
 }
 
@@ -16413,9 +16395,9 @@ static int skill_sit(struct map_session_data *sd, int type)
 	}
 
 	if( type ) {
-		clif->sc_load(&sd->bl,sd->bl.id,SELF,SI_SIT,0,0,0);
+		clif->sc_load(&sd->bl, sd->bl.id, SELF, status->get_sc_icon(SC_SIT), 0, 0, 0);
 	} else {
-		clif->sc_end(&sd->bl,sd->bl.id,SELF,SI_SIT);
+		clif->sc_end(&sd->bl, sd->bl.id, SELF, status->get_sc_icon(SC_SIT));
 	}
 
 	if (!flag) return 0;
@@ -19776,23 +19758,23 @@ static int skill_get_elemental_type(uint16 skill_id, uint16 skill_lv)
 static void skill_cooldown_save(struct map_session_data *sd)
 {
 	int i;
-	struct skill_cd* cd = NULL;
+	struct skill_cd *cd = NULL;
 	int64 now = 0;
 
-	// always check to make sure the session properly exists
 	nullpo_retv(sd);
 
-	if( !(cd = idb_get(skill->cd_db, sd->status.char_id)) ) {// no skill cooldown is associated with this character
+	if ((cd = idb_get(skill->cd_db, sd->status.char_id)) == NULL)
 		return;
-	}
 
 	now = timer->gettick();
 
-	// process each individual cooldown associated with the character
-	for( i = 0; i < cd->cursor; i++ ) {
-		cd->entry[i]->duration = DIFF_TICK32(cd->entry[i]->started+cd->entry[i]->duration,now);
-		if( cd->entry[i]->timer != INVALID_TIMER ) {
-			timer->delete(cd->entry[i]->timer,skill->blockpc_end);
+	for (i = 0; i < cd->cursor; i++) {
+		if (battle_config.guild_skill_relog_delay == 1 && cd->entry[i]->skill_id > GD_SKILLBASE && cd->entry[i]->skill_id < GD_MAX)
+			continue;
+
+		cd->entry[i]->duration = DIFF_TICK32(cd->entry[i]->started + cd->entry[i]->duration, now);
+		if (cd->entry[i]->timer != INVALID_TIMER) {
+			timer->delete(cd->entry[i]->timer, skill->blockpc_end);
 			cd->entry[i]->timer = INVALID_TIMER;
 		}
 	}
@@ -20278,6 +20260,12 @@ static void skill_validate_skillinfo(struct config_setting_t *conf, struct s_ski
 					sk->inf2 |= INF2_HIDDEN_TRAP;
 				} else {
 					sk->inf2 &= ~INF2_HIDDEN_TRAP;
+				}
+			} else if (strcmpi(type, "IsCombo") == 0) {
+				if (on) {
+					sk->inf2 |= INF2_IS_COMBO_SKILL;
+				} else {
+					sk->inf2 &= ~INF2_IS_COMBO_SKILL;
 				}
 			} else if (strcmpi(type, "None") != 0) {
 				skilldb_invalid_error(type, config_setting_name(t), sk->nameid);

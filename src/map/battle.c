@@ -4661,12 +4661,16 @@ static struct Damage battle_calc_weapon_attack(struct block_list *src, struct bl
 	{
 		short cri = sstatus->cri;
 		if (sd != NULL) {
+			// Racial crit bonuses are affected by katar's crit bonus.
+			if (battle_config.show_katar_crit_bonus && sd->weapontype == W_KATAR)
+				cri += sd->critaddrace[tstatus->race] * 2;
+			else
+				cri += sd->critaddrace[tstatus->race];
+
 			// if show_katar_crit_bonus is enabled, it already done the calculation in status.c
 			if (!battle_config.show_katar_crit_bonus && sd->weapontype == W_KATAR) {
 				cri <<= 1;
 			}
-
-			cri+= sd->critaddrace[tstatus->race];
 
 			if (flag.arrow) {
 				cri += sd->bonus.arrow_cri;
@@ -6457,7 +6461,7 @@ static enum damage_lv battle_weapon_attack(struct block_list *src, struct block_
 				skill->castend_type(type, src, target, r_skill, r_lv, tick, flag);
 				sd->state.autocast = 0;
 				sd->ud.canact_tick = tick + skill->delay_fix(src, r_skill, r_lv);
-				clif->status_change(src, SI_POSTDELAY, 1, skill->delay_fix(src, r_skill, r_lv), 0, 0, 1);
+				clif->status_change(src, status->get_sc_icon(SC_POSTDELAY), status->get_sc_relevant_bl_types(SC_POSTDELAY), 1, skill->delay_fix(src, r_skill, r_lv), 0, 0, 1);
 			}
 		}
 
