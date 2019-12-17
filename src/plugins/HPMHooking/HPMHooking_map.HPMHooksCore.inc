@@ -1154,6 +1154,8 @@ struct {
 	struct HPMHookPoint *HP_clif_specialeffect_single_post;
 	struct HPMHookPoint *HP_clif_specialeffect_value_pre;
 	struct HPMHookPoint *HP_clif_specialeffect_value_post;
+	struct HPMHookPoint *HP_clif_specialeffect_value_single_pre;
+	struct HPMHookPoint *HP_clif_specialeffect_value_single_post;
 	struct HPMHookPoint *HP_clif_removeSpecialEffect_pre;
 	struct HPMHookPoint *HP_clif_removeSpecialEffect_post;
 	struct HPMHookPoint *HP_clif_removeSpecialEffect_single_pre;
@@ -4082,10 +4084,12 @@ struct {
 	struct HPMHookPoint *HP_mob_read_db_drops_option_post;
 	struct HPMHookPoint *HP_mob_read_db_stats_sub_pre;
 	struct HPMHookPoint *HP_mob_read_db_stats_sub_post;
+	struct HPMHookPoint *HP_mob_read_db_viewdata_sub_pre;
+	struct HPMHookPoint *HP_mob_read_db_viewdata_sub_post;
 	struct HPMHookPoint *HP_mob_name_constants_pre;
 	struct HPMHookPoint *HP_mob_name_constants_post;
-	struct HPMHookPoint *HP_mob_readdb_mobavail_pre;
-	struct HPMHookPoint *HP_mob_readdb_mobavail_post;
+	struct HPMHookPoint *HP_mob_mobavail_removal_notice_pre;
+	struct HPMHookPoint *HP_mob_mobavail_removal_notice_post;
 	struct HPMHookPoint *HP_mob_read_randommonster_pre;
 	struct HPMHookPoint *HP_mob_read_randommonster_post;
 	struct HPMHookPoint *HP_mob_parse_row_chatdb_pre;
@@ -7987,6 +7991,8 @@ struct {
 	int HP_clif_specialeffect_single_post;
 	int HP_clif_specialeffect_value_pre;
 	int HP_clif_specialeffect_value_post;
+	int HP_clif_specialeffect_value_single_pre;
+	int HP_clif_specialeffect_value_single_post;
 	int HP_clif_removeSpecialEffect_pre;
 	int HP_clif_removeSpecialEffect_post;
 	int HP_clif_removeSpecialEffect_single_pre;
@@ -10915,10 +10921,12 @@ struct {
 	int HP_mob_read_db_drops_option_post;
 	int HP_mob_read_db_stats_sub_pre;
 	int HP_mob_read_db_stats_sub_post;
+	int HP_mob_read_db_viewdata_sub_pre;
+	int HP_mob_read_db_viewdata_sub_post;
 	int HP_mob_name_constants_pre;
 	int HP_mob_name_constants_post;
-	int HP_mob_readdb_mobavail_pre;
-	int HP_mob_readdb_mobavail_post;
+	int HP_mob_mobavail_removal_notice_pre;
+	int HP_mob_mobavail_removal_notice_post;
 	int HP_mob_read_randommonster_pre;
 	int HP_mob_read_randommonster_post;
 	int HP_mob_parse_row_chatdb_pre;
