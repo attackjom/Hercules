@@ -16170,7 +16170,7 @@ static int skill_delay_fix(struct block_list *bl, uint16 skill_id, uint16 skill_
 		}
 
 	}
-
+	
 	if( !(delaynodex&4) && sd && sd->delayrate != 100 )
 		time = time * sd->delayrate / 100;
 
@@ -16178,8 +16178,8 @@ static int skill_delay_fix(struct block_list *bl, uint16 skill_id, uint16 skill_
 		time = time * battle_config.delay_rate / 100;
 
 	//min delay
-	time = max(time, status_get_amotion(bl)); // Delay can never be below amotion [Playtester]
-	time = max(time, battle_config.min_skill_delay_limit);
+	//time = max(time, status_get_amotion(bl)); // Delay can never be below amotion [Playtester]
+	//time = max(time, battle_config.min_skill_delay_limit);
 
 //        ShowInfo("Delay delayfix = %d\n",time);
 	return time;
