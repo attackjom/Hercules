@@ -12,7 +12,6 @@
  * @link     http://cweiske.de/php-sqllint.htm
  */
 namespace phpsqllint;
-
 if (file_exists(__DIR__ . '/../vendor/autoload.php')) {
     //local git checkout
     include_once __DIR__ . '/../vendor/autoload.php';
@@ -20,12 +19,10 @@ if (file_exists(__DIR__ . '/../vendor/autoload.php')) {
     //dependency composer installation
     include_once 'vendor/autoload.php';
 }
-
 if (file_exists(__DIR__ . '/../src/phpsqllint/Autoloader.php')) {
     include_once __DIR__ . '/../src/phpsqllint/Autoloader.php';
     Autoloader::register();
 }
-
 $cli = new Cli();
 $cli->run();
 ?>
