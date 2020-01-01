@@ -3098,6 +3098,10 @@ static int skill_attack(int attack_type, struct block_list *src, struct block_li
 		case LG_OVERBRAND_PLUSATK:
 			dmg.dmotion = clif->skill_damage(dsrc,bl,tick,status_get_amotion(src),dmg.dmotion,damage,dmg.div_,skill_id,-1,BDT_SPLASH);
 			break;
+		case GN_CARTCANNON:
+			dmg.amotion = 600;
+			dmg.dmotion = clif->skill_damage(dsrc,bl,tick,600,dmg.dmotion,damage,dmg.div_,skill_id,-1,BDT_SPLASH);
+			break;
 		case EL_FIRE_BOMB:
 		case EL_FIRE_BOMB_ATK:
 		case EL_FIRE_WAVE:
