@@ -2100,8 +2100,12 @@ struct {
 	struct HPMHookPoint *HP_clif_pBGQueueRevokeReq_post;
 	struct HPMHookPoint *HP_clif_pBGQueueBattleBeginAck_pre;
 	struct HPMHookPoint *HP_clif_pBGQueueBattleBeginAck_post;
-	struct HPMHookPoint *HP_clif_pCashShopOpen_pre;
-	struct HPMHookPoint *HP_clif_pCashShopOpen_post;
+	struct HPMHookPoint *HP_clif_pCashShopOpen1_pre;
+	struct HPMHookPoint *HP_clif_pCashShopOpen1_post;
+	struct HPMHookPoint *HP_clif_pCashShopOpen2_pre;
+	struct HPMHookPoint *HP_clif_pCashShopOpen2_post;
+	struct HPMHookPoint *HP_clif_pCashShopOpen3_pre;
+	struct HPMHookPoint *HP_clif_pCashShopOpen3_post;
 	struct HPMHookPoint *HP_clif_pCashShopClose_pre;
 	struct HPMHookPoint *HP_clif_pCashShopClose_post;
 	struct HPMHookPoint *HP_clif_pCashShopReqTab_pre;
@@ -2116,6 +2120,8 @@ struct {
 	struct HPMHookPoint *HP_clif_pGuildInvite2_post;
 	struct HPMHookPoint *HP_clif_cashShopBuyAck_pre;
 	struct HPMHookPoint *HP_clif_cashShopBuyAck_post;
+	struct HPMHookPoint *HP_clif_cashShopOpen_pre;
+	struct HPMHookPoint *HP_clif_cashShopOpen_post;
 	struct HPMHookPoint *HP_clif_pPartyBookingAddFilter_pre;
 	struct HPMHookPoint *HP_clif_pPartyBookingAddFilter_post;
 	struct HPMHookPoint *HP_clif_pPartyBookingSubFilter_pre;
@@ -8937,8 +8943,12 @@ struct {
 	int HP_clif_pBGQueueRevokeReq_post;
 	int HP_clif_pBGQueueBattleBeginAck_pre;
 	int HP_clif_pBGQueueBattleBeginAck_post;
-	int HP_clif_pCashShopOpen_pre;
-	int HP_clif_pCashShopOpen_post;
+	int HP_clif_pCashShopOpen1_pre;
+	int HP_clif_pCashShopOpen1_post;
+	int HP_clif_pCashShopOpen2_pre;
+	int HP_clif_pCashShopOpen2_post;
+	int HP_clif_pCashShopOpen3_pre;
+	int HP_clif_pCashShopOpen3_post;
 	int HP_clif_pCashShopClose_pre;
 	int HP_clif_pCashShopClose_post;
 	int HP_clif_pCashShopReqTab_pre;
@@ -8953,6 +8963,8 @@ struct {
 	int HP_clif_pGuildInvite2_post;
 	int HP_clif_cashShopBuyAck_pre;
 	int HP_clif_cashShopBuyAck_post;
+	int HP_clif_cashShopOpen_pre;
+	int HP_clif_cashShopOpen_post;
 	int HP_clif_pPartyBookingAddFilter_pre;
 	int HP_clif_pPartyBookingAddFilter_post;
 	int HP_clif_pPartyBookingSubFilter_pre;
