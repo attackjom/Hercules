@@ -27370,13 +27370,13 @@ void HP_clif_pBGQueueBattleBeginAck(int fd, struct map_session_data *sd) {
 	}
 	return;
 }
-void HP_clif_pCashShopOpen1(int fd, struct map_session_data *sd) {
+void HP_clif_pCashShopOpen(int fd, struct map_session_data *sd) {
 	int hIndex = 0;
-	if (HPMHooks.count.HP_clif_pCashShopOpen1_pre > 0) {
+	if (HPMHooks.count.HP_clif_pCashShopOpen_pre > 0) {
 		void (*preHookFunc) (int *fd, struct map_session_data **sd);
 		*HPMforce_return = false;
-		for (hIndex = 0; hIndex < HPMHooks.count.HP_clif_pCashShopOpen1_pre; hIndex++) {
-			preHookFunc = HPMHooks.list.HP_clif_pCashShopOpen1_pre[hIndex].func;
+		for (hIndex = 0; hIndex < HPMHooks.count.HP_clif_pCashShopOpen_pre; hIndex++) {
+			preHookFunc = HPMHooks.list.HP_clif_pCashShopOpen_pre[hIndex].func;
 			preHookFunc(&fd, &sd);
 		}
 		if (*HPMforce_return) {
@@ -27385,64 +27385,12 @@ void HP_clif_pCashShopOpen1(int fd, struct map_session_data *sd) {
 		}
 	}
 	{
-		HPMHooks.source.clif.pCashShopOpen1(fd, sd);
+		HPMHooks.source.clif.pCashShopOpen(fd, sd);
 	}
-	if (HPMHooks.count.HP_clif_pCashShopOpen1_post > 0) {
+	if (HPMHooks.count.HP_clif_pCashShopOpen_post > 0) {
 		void (*postHookFunc) (int fd, struct map_session_data *sd);
-		for (hIndex = 0; hIndex < HPMHooks.count.HP_clif_pCashShopOpen1_post; hIndex++) {
-			postHookFunc = HPMHooks.list.HP_clif_pCashShopOpen1_post[hIndex].func;
-			postHookFunc(fd, sd);
-		}
-	}
-	return;
-}
-void HP_clif_pCashShopOpen2(int fd, struct map_session_data *sd) {
-	int hIndex = 0;
-	if (HPMHooks.count.HP_clif_pCashShopOpen2_pre > 0) {
-		void (*preHookFunc) (int *fd, struct map_session_data **sd);
-		*HPMforce_return = false;
-		for (hIndex = 0; hIndex < HPMHooks.count.HP_clif_pCashShopOpen2_pre; hIndex++) {
-			preHookFunc = HPMHooks.list.HP_clif_pCashShopOpen2_pre[hIndex].func;
-			preHookFunc(&fd, &sd);
-		}
-		if (*HPMforce_return) {
-			*HPMforce_return = false;
-			return;
-		}
-	}
-	{
-		HPMHooks.source.clif.pCashShopOpen2(fd, sd);
-	}
-	if (HPMHooks.count.HP_clif_pCashShopOpen2_post > 0) {
-		void (*postHookFunc) (int fd, struct map_session_data *sd);
-		for (hIndex = 0; hIndex < HPMHooks.count.HP_clif_pCashShopOpen2_post; hIndex++) {
-			postHookFunc = HPMHooks.list.HP_clif_pCashShopOpen2_post[hIndex].func;
-			postHookFunc(fd, sd);
-		}
-	}
-	return;
-}
-void HP_clif_pCashShopOpen3(int fd, struct map_session_data *sd) {
-	int hIndex = 0;
-	if (HPMHooks.count.HP_clif_pCashShopOpen3_pre > 0) {
-		void (*preHookFunc) (int *fd, struct map_session_data **sd);
-		*HPMforce_return = false;
-		for (hIndex = 0; hIndex < HPMHooks.count.HP_clif_pCashShopOpen3_pre; hIndex++) {
-			preHookFunc = HPMHooks.list.HP_clif_pCashShopOpen3_pre[hIndex].func;
-			preHookFunc(&fd, &sd);
-		}
-		if (*HPMforce_return) {
-			*HPMforce_return = false;
-			return;
-		}
-	}
-	{
-		HPMHooks.source.clif.pCashShopOpen3(fd, sd);
-	}
-	if (HPMHooks.count.HP_clif_pCashShopOpen3_post > 0) {
-		void (*postHookFunc) (int fd, struct map_session_data *sd);
-		for (hIndex = 0; hIndex < HPMHooks.count.HP_clif_pCashShopOpen3_post; hIndex++) {
-			postHookFunc = HPMHooks.list.HP_clif_pCashShopOpen3_post[hIndex].func;
+		for (hIndex = 0; hIndex < HPMHooks.count.HP_clif_pCashShopOpen_post; hIndex++) {
+			postHookFunc = HPMHooks.list.HP_clif_pCashShopOpen_post[hIndex].func;
 			postHookFunc(fd, sd);
 		}
 	}
@@ -27626,32 +27574,6 @@ void HP_clif_cashShopBuyAck(int fd, struct map_session_data *sd, int itemId, enu
 		for (hIndex = 0; hIndex < HPMHooks.count.HP_clif_cashShopBuyAck_post; hIndex++) {
 			postHookFunc = HPMHooks.list.HP_clif_cashShopBuyAck_post[hIndex].func;
 			postHookFunc(fd, sd, itemId, result);
-		}
-	}
-	return;
-}
-void HP_clif_cashShopOpen(int fd, struct map_session_data *sd, int tab) {
-	int hIndex = 0;
-	if (HPMHooks.count.HP_clif_cashShopOpen_pre > 0) {
-		void (*preHookFunc) (int *fd, struct map_session_data **sd, int *tab);
-		*HPMforce_return = false;
-		for (hIndex = 0; hIndex < HPMHooks.count.HP_clif_cashShopOpen_pre; hIndex++) {
-			preHookFunc = HPMHooks.list.HP_clif_cashShopOpen_pre[hIndex].func;
-			preHookFunc(&fd, &sd, &tab);
-		}
-		if (*HPMforce_return) {
-			*HPMforce_return = false;
-			return;
-		}
-	}
-	{
-		HPMHooks.source.clif.cashShopOpen(fd, sd, tab);
-	}
-	if (HPMHooks.count.HP_clif_cashShopOpen_post > 0) {
-		void (*postHookFunc) (int fd, struct map_session_data *sd, int tab);
-		for (hIndex = 0; hIndex < HPMHooks.count.HP_clif_cashShopOpen_post; hIndex++) {
-			postHookFunc = HPMHooks.list.HP_clif_cashShopOpen_post[hIndex].func;
-			postHookFunc(fd, sd, tab);
 		}
 	}
 	return;

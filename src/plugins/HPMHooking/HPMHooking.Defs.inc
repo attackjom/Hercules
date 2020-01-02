@@ -2510,12 +2510,8 @@ typedef void (*HPMHOOK_pre_clif_pBGQueueRevokeReq) (int *fd, struct map_session_
 typedef void (*HPMHOOK_post_clif_pBGQueueRevokeReq) (int fd, struct map_session_data *sd);
 typedef void (*HPMHOOK_pre_clif_pBGQueueBattleBeginAck) (int *fd, struct map_session_data **sd);
 typedef void (*HPMHOOK_post_clif_pBGQueueBattleBeginAck) (int fd, struct map_session_data *sd);
-typedef void (*HPMHOOK_pre_clif_pCashShopOpen1) (int *fd, struct map_session_data **sd);
-typedef void (*HPMHOOK_post_clif_pCashShopOpen1) (int fd, struct map_session_data *sd);
-typedef void (*HPMHOOK_pre_clif_pCashShopOpen2) (int *fd, struct map_session_data **sd);
-typedef void (*HPMHOOK_post_clif_pCashShopOpen2) (int fd, struct map_session_data *sd);
-typedef void (*HPMHOOK_pre_clif_pCashShopOpen3) (int *fd, struct map_session_data **sd);
-typedef void (*HPMHOOK_post_clif_pCashShopOpen3) (int fd, struct map_session_data *sd);
+typedef void (*HPMHOOK_pre_clif_pCashShopOpen) (int *fd, struct map_session_data **sd);
+typedef void (*HPMHOOK_post_clif_pCashShopOpen) (int fd, struct map_session_data *sd);
 typedef void (*HPMHOOK_pre_clif_pCashShopClose) (int *fd, struct map_session_data **sd);
 typedef void (*HPMHOOK_post_clif_pCashShopClose) (int fd, struct map_session_data *sd);
 typedef void (*HPMHOOK_pre_clif_pCashShopReqTab) (int *fd, struct map_session_data **sd);
@@ -2530,8 +2526,6 @@ typedef void (*HPMHOOK_pre_clif_pGuildInvite2) (int *fd, struct map_session_data
 typedef void (*HPMHOOK_post_clif_pGuildInvite2) (int fd, struct map_session_data *sd);
 typedef void (*HPMHOOK_pre_clif_cashShopBuyAck) (int *fd, struct map_session_data **sd, int *itemId, enum CASH_SHOP_BUY_RESULT *result);
 typedef void (*HPMHOOK_post_clif_cashShopBuyAck) (int fd, struct map_session_data *sd, int itemId, enum CASH_SHOP_BUY_RESULT result);
-typedef void (*HPMHOOK_pre_clif_cashShopOpen) (int *fd, struct map_session_data **sd, int *tab);
-typedef void (*HPMHOOK_post_clif_cashShopOpen) (int fd, struct map_session_data *sd, int tab);
 typedef void (*HPMHOOK_pre_clif_pPartyBookingAddFilter) (int *fd, struct map_session_data **sd);
 typedef void (*HPMHOOK_post_clif_pPartyBookingAddFilter) (int fd, struct map_session_data *sd);
 typedef void (*HPMHOOK_pre_clif_pPartyBookingSubFilter) (int *fd, struct map_session_data **sd);
