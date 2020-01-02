@@ -728,7 +728,7 @@ packet(0x96e,clif->ackmergeitems);
 
 // all versions
 #if PACKETVER >= 20100824
-	packet(0x0844,clif->pCashShopOpen1);
+	packet(0x0844,clif->pCashShopOpen,2);
 #endif
 
 //2010-11-24aRagexeRE
@@ -1980,11 +1980,7 @@ packet(0x96e,clif->ackmergeitems);
 #endif
 
 #if PACKETVER >= 20190724
-	packet(0x0b4c,clif->pCashShopOpen2);
-#endif
-
-#if PACKETVER >= 20191224
-	packet(0x0b6e,clif->pCashShopOpen3);
+	packet(0x0b4c,clif->pCashShopOpen,2);
 #endif
 
 #endif /* MAP_PACKETS_H */
