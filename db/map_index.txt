@@ -1040,6 +1040,13 @@ sp_rudus3
 mag_dun03
 gl_cas01_
 1@gl_prq
+prt_mz03_i
+1@gol1
+1@gol2
+odin_past
+abyss_04
+ein_dun03
+1@gl_he
 1@ghg
 ba_2whs01
 ba_2whs02
@@ -1057,6 +1064,14 @@ ba_go
 ba_maison
 ba_lost
 ba_bath
+1@thts
+2@thts
+3@thts
+4@thts
+5@thts
+6@thts
+7@thts
+8@thts
 
 // Only add maps under this line if they are not standard maps!
 //======================================================================================
