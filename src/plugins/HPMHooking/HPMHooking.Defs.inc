@@ -2,7 +2,7 @@
  * This file is part of Hercules.
  * http://herc.ws - http://github.com/HerculesWS/Hercules
  *
- * Copyright (C) 2013-2019  Hercules Dev Team
+ * Copyright (C) 2013-2020 Hercules Dev Team
  *
  * Hercules is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -2510,8 +2510,12 @@ typedef void (*HPMHOOK_pre_clif_pBGQueueRevokeReq) (int *fd, struct map_session_
 typedef void (*HPMHOOK_post_clif_pBGQueueRevokeReq) (int fd, struct map_session_data *sd);
 typedef void (*HPMHOOK_pre_clif_pBGQueueBattleBeginAck) (int *fd, struct map_session_data **sd);
 typedef void (*HPMHOOK_post_clif_pBGQueueBattleBeginAck) (int fd, struct map_session_data *sd);
-typedef void (*HPMHOOK_pre_clif_pCashShopOpen) (int *fd, struct map_session_data **sd);
-typedef void (*HPMHOOK_post_clif_pCashShopOpen) (int fd, struct map_session_data *sd);
+typedef void (*HPMHOOK_pre_clif_pCashShopOpen1) (int *fd, struct map_session_data **sd);
+typedef void (*HPMHOOK_post_clif_pCashShopOpen1) (int fd, struct map_session_data *sd);
+typedef void (*HPMHOOK_pre_clif_pCashShopOpen2) (int *fd, struct map_session_data **sd);
+typedef void (*HPMHOOK_post_clif_pCashShopOpen2) (int fd, struct map_session_data *sd);
+typedef void (*HPMHOOK_pre_clif_pCashShopLimitedReq) (int *fd, struct map_session_data **sd);
+typedef void (*HPMHOOK_post_clif_pCashShopLimitedReq) (int fd, struct map_session_data *sd);
 typedef void (*HPMHOOK_pre_clif_pCashShopClose) (int *fd, struct map_session_data **sd);
 typedef void (*HPMHOOK_post_clif_pCashShopClose) (int fd, struct map_session_data *sd);
 typedef void (*HPMHOOK_pre_clif_pCashShopReqTab) (int *fd, struct map_session_data **sd);
@@ -2526,6 +2530,8 @@ typedef void (*HPMHOOK_pre_clif_pGuildInvite2) (int *fd, struct map_session_data
 typedef void (*HPMHOOK_post_clif_pGuildInvite2) (int fd, struct map_session_data *sd);
 typedef void (*HPMHOOK_pre_clif_cashShopBuyAck) (int *fd, struct map_session_data **sd, int *itemId, enum CASH_SHOP_BUY_RESULT *result);
 typedef void (*HPMHOOK_post_clif_cashShopBuyAck) (int fd, struct map_session_data *sd, int itemId, enum CASH_SHOP_BUY_RESULT result);
+typedef void (*HPMHOOK_pre_clif_cashShopOpen) (int *fd, struct map_session_data **sd, int *tab);
+typedef void (*HPMHOOK_post_clif_cashShopOpen) (int fd, struct map_session_data *sd, int tab);
 typedef void (*HPMHOOK_pre_clif_pPartyBookingAddFilter) (int *fd, struct map_session_data **sd);
 typedef void (*HPMHOOK_post_clif_pPartyBookingAddFilter) (int fd, struct map_session_data *sd);
 typedef void (*HPMHOOK_pre_clif_pPartyBookingSubFilter) (int *fd, struct map_session_data **sd);
@@ -6418,8 +6424,8 @@ typedef void (*HPMHOOK_pre_pc_update_idle_time) (struct map_session_data **sd, e
 typedef void (*HPMHOOK_post_pc_update_idle_time) (struct map_session_data *sd, enum e_battle_config_idletime type);
 typedef int (*HPMHOOK_pre_pc_have_magnifier) (struct map_session_data **sd);
 typedef int (*HPMHOOK_post_pc_have_magnifier) (int retVal___, struct map_session_data *sd);
-typedef int (*HPMHOOK_pre_pc_have_item_chain) (struct map_session_data **sd, unsigned short *chain_id);
-typedef int (*HPMHOOK_post_pc_have_item_chain) (int retVal___, struct map_session_data *sd, unsigned short chain_id);
+typedef int (*HPMHOOK_pre_pc_have_item_chain) (struct map_session_data **sd, enum e_chain_cache *chain_cache_id);
+typedef int (*HPMHOOK_post_pc_have_item_chain) (int retVal___, struct map_session_data *sd, enum e_chain_cache chain_cache_id);
 typedef bool (*HPMHOOK_pre_pc_process_chat_message) (struct map_session_data **sd, const char **message);
 typedef bool (*HPMHOOK_post_pc_process_chat_message) (bool retVal___, struct map_session_data *sd, const char *message);
 typedef int (*HPMHOOK_pre_pc_wis_message_to_gm) (const char **sender_name, int *permission, const char **message);
@@ -6436,6 +6442,8 @@ typedef bool (*HPMHOOK_pre_pc_has_second_costume) (struct map_session_data **sd)
 typedef bool (*HPMHOOK_post_pc_has_second_costume) (bool retVal___, struct map_session_data *sd);
 typedef bool (*HPMHOOK_pre_pc_expandInventory) (struct map_session_data **sd, int *adjustSize);
 typedef bool (*HPMHOOK_post_pc_expandInventory) (bool retVal___, struct map_session_data *sd, int adjustSize);
+typedef bool (*HPMHOOK_pre_pc_auto_exp_insurance) (struct map_session_data **sd);
+typedef bool (*HPMHOOK_post_pc_auto_exp_insurance) (bool retVal___, struct map_session_data *sd);
 #endif // MAP_PC_H
 #ifdef MAP_NPC_H /* libpcre */
 typedef pcre* (*HPMHOOK_pre_libpcre_compile) (const char **pattern, int *options, const char ***errptr, int **erroffset, const unsigned char **tableptr);

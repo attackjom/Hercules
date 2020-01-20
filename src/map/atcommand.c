@@ -2,8 +2,8 @@
  * This file is part of Hercules.
  * http://herc.ws - http://github.com/HerculesWS/Hercules
  *
- * Copyright (C) 2012-2018  Hercules Dev Team
- * Copyright (C)  Athena Dev Teams
+ * Copyright (C) 2012-2020 Hercules Dev Team
+ * Copyright (C) Athena Dev Teams
  *
  * Hercules is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -8300,6 +8300,15 @@ ACMD(feelreset)
 	return true;
 }
 
+// Reset hatred targets [Wolfie]
+ACMD(hatereset)
+{
+	pc->resethate(sd);
+	clif->message(fd, msg_fd(fd, 979)); // Reset 'Hatred' targets.
+
+	return true;
+}
+
 /*==========================================
  * AUCTION SYSTEM
  *------------------------------------------*/
@@ -10201,6 +10210,7 @@ static void atcommand_basecommands(void)
 		ACMD_DEF(homshuffle),
 		ACMD_DEF(showmobs),
 		ACMD_DEF(feelreset),
+		ACMD_DEF(hatereset),
 		ACMD_DEF(auction),
 		ACMD_DEF(mail),
 		ACMD_DEF2("noks", ksprotection),
