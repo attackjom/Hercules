@@ -2,8 +2,8 @@
  * This file is part of Hercules.
  * http://herc.ws - http://github.com/HerculesWS/Hercules
  *
- * Copyright (C) 2012-2018  Hercules Dev Team
- * Copyright (C)  Athena Dev Teams
+ * Copyright (C) 2012-2020 Hercules Dev Team
+ * Copyright (C) Athena Dev Teams
  *
  * Hercules is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -529,16 +529,17 @@ enum script_petinfo_types {
  * Player blocking actions related flags.
  */
 enum pcblock_action_flag {
-	PCBLOCK_NONE     = 0x00,
-	PCBLOCK_MOVE     = 0x01,
-	PCBLOCK_ATTACK   = 0x02,
-	PCBLOCK_SKILL    = 0x04,
-	PCBLOCK_USEITEM  = 0x08,
-	PCBLOCK_CHAT     = 0x10,
-	PCBLOCK_IMMUNE   = 0x20,
-	PCBLOCK_SITSTAND = 0x40,
-	PCBLOCK_COMMANDS = 0x80,
-	PCBLOCK_ALL      = 0xFF,
+	PCBLOCK_NONE     = 0x000,
+	PCBLOCK_MOVE     = 0x001,
+	PCBLOCK_ATTACK   = 0x002,
+	PCBLOCK_SKILL    = 0x004,
+	PCBLOCK_USEITEM  = 0x008,
+	PCBLOCK_CHAT     = 0x010,
+	PCBLOCK_IMMUNE   = 0x020,
+	PCBLOCK_SITSTAND = 0x040,
+	PCBLOCK_COMMANDS = 0x080,
+	PCBLOCK_NPC      = 0x100,
+	PCBLOCK_ALL      = 0x1FF,
 };
 
 /**

@@ -2,7 +2,7 @@
  * This file is part of Hercules.
  * http://herc.ws - http://github.com/HerculesWS/Hercules
  *
- * Copyright (C) 2013-2018  Hercules Dev Team
+ * Copyright (C) 2013-2020 Hercules Dev Team
  *
  * Hercules is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -3755,19 +3755,20 @@ struct PACKET_CZ_SE_CASHSHOP_OPEN1 {
 DEFINE_PACKET_HEADER(CZ_SE_CASHSHOP_OPEN1, 0x0844);
 #endif
 
-#if PACKETVER >= 20190724
-struct PACKET_CZ_SE_CASHSHOP_OPEN2 {
-	int16 packetType;
-} __attribute__((packed));
-DEFINE_PACKET_HEADER(CZ_SE_CASHSHOP_OPEN2, 0x0b4c);
-#endif
-
 #if PACKETVER >= 20191224
-struct PACKET_CZ_SE_CASHSHOP_OPEN3 {
+struct PACKET_CZ_SE_CASHSHOP_OPEN2 {
 	int16 packetType;
 	uint32 tab;
 } __attribute__((packed));
-DEFINE_PACKET_HEADER(CZ_SE_CASHSHOP_OPEN3, 0x0b6d);
+DEFINE_PACKET_HEADER(CZ_SE_CASHSHOP_OPEN2, 0x0b6d);
+#endif
+
+#if PACKETVER >= 20190724
+struct PACKET_CZ_SE_CASHSHOP_LIMITED_REQ {
+	int16 packetType;
+	uint32 tab;
+} __attribute__((packed));
+DEFINE_PACKET_HEADER(CZ_SE_CASHSHOP_LIMITED_REQ, 0x0b4c);
 #endif
 
 #if PACKETVER_ZERO_NUM >= 20191224

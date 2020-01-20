@@ -2,7 +2,7 @@
  * This file is part of Hercules.
  * http://herc.ws - http://github.com/HerculesWS/Hercules
  *
- * Copyright (C) 2013-2019  Hercules Dev Team
+ * Copyright (C) 2013-2020 Hercules Dev Team
  *
  * Hercules is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -1076,7 +1076,7 @@ struct HookingPointData HookingPoints[] = {
 	{ HP_POP(clif->pBGQueueBattleBeginAck, HP_clif_pBGQueueBattleBeginAck) },
 	{ HP_POP(clif->pCashShopOpen1, HP_clif_pCashShopOpen1) },
 	{ HP_POP(clif->pCashShopOpen2, HP_clif_pCashShopOpen2) },
-	{ HP_POP(clif->pCashShopOpen3, HP_clif_pCashShopOpen3) },
+	{ HP_POP(clif->pCashShopLimitedReq, HP_clif_pCashShopLimitedReq) },
 	{ HP_POP(clif->pCashShopClose, HP_clif_pCashShopClose) },
 	{ HP_POP(clif->pCashShopReqTab, HP_clif_pCashShopReqTab) },
 	{ HP_POP(clif->pCashShopSchedule, HP_clif_pCashShopSchedule) },
@@ -2571,6 +2571,7 @@ struct HookingPointData HookingPoints[] = {
 	{ HP_POP(pc->isDeathPenaltyJob, HP_pc_isDeathPenaltyJob) },
 	{ HP_POP(pc->has_second_costume, HP_pc_has_second_costume) },
 	{ HP_POP(pc->expandInventory, HP_pc_expandInventory) },
+	{ HP_POP(pc->auto_exp_insurance, HP_pc_auto_exp_insurance) },
 /* pcre_interface */
 	{ HP_POP(libpcre->compile, HP_libpcre_compile) },
 	{ HP_POP(libpcre->study, HP_libpcre_study) },

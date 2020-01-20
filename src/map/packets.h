@@ -2,7 +2,7 @@
  * This file is part of Hercules.
  * http://herc.ws - http://github.com/HerculesWS/Hercules
  *
- * Copyright (C) 2013-2015  Hercules Dev Team
+ * Copyright (C) 2013-2020 Hercules Dev Team
  *
  * Hercules is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -1980,11 +1980,11 @@ packet(0x96e,clif->ackmergeitems);
 #endif
 
 #if PACKETVER >= 20190724
-	packet(0x0b4c,clif->pCashShopOpen2);
+	packet(0x0b4c,clif->pCashShopLimitedReq);
 #endif
 
 #if PACKETVER >= 20191224
-	packet(0x0b6e,clif->pCashShopOpen3);
+	packet(0x0b6d,clif->pCashShopOpen2);
 #endif
 
 #endif /* MAP_PACKETS_H */

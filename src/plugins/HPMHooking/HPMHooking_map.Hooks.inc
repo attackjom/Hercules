@@ -2,7 +2,7 @@
  * This file is part of Hercules.
  * http://herc.ws - http://github.com/HerculesWS/Hercules
  *
- * Copyright (C) 2013-2019  Hercules Dev Team
+ * Copyright (C) 2013-2020 Hercules Dev Team
  *
  * Hercules is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27422,13 +27422,13 @@ void HP_clif_pCashShopOpen2(int fd, struct map_session_data *sd) {
 	}
 	return;
 }
-void HP_clif_pCashShopOpen3(int fd, struct map_session_data *sd) {
+void HP_clif_pCashShopLimitedReq(int fd, struct map_session_data *sd) {
 	int hIndex = 0;
-	if (HPMHooks.count.HP_clif_pCashShopOpen3_pre > 0) {
+	if (HPMHooks.count.HP_clif_pCashShopLimitedReq_pre > 0) {
 		void (*preHookFunc) (int *fd, struct map_session_data **sd);
 		*HPMforce_return = false;
-		for (hIndex = 0; hIndex < HPMHooks.count.HP_clif_pCashShopOpen3_pre; hIndex++) {
-			preHookFunc = HPMHooks.list.HP_clif_pCashShopOpen3_pre[hIndex].func;
+		for (hIndex = 0; hIndex < HPMHooks.count.HP_clif_pCashShopLimitedReq_pre; hIndex++) {
+			preHookFunc = HPMHooks.list.HP_clif_pCashShopLimitedReq_pre[hIndex].func;
 			preHookFunc(&fd, &sd);
 		}
 		if (*HPMforce_return) {
@@ -27437,12 +27437,12 @@ void HP_clif_pCashShopOpen3(int fd, struct map_session_data *sd) {
 		}
 	}
 	{
-		HPMHooks.source.clif.pCashShopOpen3(fd, sd);
+		HPMHooks.source.clif.pCashShopLimitedReq(fd, sd);
 	}
-	if (HPMHooks.count.HP_clif_pCashShopOpen3_post > 0) {
+	if (HPMHooks.count.HP_clif_pCashShopLimitedReq_post > 0) {
 		void (*postHookFunc) (int fd, struct map_session_data *sd);
-		for (hIndex = 0; hIndex < HPMHooks.count.HP_clif_pCashShopOpen3_post; hIndex++) {
-			postHookFunc = HPMHooks.list.HP_clif_pCashShopOpen3_post[hIndex].func;
+		for (hIndex = 0; hIndex < HPMHooks.count.HP_clif_pCashShopLimitedReq_post; hIndex++) {
+			postHookFunc = HPMHooks.list.HP_clif_pCashShopLimitedReq_post[hIndex].func;
 			postHookFunc(fd, sd);
 		}
 	}
@@ -66643,15 +66643,15 @@ int HP_pc_have_magnifier(struct map_session_data *sd) {
 	}
 	return retVal___;
 }
-int HP_pc_have_item_chain(struct map_session_data *sd, unsigned short chain_id) {
+int HP_pc_have_item_chain(struct map_session_data *sd, enum e_chain_cache chain_cache_id) {
 	int hIndex = 0;
 	int retVal___ = 0;
 	if (HPMHooks.count.HP_pc_have_item_chain_pre > 0) {
-		int (*preHookFunc) (struct map_session_data **sd, unsigned short *chain_id);
+		int (*preHookFunc) (struct map_session_data **sd, enum e_chain_cache *chain_cache_id);
 		*HPMforce_return = false;
 		for (hIndex = 0; hIndex < HPMHooks.count.HP_pc_have_item_chain_pre; hIndex++) {
 			preHookFunc = HPMHooks.list.HP_pc_have_item_chain_pre[hIndex].func;
-			retVal___ = preHookFunc(&sd, &chain_id);
+			retVal___ = preHookFunc(&sd, &chain_cache_id);
 		}
 		if (*HPMforce_return) {
 			*HPMforce_return = false;
@@ -66659,13 +66659,13 @@ int HP_pc_have_item_chain(struct map_session_data *sd, unsigned short chain_id) 
 		}
 	}
 	{
-		retVal___ = HPMHooks.source.pc.have_item_chain(sd, chain_id);
+		retVal___ = HPMHooks.source.pc.have_item_chain(sd, chain_cache_id);
 	}
 	if (HPMHooks.count.HP_pc_have_item_chain_post > 0) {
-		int (*postHookFunc) (int retVal___, struct map_session_data *sd, unsigned short chain_id);
+		int (*postHookFunc) (int retVal___, struct map_session_data *sd, enum e_chain_cache chain_cache_id);
 		for (hIndex = 0; hIndex < HPMHooks.count.HP_pc_have_item_chain_post; hIndex++) {
 			postHookFunc = HPMHooks.list.HP_pc_have_item_chain_post[hIndex].func;
-			retVal___ = postHookFunc(retVal___, sd, chain_id);
+			retVal___ = postHookFunc(retVal___, sd, chain_cache_id);
 		}
 	}
 	return retVal___;
@@ -66887,6 +66887,33 @@ bool HP_pc_expandInventory(struct map_session_data *sd, int adjustSize) {
 		for (hIndex = 0; hIndex < HPMHooks.count.HP_pc_expandInventory_post; hIndex++) {
 			postHookFunc = HPMHooks.list.HP_pc_expandInventory_post[hIndex].func;
 			retVal___ = postHookFunc(retVal___, sd, adjustSize);
+		}
+	}
+	return retVal___;
+}
+bool HP_pc_auto_exp_insurance(struct map_session_data *sd) {
+	int hIndex = 0;
+	bool retVal___ = false;
+	if (HPMHooks.count.HP_pc_auto_exp_insurance_pre > 0) {
+		bool (*preHookFunc) (struct map_session_data **sd);
+		*HPMforce_return = false;
+		for (hIndex = 0; hIndex < HPMHooks.count.HP_pc_auto_exp_insurance_pre; hIndex++) {
+			preHookFunc = HPMHooks.list.HP_pc_auto_exp_insurance_pre[hIndex].func;
+			retVal___ = preHookFunc(&sd);
+		}
+		if (*HPMforce_return) {
+			*HPMforce_return = false;
+			return retVal___;
+		}
+	}
+	{
+		retVal___ = HPMHooks.source.pc.auto_exp_insurance(sd);
+	}
+	if (HPMHooks.count.HP_pc_auto_exp_insurance_post > 0) {
+		bool (*postHookFunc) (bool retVal___, struct map_session_data *sd);
+		for (hIndex = 0; hIndex < HPMHooks.count.HP_pc_auto_exp_insurance_post; hIndex++) {
+			postHookFunc = HPMHooks.list.HP_pc_auto_exp_insurance_post[hIndex].func;
+			retVal___ = postHookFunc(retVal___, sd);
 		}
 	}
 	return retVal___;

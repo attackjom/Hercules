@@ -2,8 +2,8 @@
  * This file is part of Hercules.
  * http://herc.ws - http://github.com/HerculesWS/Hercules
  *
- * Copyright (C) 2012-2018  Hercules Dev Team
- * Copyright (C)  Athena Dev Teams
+ * Copyright (C) 2012-2020 Hercules Dev Team
+ * Copyright (C) Athena Dev Teams
  *
  * Hercules is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -11489,7 +11489,9 @@ static void clif_parse_ActionRequest_sub(struct map_session_data *sd, int action
 		{
 			struct npc_data *nd = map->id2nd(target_id);
 			if (nd != NULL) {
-				npc->click(sd, nd);
+				if (sd->block_action.npc == 0) { // *pcblock script command
+					npc->click(sd, nd);
+				}
 				return;
 			}
 
@@ -11964,7 +11966,7 @@ static void clif_parse_NpcClicked(int fd, struct map_session_data *sd)
 		clif->clearunit_area(&sd->bl,CLR_DEAD);
 		return;
 	}
-	if (sd->npc_id || sd->state.workinprogress & 2) {
+	if (sd->npc_id > 0 || (sd->state.workinprogress & 2) == 2 || sd->block_action.npc == 1) {	// *pcblock script command
 #if PACKETVER >= 20110308
 		clif->msgtable(sd, MSG_BUSY);
 #else
@@ -16911,7 +16913,7 @@ static void clif_parse_Mail_getattach(int fd, struct map_session_data *sd)
 	if( sd->mail.inbox.msg[i].zeny < 1 && (sd->mail.inbox.msg[i].item.nameid < 1 || sd->mail.inbox.msg[i].item.amount < 1) )
 		return;
 
-	if( sd->mail.inbox.msg[i].zeny + sd->status.zeny > MAX_ZENY ) {
+	if( sd->mail.inbox.msg[i].zeny > MAX_ZENY - sd->status.zeny ) {
 		clif->mail_getattachment(fd, 1);
 		return;
 	}
@@ -20004,8 +20006,8 @@ static void clif_parse_dull(int fd, struct map_session_data *sd)
 	return;
 }
 
-static void clif_parse_CashShopOpen1(int fd, struct map_session_data *sd) __attribute__((nonnull (2)));
-static void clif_parse_CashShopOpen1(int fd, struct map_session_data *sd)
+static void clif_parse_cashShopOpen1(int fd, struct map_session_data *sd) __attribute__((nonnull (2)));
+static void clif_parse_cashShopOpen1(int fd, struct map_session_data *sd)
 {
 	if (sd->state.trading || pc_isdead(sd) || pc_isvending(sd))
 		return;
@@ -20018,22 +20020,13 @@ static void clif_parse_CashShopOpen1(int fd, struct map_session_data *sd)
 	clif->cashShopOpen(fd, sd, 0);
 }
 
-static void clif_parse_CashShopOpen2(int fd, struct map_session_data *sd) __attribute__((nonnull (2)));
-static void clif_parse_CashShopOpen2(int fd, struct map_session_data *sd)
+static void clif_parse_cashShopLimitedReq(int fd, struct map_session_data *sd) __attribute__((nonnull (2)));
+static void clif_parse_cashShopLimitedReq(int fd, struct map_session_data *sd)
 {
-	if (sd->state.trading != 0 || pc_isdead(sd) || pc_isvending(sd))
-		return;
-
-	if (map->list[sd->bl.m].flag.nocashshop != 0) {
-		clif->messagecolor_self(fd, COLOR_RED, msg_fd(fd, 1489)); //Cash Shop is disabled in this map
-		return;
-	}
-
-	clif->cashShopOpen(fd, sd, 0);
 }
 
-static void clif_parse_CashShopOpen3(int fd, struct map_session_data *sd) __attribute__((nonnull (2)));
-static void clif_parse_CashShopOpen3(int fd, struct map_session_data *sd)
+static void clif_parse_cashShopOpen2(int fd, struct map_session_data *sd) __attribute__((nonnull (2)));
+static void clif_parse_cashShopOpen2(int fd, struct map_session_data *sd)
 {
 	if (sd->state.trading != 0 || pc_isdead(sd) || pc_isvending(sd))
 		return;
@@ -20044,7 +20037,7 @@ static void clif_parse_CashShopOpen3(int fd, struct map_session_data *sd)
 	}
 
 #if PACKETVER >= 20191224
-	const struct PACKET_CZ_SE_CASHSHOP_OPEN3 *p = RFIFOP(fd, 0);
+	const struct PACKET_CZ_SE_CASHSHOP_OPEN2 *p = RFIFOP(fd, 0);
 	clif->cashShopOpen(fd, sd, p->tab);
 #endif
 }
@@ -20060,18 +20053,18 @@ static void clif_cashShopOpen(int fd, struct map_session_data *sd, int tab)
 #if PACKETVER_ZERO_NUM >= 20191224
 	p->tab = tab;
 #endif
-	WFIFOSET(fd, 10);
+	WFIFOSET(fd, sizeof(struct PACKET_ZC_SE_CASHSHOP_OPEN));
 #endif
 }
 
-static void clif_parse_CashShopClose(int fd, struct map_session_data *sd) __attribute__((nonnull (2)));
-static void clif_parse_CashShopClose(int fd, struct map_session_data *sd)
+static void clif_parse_cashShopClose(int fd, struct map_session_data *sd) __attribute__((nonnull (2)));
+static void clif_parse_cashShopClose(int fd, struct map_session_data *sd)
 {
 	/* TODO apply some state tracking */
 }
 
-static void clif_parse_CashShopSchedule(int fd, struct map_session_data *sd) __attribute__((nonnull (2)));
-static void clif_parse_CashShopSchedule(int fd, struct map_session_data *sd)
+static void clif_parse_cashShopSchedule(int fd, struct map_session_data *sd) __attribute__((nonnull (2)));
+static void clif_parse_cashShopSchedule(int fd, struct map_session_data *sd)
 {
 	if (sd->state.trading || pc_isdead(sd) || pc_isvending(sd))
 		return;
@@ -20110,8 +20103,8 @@ void clif_cashShopSchedule(int fd, struct map_session_data *sd)
 }
 
 /// R 0848 <len>.W <limit>.W <kafra pay>.L (<item id>.L <amount>.L <tab>.W)*
-static void clif_parse_CashShopBuy(int fd, struct map_session_data *sd) __attribute__((nonnull (2)));
-static void clif_parse_CashShopBuy(int fd, struct map_session_data *sd)
+static void clif_parse_cashShopBuy(int fd, struct map_session_data *sd) __attribute__((nonnull (2)));
+static void clif_parse_cashShopBuy(int fd, struct map_session_data *sd)
 {
 	if (sd->state.trading || pc_isdead(sd) || pc_isvending(sd))
 		return;
@@ -20170,7 +20163,7 @@ static void clif_parse_CashShopBuy(int fd, struct map_session_data *sd)
 
 				ret = pc->paycash(sd, clif->cs.data[tab][j]->price * qty, kafra_pay);// [Ryuuzaki] //changed Kafrapoints calculation. [Normynator]
 				if (ret < 0) {
-					ShowError("clif_parse_CashShopBuy: The return from pc->paycash was negative which is not allowed.\n");
+					ShowError("clif_parse_cashShopBuy: The return from pc->paycash was negative which is not allowed.\n");
 					break; //This should never happen.
 				}
 				kafra_pay = ret;
@@ -20230,9 +20223,9 @@ static void clif_cashShopBuyAck(int fd, struct map_session_data *sd, int itemId,
 #endif
 }
 
-static void clif_parse_CashShopReqTab(int fd, struct map_session_data *sd) __attribute__((nonnull (2)));
+static void clif_parse_cashShopReqTab(int fd, struct map_session_data *sd) __attribute__((nonnull (2)));
 /* [Ind/Hercules] */
-static void clif_parse_CashShopReqTab(int fd, struct map_session_data *sd)
+static void clif_parse_cashShopReqTab(int fd, struct map_session_data *sd)
 {
 // [4144] packet exists only in 2011 and was dropped after
 #if PACKETVER >= 20110222 && PACKETVER < 20120000
@@ -20307,12 +20300,15 @@ static void clif_status_change2(struct block_list *bl, int tid, enum send_target
 
 static void clif_partytickack(struct map_session_data *sd, bool flag)
 {
+#if PACKETVER_MAIN_NUM >= 20070911 || defined(PACKETVER_RE) || PACKETVER_AD_NUM >= 20070911 || PACKETVER_SAK_NUM >= 20070904 || defined(PACKETVER_ZERO)
 	nullpo_retv(sd);
 
-	WFIFOHEAD(sd->fd, packet_len(0x2c9));
-	WFIFOW(sd->fd, 0) = 0x2c9;
-	WFIFOB(sd->fd, 2) = flag;
-	WFIFOSET(sd->fd, packet_len(0x2c9));
+	WFIFOHEAD(sd->fd, sizeof(struct PACKET_ZC_PARTY_CONFIG));
+	struct PACKET_ZC_PARTY_CONFIG *p = WFIFOP(sd->fd, 0);
+	p->packetType = HEADER_ZC_PARTY_CONFIG;
+	p->denyPartyInvites = flag;
+	WFIFOSET(sd->fd, sizeof(struct PACKET_ZC_PARTY_CONFIG));
+#endif
 }
 
 static void clif_ShowScript(struct block_list *bl, const char *message, enum send_target target)
@@ -24677,13 +24673,13 @@ void clif_defaults(void)
 	clif->pBGQueueRevokeReq = clif_parse_bgqueue_revoke_req;
 	clif->pBGQueueBattleBeginAck = clif_parse_bgqueue_battlebegin_ack;
 	/* RagExe Cash Shop [Ind/Hercules] */
-	clif->pCashShopOpen1 = clif_parse_CashShopOpen1;
-	clif->pCashShopOpen2 = clif_parse_CashShopOpen2;
-	clif->pCashShopOpen3 = clif_parse_CashShopOpen3;
-	clif->pCashShopClose = clif_parse_CashShopClose;
-	clif->pCashShopReqTab = clif_parse_CashShopReqTab;
-	clif->pCashShopSchedule = clif_parse_CashShopSchedule;
-	clif->pCashShopBuy = clif_parse_CashShopBuy;
+	clif->pCashShopOpen1 = clif_parse_cashShopOpen1;
+	clif->pCashShopOpen2 = clif_parse_cashShopOpen2;
+	clif->pCashShopLimitedReq = clif_parse_cashShopLimitedReq;
+	clif->pCashShopClose = clif_parse_cashShopClose;
+	clif->pCashShopReqTab = clif_parse_cashShopReqTab;
+	clif->pCashShopSchedule = clif_parse_cashShopSchedule;
+	clif->pCashShopBuy = clif_parse_cashShopBuy;
 	clif->cashShopBuyAck = clif_cashShopBuyAck;
 	clif->cashShopOpen = clif_cashShopOpen;
 	/*  */
