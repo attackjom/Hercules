@@ -2,8 +2,8 @@
  * This file is part of Hercules.
  * http://herc.ws - http://github.com/HerculesWS/Hercules
  *
- * Copyright (C) 2012-2018  Hercules Dev Team
- * Copyright (C)  Athena Dev Teams
+ * Copyright (C) 2012-2020 Hercules Dev Team
+ * Copyright (C) Athena Dev Teams
  *
  * Hercules is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -240,6 +240,10 @@ struct map_session_data {
 		unsigned int refine_ui : 1;
 		unsigned int npc_unloaded : 1; ///< The player is talking with an unloaded NPCs (respawned tombstones)
 		unsigned int lapine_ui : 1;
+		unsigned int itemskill_conditions_checked : 1; // Used by itemskill() script command, to prevent second check of conditions after target was selected.
+		unsigned int itemskill_check_conditions : 1; // Used by itemskill() script command, to check skill conditions and consume them.
+		unsigned int itemskill_no_casttime : 1; // Used by itemskill() script command, to cast skill instantaneously.
+		unsigned int itemskill_castonself : 1; // Used by itemskill() script command, to forcefully cast skill on invoking character.
 	} state;
 	struct {
 		unsigned char no_weapon_damage, no_magic_damage, no_misc_damage;
@@ -635,6 +639,7 @@ END_ZEROED_BLOCK;
 		unsigned immune   : 1;
 		unsigned sitstand : 1;
 		unsigned commands : 1;
+		unsigned npc      : 1;
 	} block_action;
 
 	/* Achievement System */
@@ -642,6 +647,15 @@ END_ZEROED_BLOCK;
 	bool achievements_received;
 	// Title
 	VECTOR_DECL(int) title_ids;
+
+	/*
+	 * itemskill_conditions_checked/itemskill_no_conditions/itemskill_no_casttime/itemskill_castonself abuse prevention.
+	 * If a skill, casted by itemskill() script command, is aborted while target selection,
+	 * the map server gets no notification where these states could be unset.
+	 * Thus we need this helper variables to prevent abusing these states for next skill cast.
+	 */
+	int itemskill_id;
+	int itemskill_lv;
 };
 
 #define EQP_WEAPON EQP_HAND_R
@@ -1020,6 +1034,7 @@ END_ZEROED_BLOCK; /* End */
 	void (*unequipitem_pos) (struct map_session_data *sd, int n, int pos);
 	int (*checkitem) (struct map_session_data *sd);
 	int (*useitem) (struct map_session_data *sd,int n);
+	int (*itemskill_clear) (struct map_session_data *sd);
 
 	int (*skillatk_bonus) (struct map_session_data *sd, uint16 skill_id);
 	int (*skillheal_bonus) (struct map_session_data *sd, uint16 skill_id);
@@ -1036,7 +1051,7 @@ END_ZEROED_BLOCK; /* End */
 	int (*setcart) (struct map_session_data* sd, int type);
 	void (*setfalcon) (struct map_session_data *sd, bool flag);
 	void (*setridingpeco) (struct map_session_data *sd, bool flag);
-	void (*setmadogear) (struct map_session_data *sd, bool flag);
+	void (*setmadogear) (struct map_session_data *sd, bool flag, enum mado_type mtype);
 	void (*setridingdragon) (struct map_session_data *sd, unsigned int type);
 	void (*setridingwug) (struct map_session_data *sd, bool flag);
 	int (*changelook) (struct map_session_data *sd,int type,int val);
@@ -1186,7 +1201,7 @@ END_ZEROED_BLOCK; /* End */
 	void (*update_idle_time) (struct map_session_data* sd, enum e_battle_config_idletime type);
 
 	int (*have_magnifier) (struct map_session_data *sd);
-	int (*have_item_chain) (struct map_session_data *sd, unsigned short chain_id);
+	int (*have_item_chain) (struct map_session_data *sd, enum e_chain_cache chain_cache_id);
 
 	bool (*process_chat_message) (struct map_session_data *sd, const char *message);
 	int (*wis_message_to_gm) (const char *sender_name, int permission, const char *message);
@@ -1196,6 +1211,7 @@ END_ZEROED_BLOCK; /* End */
 	bool (*isDeathPenaltyJob) (uint16 job);
 	bool (*has_second_costume) (struct map_session_data *sd);
 	bool (*expandInventory) (struct map_session_data *sd, int adjustSize);
+	bool (*auto_exp_insurance) (struct map_session_data *sd);
 };
 
 #ifdef HERCULES_CORE

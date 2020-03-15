@@ -2,7 +2,7 @@
  * This file is part of Hercules.
  * http://herc.ws - http://github.com/HerculesWS/Hercules
  *
- * Copyright (C) 2013-2019  Hercules Dev Team
+ * Copyright (C) 2013-2020 Hercules Dev Team
  *
  * Hercules is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -674,10 +674,14 @@ struct {
 	struct HPMHookPoint *HP_inter_mercenary_delete_post;
 	struct HPMHookPoint *HP_inter_party_check_lv_pre;
 	struct HPMHookPoint *HP_inter_party_check_lv_post;
+	struct HPMHookPoint *HP_inter_party_is_family_party_pre;
+	struct HPMHookPoint *HP_inter_party_is_family_party_post;
 	struct HPMHookPoint *HP_inter_party_calc_state_pre;
 	struct HPMHookPoint *HP_inter_party_calc_state_post;
 	struct HPMHookPoint *HP_inter_party_tosql_pre;
 	struct HPMHookPoint *HP_inter_party_tosql_post;
+	struct HPMHookPoint *HP_inter_party_del_nonexistent_party_pre;
+	struct HPMHookPoint *HP_inter_party_del_nonexistent_party_post;
 	struct HPMHookPoint *HP_inter_party_fromsql_pre;
 	struct HPMHookPoint *HP_inter_party_fromsql_post;
 	struct HPMHookPoint *HP_inter_party_sql_init_pre;
@@ -2295,10 +2299,14 @@ struct {
 	int HP_inter_mercenary_delete_post;
 	int HP_inter_party_check_lv_pre;
 	int HP_inter_party_check_lv_post;
+	int HP_inter_party_is_family_party_pre;
+	int HP_inter_party_is_family_party_post;
 	int HP_inter_party_calc_state_pre;
 	int HP_inter_party_calc_state_post;
 	int HP_inter_party_tosql_pre;
 	int HP_inter_party_tosql_post;
+	int HP_inter_party_del_nonexistent_party_pre;
+	int HP_inter_party_del_nonexistent_party_post;
 	int HP_inter_party_fromsql_pre;
 	int HP_inter_party_fromsql_post;
 	int HP_inter_party_sql_init_pre;

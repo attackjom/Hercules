@@ -2,8 +2,8 @@
  * This file is part of Hercules.
  * http://herc.ws - http://github.com/HerculesWS/Hercules
  *
- * Copyright (C) 2012-2018  Hercules Dev Team
- * Copyright (C)  Athena Dev Teams
+ * Copyright (C) 2012-2020 Hercules Dev Team
+ * Copyright (C) Athena Dev Teams
  *
  * Hercules is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -48,6 +48,7 @@ enum npc_shop_types {
 	NST_MARKET, /* official npc market type */
 	NST_CUSTOM,
 	NST_BARTER, /* official npc barter type */
+	NST_EXPANDED_BARTER, /* official npc expanded barter type */
 	/* */
 	NST_MAX,
 };
@@ -60,17 +61,25 @@ struct npc_label_list {
 	int pos;
 };
 
+struct npc_barter_currency {
+	int nameid;
+	int refine;
+	int amount;
+};
+
 struct npc_item_list {
 	int nameid;
 	unsigned int value;  // price or barter currency item id
-	int value2;  // barter currency item amount
-	unsigned int qty;
+	int value2;  // barter currency item amount / expanded barter currency size
+	int qty;
+	struct npc_barter_currency *currency;
 };
 
 struct npc_shop_data {
 	unsigned char type;/* what am i */
 	struct npc_item_list *item;/* list */
 	unsigned int items;/* total */
+	int shop_last_index;  // only for NST_EXPANDED_BARTER
 };
 struct npc_parse;
 struct npc_data {
@@ -86,7 +95,7 @@ struct npc_data {
 	int chat_id;
 	int touching_id;
 	int64 next_walktime;
-	uint8 dir;
+	enum unit_dir dir;
 	uint8 area_size;
 
 	int clan_id;
@@ -261,8 +270,9 @@ struct npc_interface {
 	int (*unload_ev) (union DBKey key, struct DBData *data, va_list ap);
 	int (*unload_ev_label) (union DBKey key, struct DBData *data, va_list ap);
 	int (*unload_dup_sub) (struct npc_data *nd, va_list args);
-	void (*unload_duplicates) (struct npc_data *nd);
-	int (*unload) (struct npc_data *nd, bool single);
+	void (*unload_duplicates) (struct npc_data *nd, bool unload_mobs);
+	int (*unload_mob) (struct mob_data *md, va_list args);
+	int (*unload) (struct npc_data *nd, bool single, bool unload_mobs);
 	void (*clearsrcfile) (void);
 	void (*addsrcfile) (const char *name);
 	void (*delsrcfile) (const char *name);
@@ -271,7 +281,7 @@ struct npc_interface {
 	void (*parsename) (struct npc_data *nd, const char *name, const char *start, const char *buffer, const char *filepath);
 	int (*parseview) (const char *w4, const char *start, const char *buffer, const char *filepath);
 	bool (*viewisid) (const char *viewid);
-	struct npc_data *(*create_npc) (enum npc_subtype subtype, int m, int x, int y, uint8 dir, int class_);
+	struct npc_data *(*create_npc) (enum npc_subtype subtype, int m, int x, int y, enum unit_dir dir, int class_);
 	struct npc_data* (*add_warp) (char *name, short from_mapid, short from_x, short from_y, short xs, short ys, unsigned short to_mapindex, short to_x, short to_y);
 	const char *(*parse_warp) (const char *w1, const char *w2, const char *w3, const char *w4, const char *start, const char *buffer, const char *filepath, int *retval);
 	const char *(*parse_shop) (const char *w1, const char *w2, const char *w3, const char *w4, const char *start, const char *buffer, const char *filepath, int *retval);
@@ -304,7 +314,7 @@ struct npc_interface {
 	int (*path_db_clear_sub) (union DBKey key, struct DBData *data, va_list args);
 	int (*ev_label_db_clear_sub) (union DBKey key, struct DBData *data, va_list args);
 	int (*reload) (void);
-	bool (*unloadfile) (const char *filepath);
+	bool (*unloadfile) (const char *filepath, bool unload_mobs);
 	void (*do_clear_npc) (void);
 	void (*debug_warps_sub) (struct npc_data *nd);
 	void (*debug_warps) (void);
@@ -314,6 +324,7 @@ struct npc_interface {
 	void (*trader_update) (int master);
 	enum market_buy_result (*market_buylist) (struct map_session_data *sd, struct itemlist *item_list);
 	int (*barter_buylist) (struct map_session_data *sd, struct barteritemlist *item_list);
+	int (*expanded_barter_buylist) (struct map_session_data *sd, struct barteritemlist *item_list);
 	bool (*trader_open) (struct map_session_data *sd, struct npc_data *nd);
 	void (*market_fromsql) (void);
 	void (*market_tosql) (struct npc_data *nd, int index);
@@ -323,6 +334,10 @@ struct npc_interface {
 	void (*barter_tosql) (struct npc_data *nd, int index);
 	void (*barter_delfromsql) (struct npc_data *nd, int index);
 	void (*barter_delfromsql_sub) (const char *npcname, int itemId, int itemId2, int amount2);
+	void (*expanded_barter_fromsql) (void);
+	void (*expanded_barter_tosql) (struct npc_data *nd, int index);
+	void (*expanded_barter_delfromsql) (struct npc_data *nd, int index);
+	void (*expanded_barter_delfromsql_sub) (const char *npcname, int itemId, int zeny, int currencyCount, struct npc_barter_currency* currency);
 	bool (*db_checkid) (const int id);
 	void (*refresh) (struct npc_data* nd);
 	void (*questinfo_clear) (struct npc_data *nd);

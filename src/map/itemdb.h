@@ -2,8 +2,8 @@
  * This file is part of Hercules.
  * http://herc.ws - http://github.com/HerculesWS/Hercules
  *
- * Copyright (C) 2012-2018  Hercules Dev Team
- * Copyright (C)  Athena Dev Teams
+ * Copyright (C) 2012-2020 Hercules Dev Team
+ * Copyright (C) Athena Dev Teams
  *
  * Hercules is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -95,6 +95,8 @@ enum item_itemid {
 	ITEMID_ALOEBERA              = 606,
 	ITEMID_SPECTACLES            = 611,
 	ITEMID_POISON_BOTTLE         = 678,
+	ITEMID_EARTH_SCROLL_1_3      = 686,
+	ITEMID_EARTH_SCROLL_1_5      = 687,
 	ITEMID_EMPTY_BOTTLE          = 713,
 	ITEMID_EMPERIUM              = 714,
 	ITEMID_YELLOW_GEMSTONE       = 715,
@@ -359,6 +361,7 @@ enum geneticist_item_list {
 enum e_chain_cache {
 	ECC_ORE,
 	ECC_SIEGFRIED,
+	ECC_NEO_INSURANCE,
 	/* */
 	ECC_MAX,
 };

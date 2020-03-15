@@ -2,7 +2,7 @@
  * This file is part of Hercules.
  * http://herc.ws - http://github.com/HerculesWS/Hercules
  *
- * Copyright (C) 2013-2019  Hercules Dev Team
+ * Copyright (C) 2013-2020 Hercules Dev Team
  *
  * Hercules is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -1104,6 +1104,8 @@ struct {
 	struct HPMHookPoint *HP_clif_misceffect_post;
 	struct HPMHookPoint *HP_clif_changeoption_pre;
 	struct HPMHookPoint *HP_clif_changeoption_post;
+	struct HPMHookPoint *HP_clif_changeoption_target_pre;
+	struct HPMHookPoint *HP_clif_changeoption_target_post;
 	struct HPMHookPoint *HP_clif_changeoption2_pre;
 	struct HPMHookPoint *HP_clif_changeoption2_post;
 	struct HPMHookPoint *HP_clif_emotion_pre;
@@ -2104,8 +2106,8 @@ struct {
 	struct HPMHookPoint *HP_clif_pCashShopOpen1_post;
 	struct HPMHookPoint *HP_clif_pCashShopOpen2_pre;
 	struct HPMHookPoint *HP_clif_pCashShopOpen2_post;
-	struct HPMHookPoint *HP_clif_pCashShopOpen3_pre;
-	struct HPMHookPoint *HP_clif_pCashShopOpen3_post;
+	struct HPMHookPoint *HP_clif_pCashShopLimitedReq_pre;
+	struct HPMHookPoint *HP_clif_pCashShopLimitedReq_post;
 	struct HPMHookPoint *HP_clif_pCashShopClose_pre;
 	struct HPMHookPoint *HP_clif_pCashShopClose_post;
 	struct HPMHookPoint *HP_clif_pCashShopReqTab_pre;
@@ -2302,6 +2304,12 @@ struct {
 	struct HPMHookPoint *HP_clif_pNPCBarterClosed_post;
 	struct HPMHookPoint *HP_clif_pNPCBarterPurchase_pre;
 	struct HPMHookPoint *HP_clif_pNPCBarterPurchase_post;
+	struct HPMHookPoint *HP_clif_pNPCExpandedBarterClosed_pre;
+	struct HPMHookPoint *HP_clif_pNPCExpandedBarterClosed_post;
+	struct HPMHookPoint *HP_clif_pNPCExpandedBarterPurchase_pre;
+	struct HPMHookPoint *HP_clif_pNPCExpandedBarterPurchase_post;
+	struct HPMHookPoint *HP_clif_npc_expanded_barter_open_pre;
+	struct HPMHookPoint *HP_clif_npc_expanded_barter_open_post;
 	struct HPMHookPoint *HP_clif_pClientVersion_pre;
 	struct HPMHookPoint *HP_clif_pClientVersion_post;
 	struct HPMHookPoint *HP_clif_pPing_pre;
@@ -2422,8 +2430,8 @@ struct {
 	struct HPMHookPoint *HP_duel_leave_post;
 	struct HPMHookPoint *HP_duel_showinfo_pre;
 	struct HPMHookPoint *HP_duel_showinfo_post;
-	struct HPMHookPoint *HP_duel_checktime_pre;
-	struct HPMHookPoint *HP_duel_checktime_post;
+	struct HPMHookPoint *HP_duel_difftime_pre;
+	struct HPMHookPoint *HP_duel_difftime_post;
 	struct HPMHookPoint *HP_duel_init_pre;
 	struct HPMHookPoint *HP_duel_init_post;
 	struct HPMHookPoint *HP_duel_final_pre;
@@ -4272,6 +4280,8 @@ struct {
 	struct HPMHookPoint *HP_npc_unload_dup_sub_post;
 	struct HPMHookPoint *HP_npc_unload_duplicates_pre;
 	struct HPMHookPoint *HP_npc_unload_duplicates_post;
+	struct HPMHookPoint *HP_npc_unload_mob_pre;
+	struct HPMHookPoint *HP_npc_unload_mob_post;
 	struct HPMHookPoint *HP_npc_unload_pre;
 	struct HPMHookPoint *HP_npc_unload_post;
 	struct HPMHookPoint *HP_npc_clearsrcfile_pre;
@@ -4374,6 +4384,8 @@ struct {
 	struct HPMHookPoint *HP_npc_market_buylist_post;
 	struct HPMHookPoint *HP_npc_barter_buylist_pre;
 	struct HPMHookPoint *HP_npc_barter_buylist_post;
+	struct HPMHookPoint *HP_npc_expanded_barter_buylist_pre;
+	struct HPMHookPoint *HP_npc_expanded_barter_buylist_post;
 	struct HPMHookPoint *HP_npc_trader_open_pre;
 	struct HPMHookPoint *HP_npc_trader_open_post;
 	struct HPMHookPoint *HP_npc_market_fromsql_pre;
@@ -4392,6 +4404,14 @@ struct {
 	struct HPMHookPoint *HP_npc_barter_delfromsql_post;
 	struct HPMHookPoint *HP_npc_barter_delfromsql_sub_pre;
 	struct HPMHookPoint *HP_npc_barter_delfromsql_sub_post;
+	struct HPMHookPoint *HP_npc_expanded_barter_fromsql_pre;
+	struct HPMHookPoint *HP_npc_expanded_barter_fromsql_post;
+	struct HPMHookPoint *HP_npc_expanded_barter_tosql_pre;
+	struct HPMHookPoint *HP_npc_expanded_barter_tosql_post;
+	struct HPMHookPoint *HP_npc_expanded_barter_delfromsql_pre;
+	struct HPMHookPoint *HP_npc_expanded_barter_delfromsql_post;
+	struct HPMHookPoint *HP_npc_expanded_barter_delfromsql_sub_pre;
+	struct HPMHookPoint *HP_npc_expanded_barter_delfromsql_sub_post;
 	struct HPMHookPoint *HP_npc_db_checkid_pre;
 	struct HPMHookPoint *HP_npc_db_checkid_post;
 	struct HPMHookPoint *HP_npc_refresh_pre;
@@ -4744,6 +4764,8 @@ struct {
 	struct HPMHookPoint *HP_pc_checkitem_post;
 	struct HPMHookPoint *HP_pc_useitem_pre;
 	struct HPMHookPoint *HP_pc_useitem_post;
+	struct HPMHookPoint *HP_pc_itemskill_clear_pre;
+	struct HPMHookPoint *HP_pc_itemskill_clear_post;
 	struct HPMHookPoint *HP_pc_skillatk_bonus_pre;
 	struct HPMHookPoint *HP_pc_skillatk_bonus_post;
 	struct HPMHookPoint *HP_pc_skillheal_bonus_pre;
@@ -5026,6 +5048,8 @@ struct {
 	struct HPMHookPoint *HP_pc_has_second_costume_post;
 	struct HPMHookPoint *HP_pc_expandInventory_pre;
 	struct HPMHookPoint *HP_pc_expandInventory_post;
+	struct HPMHookPoint *HP_pc_auto_exp_insurance_pre;
+	struct HPMHookPoint *HP_pc_auto_exp_insurance_post;
 	struct HPMHookPoint *HP_libpcre_compile_pre;
 	struct HPMHookPoint *HP_libpcre_compile_post;
 	struct HPMHookPoint *HP_libpcre_study_pre;
@@ -5642,6 +5666,8 @@ struct {
 	struct HPMHookPoint *HP_script_run_item_rental_start_script_post;
 	struct HPMHookPoint *HP_script_run_item_lapineddukddak_script_pre;
 	struct HPMHookPoint *HP_script_run_item_lapineddukddak_script_post;
+	struct HPMHookPoint *HP_script_sellitemcurrency_add_pre;
+	struct HPMHookPoint *HP_script_sellitemcurrency_add_post;
 	struct HPMHookPoint *HP_searchstore_open_pre;
 	struct HPMHookPoint *HP_searchstore_open_post;
 	struct HPMHookPoint *HP_searchstore_query_pre;
@@ -5830,6 +5856,8 @@ struct {
 	struct HPMHookPoint *HP_skill_vf_cast_fix_post;
 	struct HPMHookPoint *HP_skill_delay_fix_pre;
 	struct HPMHookPoint *HP_skill_delay_fix_post;
+	struct HPMHookPoint *HP_skill_is_item_skill_pre;
+	struct HPMHookPoint *HP_skill_is_item_skill_post;
 	struct HPMHookPoint *HP_skill_check_condition_castbegin_pre;
 	struct HPMHookPoint *HP_skill_check_condition_castbegin_post;
 	struct HPMHookPoint *HP_skill_check_condition_castend_pre;
@@ -6758,22 +6786,24 @@ struct {
 	struct HPMHookPoint *HP_unit_final_post;
 	struct HPMHookPoint *HP_unit_bl2ud_pre;
 	struct HPMHookPoint *HP_unit_bl2ud_post;
+	struct HPMHookPoint *HP_unit_cbl2ud_pre;
+	struct HPMHookPoint *HP_unit_cbl2ud_post;
 	struct HPMHookPoint *HP_unit_bl2ud2_pre;
 	struct HPMHookPoint *HP_unit_bl2ud2_post;
 	struct HPMHookPoint *HP_unit_init_ud_pre;
 	struct HPMHookPoint *HP_unit_init_ud_post;
 	struct HPMHookPoint *HP_unit_attack_timer_pre;
 	struct HPMHookPoint *HP_unit_attack_timer_post;
-	struct HPMHookPoint *HP_unit_walktoxy_timer_pre;
-	struct HPMHookPoint *HP_unit_walktoxy_timer_post;
-	struct HPMHookPoint *HP_unit_walktoxy_sub_pre;
-	struct HPMHookPoint *HP_unit_walktoxy_sub_post;
-	struct HPMHookPoint *HP_unit_delay_walktoxy_timer_pre;
-	struct HPMHookPoint *HP_unit_delay_walktoxy_timer_post;
-	struct HPMHookPoint *HP_unit_walktoxy_pre;
-	struct HPMHookPoint *HP_unit_walktoxy_post;
-	struct HPMHookPoint *HP_unit_walktobl_sub_pre;
-	struct HPMHookPoint *HP_unit_walktobl_sub_post;
+	struct HPMHookPoint *HP_unit_walk_toxy_timer_pre;
+	struct HPMHookPoint *HP_unit_walk_toxy_timer_post;
+	struct HPMHookPoint *HP_unit_walk_toxy_sub_pre;
+	struct HPMHookPoint *HP_unit_walk_toxy_sub_post;
+	struct HPMHookPoint *HP_unit_delay_walk_toxy_timer_pre;
+	struct HPMHookPoint *HP_unit_delay_walk_toxy_timer_post;
+	struct HPMHookPoint *HP_unit_walk_toxy_pre;
+	struct HPMHookPoint *HP_unit_walk_toxy_post;
+	struct HPMHookPoint *HP_unit_walktobl_timer_pre;
+	struct HPMHookPoint *HP_unit_walktobl_timer_post;
 	struct HPMHookPoint *HP_unit_walktobl_pre;
 	struct HPMHookPoint *HP_unit_walktobl_post;
 	struct HPMHookPoint *HP_unit_run_pre;
@@ -6784,20 +6814,22 @@ struct {
 	struct HPMHookPoint *HP_unit_escape_post;
 	struct HPMHookPoint *HP_unit_movepos_pre;
 	struct HPMHookPoint *HP_unit_movepos_post;
-	struct HPMHookPoint *HP_unit_setdir_pre;
-	struct HPMHookPoint *HP_unit_setdir_post;
+	struct HPMHookPoint *HP_unit_set_dir_pre;
+	struct HPMHookPoint *HP_unit_set_dir_post;
 	struct HPMHookPoint *HP_unit_getdir_pre;
 	struct HPMHookPoint *HP_unit_getdir_post;
 	struct HPMHookPoint *HP_unit_blown_pre;
 	struct HPMHookPoint *HP_unit_blown_post;
 	struct HPMHookPoint *HP_unit_warp_pre;
 	struct HPMHookPoint *HP_unit_warp_post;
+	struct HPMHookPoint *HP_unit_warpto_master_pre;
+	struct HPMHookPoint *HP_unit_warpto_master_post;
 	struct HPMHookPoint *HP_unit_stop_walking_pre;
 	struct HPMHookPoint *HP_unit_stop_walking_post;
 	struct HPMHookPoint *HP_unit_skilluse_id_pre;
 	struct HPMHookPoint *HP_unit_skilluse_id_post;
-	struct HPMHookPoint *HP_unit_step_timer_pre;
-	struct HPMHookPoint *HP_unit_step_timer_post;
+	struct HPMHookPoint *HP_unit_steptimer_pre;
+	struct HPMHookPoint *HP_unit_steptimer_post;
 	struct HPMHookPoint *HP_unit_stop_stepaction_pre;
 	struct HPMHookPoint *HP_unit_stop_stepaction_post;
 	struct HPMHookPoint *HP_unit_is_walking_pre;
@@ -7947,6 +7979,8 @@ struct {
 	int HP_clif_misceffect_post;
 	int HP_clif_changeoption_pre;
 	int HP_clif_changeoption_post;
+	int HP_clif_changeoption_target_pre;
+	int HP_clif_changeoption_target_post;
 	int HP_clif_changeoption2_pre;
 	int HP_clif_changeoption2_post;
 	int HP_clif_emotion_pre;
@@ -8947,8 +8981,8 @@ struct {
 	int HP_clif_pCashShopOpen1_post;
 	int HP_clif_pCashShopOpen2_pre;
 	int HP_clif_pCashShopOpen2_post;
-	int HP_clif_pCashShopOpen3_pre;
-	int HP_clif_pCashShopOpen3_post;
+	int HP_clif_pCashShopLimitedReq_pre;
+	int HP_clif_pCashShopLimitedReq_post;
 	int HP_clif_pCashShopClose_pre;
 	int HP_clif_pCashShopClose_post;
 	int HP_clif_pCashShopReqTab_pre;
@@ -9145,6 +9179,12 @@ struct {
 	int HP_clif_pNPCBarterClosed_post;
 	int HP_clif_pNPCBarterPurchase_pre;
 	int HP_clif_pNPCBarterPurchase_post;
+	int HP_clif_pNPCExpandedBarterClosed_pre;
+	int HP_clif_pNPCExpandedBarterClosed_post;
+	int HP_clif_pNPCExpandedBarterPurchase_pre;
+	int HP_clif_pNPCExpandedBarterPurchase_post;
+	int HP_clif_npc_expanded_barter_open_pre;
+	int HP_clif_npc_expanded_barter_open_post;
 	int HP_clif_pClientVersion_pre;
 	int HP_clif_pClientVersion_post;
 	int HP_clif_pPing_pre;
@@ -9265,8 +9305,8 @@ struct {
 	int HP_duel_leave_post;
 	int HP_duel_showinfo_pre;
 	int HP_duel_showinfo_post;
-	int HP_duel_checktime_pre;
-	int HP_duel_checktime_post;
+	int HP_duel_difftime_pre;
+	int HP_duel_difftime_post;
 	int HP_duel_init_pre;
 	int HP_duel_init_post;
 	int HP_duel_final_pre;
@@ -11115,6 +11155,8 @@ struct {
 	int HP_npc_unload_dup_sub_post;
 	int HP_npc_unload_duplicates_pre;
 	int HP_npc_unload_duplicates_post;
+	int HP_npc_unload_mob_pre;
+	int HP_npc_unload_mob_post;
 	int HP_npc_unload_pre;
 	int HP_npc_unload_post;
 	int HP_npc_clearsrcfile_pre;
@@ -11217,6 +11259,8 @@ struct {
 	int HP_npc_market_buylist_post;
 	int HP_npc_barter_buylist_pre;
 	int HP_npc_barter_buylist_post;
+	int HP_npc_expanded_barter_buylist_pre;
+	int HP_npc_expanded_barter_buylist_post;
 	int HP_npc_trader_open_pre;
 	int HP_npc_trader_open_post;
 	int HP_npc_market_fromsql_pre;
@@ -11235,6 +11279,14 @@ struct {
 	int HP_npc_barter_delfromsql_post;
 	int HP_npc_barter_delfromsql_sub_pre;
 	int HP_npc_barter_delfromsql_sub_post;
+	int HP_npc_expanded_barter_fromsql_pre;
+	int HP_npc_expanded_barter_fromsql_post;
+	int HP_npc_expanded_barter_tosql_pre;
+	int HP_npc_expanded_barter_tosql_post;
+	int HP_npc_expanded_barter_delfromsql_pre;
+	int HP_npc_expanded_barter_delfromsql_post;
+	int HP_npc_expanded_barter_delfromsql_sub_pre;
+	int HP_npc_expanded_barter_delfromsql_sub_post;
 	int HP_npc_db_checkid_pre;
 	int HP_npc_db_checkid_post;
 	int HP_npc_refresh_pre;
@@ -11587,6 +11639,8 @@ struct {
 	int HP_pc_checkitem_post;
 	int HP_pc_useitem_pre;
 	int HP_pc_useitem_post;
+	int HP_pc_itemskill_clear_pre;
+	int HP_pc_itemskill_clear_post;
 	int HP_pc_skillatk_bonus_pre;
 	int HP_pc_skillatk_bonus_post;
 	int HP_pc_skillheal_bonus_pre;
@@ -11869,6 +11923,8 @@ struct {
 	int HP_pc_has_second_costume_post;
 	int HP_pc_expandInventory_pre;
 	int HP_pc_expandInventory_post;
+	int HP_pc_auto_exp_insurance_pre;
+	int HP_pc_auto_exp_insurance_post;
 	int HP_libpcre_compile_pre;
 	int HP_libpcre_compile_post;
 	int HP_libpcre_study_pre;
@@ -12485,6 +12541,8 @@ struct {
 	int HP_script_run_item_rental_start_script_post;
 	int HP_script_run_item_lapineddukddak_script_pre;
 	int HP_script_run_item_lapineddukddak_script_post;
+	int HP_script_sellitemcurrency_add_pre;
+	int HP_script_sellitemcurrency_add_post;
 	int HP_searchstore_open_pre;
 	int HP_searchstore_open_post;
 	int HP_searchstore_query_pre;
@@ -12673,6 +12731,8 @@ struct {
 	int HP_skill_vf_cast_fix_post;
 	int HP_skill_delay_fix_pre;
 	int HP_skill_delay_fix_post;
+	int HP_skill_is_item_skill_pre;
+	int HP_skill_is_item_skill_post;
 	int HP_skill_check_condition_castbegin_pre;
 	int HP_skill_check_condition_castbegin_post;
 	int HP_skill_check_condition_castend_pre;
@@ -13601,22 +13661,24 @@ struct {
 	int HP_unit_final_post;
 	int HP_unit_bl2ud_pre;
 	int HP_unit_bl2ud_post;
+	int HP_unit_cbl2ud_pre;
+	int HP_unit_cbl2ud_post;
 	int HP_unit_bl2ud2_pre;
 	int HP_unit_bl2ud2_post;
 	int HP_unit_init_ud_pre;
 	int HP_unit_init_ud_post;
 	int HP_unit_attack_timer_pre;
 	int HP_unit_attack_timer_post;
-	int HP_unit_walktoxy_timer_pre;
-	int HP_unit_walktoxy_timer_post;
-	int HP_unit_walktoxy_sub_pre;
-	int HP_unit_walktoxy_sub_post;
-	int HP_unit_delay_walktoxy_timer_pre;
-	int HP_unit_delay_walktoxy_timer_post;
-	int HP_unit_walktoxy_pre;
-	int HP_unit_walktoxy_post;
-	int HP_unit_walktobl_sub_pre;
-	int HP_unit_walktobl_sub_post;
+	int HP_unit_walk_toxy_timer_pre;
+	int HP_unit_walk_toxy_timer_post;
+	int HP_unit_walk_toxy_sub_pre;
+	int HP_unit_walk_toxy_sub_post;
+	int HP_unit_delay_walk_toxy_timer_pre;
+	int HP_unit_delay_walk_toxy_timer_post;
+	int HP_unit_walk_toxy_pre;
+	int HP_unit_walk_toxy_post;
+	int HP_unit_walktobl_timer_pre;
+	int HP_unit_walktobl_timer_post;
 	int HP_unit_walktobl_pre;
 	int HP_unit_walktobl_post;
 	int HP_unit_run_pre;
@@ -13627,20 +13689,22 @@ struct {
 	int HP_unit_escape_post;
 	int HP_unit_movepos_pre;
 	int HP_unit_movepos_post;
-	int HP_unit_setdir_pre;
-	int HP_unit_setdir_post;
+	int HP_unit_set_dir_pre;
+	int HP_unit_set_dir_post;
 	int HP_unit_getdir_pre;
 	int HP_unit_getdir_post;
 	int HP_unit_blown_pre;
 	int HP_unit_blown_post;
 	int HP_unit_warp_pre;
 	int HP_unit_warp_post;
+	int HP_unit_warpto_master_pre;
+	int HP_unit_warpto_master_post;
 	int HP_unit_stop_walking_pre;
 	int HP_unit_stop_walking_post;
 	int HP_unit_skilluse_id_pre;
 	int HP_unit_skilluse_id_post;
-	int HP_unit_step_timer_pre;
-	int HP_unit_step_timer_post;
+	int HP_unit_steptimer_pre;
+	int HP_unit_steptimer_post;
 	int HP_unit_stop_stepaction_pre;
 	int HP_unit_stop_stepaction_post;
 	int HP_unit_is_walking_pre;

@@ -2,7 +2,7 @@
  * This file is part of Hercules.
  * http://herc.ws - http://github.com/HerculesWS/Hercules
  *
- * Copyright (C) 2013-2018  Hercules Dev Team
+ * Copyright (C) 2013-2020 Hercules Dev Team
  *
  * Hercules is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -3755,22 +3755,22 @@ struct PACKET_CZ_SE_CASHSHOP_OPEN1 {
 DEFINE_PACKET_HEADER(CZ_SE_CASHSHOP_OPEN1, 0x0844);
 #endif
 
-#if PACKETVER >= 20190724
-struct PACKET_CZ_SE_CASHSHOP_OPEN2 {
-	int16 packetType;
-} __attribute__((packed));
-DEFINE_PACKET_HEADER(CZ_SE_CASHSHOP_OPEN2, 0x0b4c);
-#endif
-
 #if PACKETVER >= 20191224
-struct PACKET_CZ_SE_CASHSHOP_OPEN3 {
+struct PACKET_CZ_SE_CASHSHOP_OPEN2 {
 	int16 packetType;
 	uint32 tab;
 } __attribute__((packed));
-DEFINE_PACKET_HEADER(CZ_SE_CASHSHOP_OPEN3, 0x0b6d);
+DEFINE_PACKET_HEADER(CZ_SE_CASHSHOP_OPEN2, 0x0b6d);
 #endif
 
-#if PACKETVER_ZERO_NUM >= 20191224
+#if PACKETVER >= 20190724
+struct PACKET_CZ_SE_CASHSHOP_LIMITED_REQ {
+	int16 packetType;
+} __attribute__((packed));
+DEFINE_PACKET_HEADER(CZ_SE_CASHSHOP_LIMITED_REQ, 0x0b4c);
+#endif
+
+#if PACKETVER_MAIN_NUM >= 20200129 || PACKETVER_RE_NUM >= 20200205 || PACKETVER_ZERO_NUM >= 20191224
 struct PACKET_ZC_SE_CASHSHOP_OPEN {
 	int16 packetType;
 	uint32 cashPoints;
@@ -3787,6 +3787,109 @@ struct PACKET_ZC_SE_CASHSHOP_OPEN {
 } __attribute__((packed));
 DEFINE_PACKET_HEADER(ZC_SE_CASHSHOP_OPEN, 0x0845);
 #endif
+
+#if PACKETVER_MAIN_NUM >= 20190904 || PACKETVER_RE_NUM >= 20190904 || PACKETVER_ZERO_NUM >= 20190828
+struct PACKET_CZ_NPC_EXPANDED_BARTER_CLOSE {
+	int16 packetType;
+} __attribute__((packed));
+DEFINE_PACKET_HEADER(CZ_NPC_EXPANDED_BARTER_CLOSE, 0x0b58);
+#endif
+
+#if PACKETVER_MAIN_NUM >= 20191120 || PACKETVER_RE_NUM >= 20191106 || PACKETVER_ZERO_NUM >= 20191127
+struct PACKET_ZC_NPC_EXPANDED_BARTER_OPEN_sub2 {
+#if PACKETVER_MAIN_NUM >= 20181121 || PACKETVER_RE_NUM >= 20180704 || PACKETVER_ZERO_NUM >= 20181114
+	uint32 nameid;
+#else
+	uint16 nameid;
+#endif
+	uint16 refine_level;
+	uint32 amount;
+	uint16 type;
+} __attribute__((packed));
+
+struct PACKET_ZC_NPC_EXPANDED_BARTER_OPEN_sub {
+#if PACKETVER_MAIN_NUM >= 20181121 || PACKETVER_RE_NUM >= 20180704 || PACKETVER_ZERO_NUM >= 20181114
+	uint32 nameid;
+#else
+	uint16 nameid;
+#endif
+	uint16 type;
+	uint32 amount;
+	uint32 weight;
+	uint32 index;
+	uint32 zeny;
+	uint32 currency_count;
+	// Workaround for fix Visual Studio bug (error C2233). Here should be currencies[]
+	struct PACKET_ZC_NPC_EXPANDED_BARTER_OPEN_sub2 currencies[1];
+} __attribute__((packed));
+
+// Workaround check for Visual Studio bug (error C2233)
+STATIC_ASSERT(sizeof(struct PACKET_ZC_NPC_EXPANDED_BARTER_OPEN_sub2[1]) ==
+	sizeof(struct PACKET_ZC_NPC_EXPANDED_BARTER_OPEN_sub2),
+	"Wrong PACKET_ZC_NPC_EXPANDED_BARTER_OPEN_sub size");
+
+struct PACKET_ZC_NPC_EXPANDED_BARTER_OPEN {
+	int16 packetType;
+	int16 packetLength;
+	int32 items_count;
+	struct PACKET_ZC_NPC_EXPANDED_BARTER_OPEN_sub items[];
+} __attribute__((packed));
+
+DEFINE_PACKET_HEADER(ZC_NPC_EXPANDED_BARTER_OPEN, 0x0b56);
+#endif
+
+#if PACKETVER_MAIN_NUM >= 20190904 || PACKETVER_RE_NUM >= 20190904 || PACKETVER_ZERO_NUM >= 20190828
+struct PACKET_CZ_NPC_EXPANDED_BARTER_PURCHASE_sub {
+#if PACKETVER_MAIN_NUM >= 20181121 || PACKETVER_RE_NUM >= 20180704 || PACKETVER_ZERO_NUM >= 20181114
+	uint32 itemId;
+#else
+	uint16 itemId;
+#endif
+	uint32 shopIndex;
+	uint32 amount;
+} __attribute__((packed));
+
+struct PACKET_CZ_NPC_EXPANDED_BARTER_PURCHASE {
+	int16 packetType;
+	int16 packetLength;
+	struct PACKET_CZ_NPC_EXPANDED_BARTER_PURCHASE_sub list[];
+} __attribute__((packed));
+DEFINE_PACKET_HEADER(CZ_NPC_EXPANDED_BARTER_PURCHASE, 0x0b57);
+#endif
+
+#if PACKETVER >= 7
+struct PACKET_ZC_STATE_CHANGE {
+	int16 packetType;
+	uint32 AID;
+	int16 bodyState;
+	int16 healthState;
+	int32 effectState;
+	int8 isPKModeON;
+} __attribute__((packed));
+DEFINE_PACKET_HEADER(ZC_STATE_CHANGE, 0x0229);
+#else
+struct PACKET_ZC_STATE_CHANGE {
+	int16 PacketType;
+	uint32 AID;
+	int16 bodyState;
+	int16 healthState;
+	int16 effectState;
+	int8 isPKModeON;
+} __attribute__((packed));
+DEFINE_PACKET_HEADER(ZC_STATE_CHANGE, 0x0119);
+#endif
+
+struct PACKET_ZC_AUTORUN_SKILL {
+	int16 packetType;
+	uint16 skill_id;
+	uint32 skill_type;
+	uint16 skill_lv;
+	uint16 skill_sp;
+	uint16 skill_range;
+	char skill_name[NAME_LENGTH];
+	char up_flag;
+} __attribute__((packed));
+DEFINE_PACKET_HEADER(ZC_AUTORUN_SKILL, 0x0147);
 
 #if !defined(sun) && (!defined(__NETBSD__) || __NetBSD_Version__ >= 600000000) // NetBSD 5 and Solaris don't like pragma pack but accept the packed attribute
 #pragma pack(pop)

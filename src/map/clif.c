@@ -2,8 +2,8 @@
  * This file is part of Hercules.
  * http://herc.ws - http://github.com/HerculesWS/Hercules
  *
- * Copyright (C) 2012-2018  Hercules Dev Team
- * Copyright (C)  Athena Dev Teams
+ * Copyright (C) 2012-2020 Hercules Dev Team
+ * Copyright (C) Athena Dev Teams
  *
  * Hercules is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -2179,6 +2179,9 @@ static void clif_selllist(struct map_session_data *sd)
 			if( !itemdb_cansell(&sd->status.inventory[i], pc_get_group_level(sd)) )
 				continue;
 
+			if (sd->status.inventory[i].favorite != 0)
+				continue; // Cannot Sell Favorite item
+
 			if( sd->status.inventory[i].expire_time )
 				continue; // Cannot Sell Rental Items
 
@@ -4032,51 +4035,58 @@ static void clif_misceffect(struct block_list *bl, int type)
 /// 0229 <id>.L <body state>.W <health state>.W <effect state>.L <pk mode>.B (ZC_STATE_CHANGE3)
 static void clif_changeoption(struct block_list *bl)
 {
-	unsigned char buf[32];
-	struct status_change *sc;
-	struct map_session_data* sd;
-
 	nullpo_retv(bl);
 
-	if ( !(sc = status->get_sc(bl)) && bl->type != BL_NPC ) return; //How can an option change if there's no sc?
+	struct status_change *sc = status->get_sc(bl);
 
-	sd = BL_CAST(BL_PC, bl);
+	if (sc == NULL && bl->type != BL_NPC) // How can an option change if there's no sc?
+		return;
 
-#if PACKETVER >= 7
-	WBUFW(buf,0) = 0x229;
-	WBUFL(buf,2) = bl->id;
-	WBUFW(buf,6) = (sc) ? sc->opt1 : 0;
-	WBUFW(buf,8) = (sc) ? sc->opt2 : 0;
-	WBUFL(buf,10) = (sc != NULL) ? sc->option : ((bl->type == BL_NPC) ? BL_UCCAST(BL_NPC, bl)->option : 0);
-	WBUFB(buf,14) = (sd)? sd->status.karma : 0;
+	struct map_session_data *sd = BL_CAST(BL_PC, bl);
+	struct PACKET_ZC_STATE_CHANGE p;
+	p.packetType = HEADER_ZC_STATE_CHANGE;
+	p.AID = bl->id;
+	p.bodyState = (sc != NULL) ? sc->opt1 : 0;
+	p.healthState = (sc != NULL) ? sc->opt2 : 0;
+	p.effectState = (sc != NULL) ? sc->option : BL_UCCAST(BL_NPC, bl)->option;
+	p.isPKModeON = (sd != NULL) ? sd->status.karma : 0;
 	if (clif->isdisguised(bl)) {
-		clif->send(buf,packet_len(0x229),bl,AREA_WOS);
-		WBUFL(buf,2) = -bl->id;
-		clif->send(buf,packet_len(0x229),bl,SELF);
-		WBUFL(buf,2) = bl->id;
-		WBUFL(buf,10) = OPTION_INVISIBLE;
-		clif->send(buf,packet_len(0x229),bl,SELF);
+		clif->send(&p, sizeof(p), bl, AREA_WOS);
+		p.AID = -bl->id;
+		clif->send(&p, sizeof(p), bl, SELF);
+		p.AID = bl->id;
+		p.effectState = OPTION_INVISIBLE;
+		clif->send(&p, sizeof(p), bl, SELF);
 	} else {
-		clif->send(buf,packet_len(0x229),bl,AREA);
+		clif->send(&p, sizeof(p), bl, AREA);
 	}
-#else
-	WBUFW(buf,0) = 0x119;
-	WBUFL(buf,2) = bl->id;
-	WBUFW(buf,6) = (sc) ? sc->opt1 : 0;
-	WBUFW(buf,8) = (sc) ? sc->opt2 : 0;
-	WBUFL(buf,10) = (sc != NULL) ? sc->option : ((bl->type == BL_NPC) ? BL_UCCAST(BL_NPC, bl)->option : 0);
-	WBUFB(buf,12) = (sd)? sd->status.karma : 0;
+}
+
+static void clif_changeoption_target(struct block_list *bl, struct block_list *target_bl, enum send_target target)
+{
+	nullpo_retv(bl);
+	nullpo_retv(target_bl);
+
+	struct status_change *sc = status->get_sc(bl);
+
+	if (sc == NULL && bl->type != BL_NPC) // How can an option change if there's no sc?
+		return;
+
+	struct map_session_data *sd = BL_CAST(BL_PC, bl);
+	struct PACKET_ZC_STATE_CHANGE p;
+	p.packetType = HEADER_ZC_STATE_CHANGE;
+	p.AID = bl->id;
+	p.bodyState = (sc != NULL) ? sc->opt1 : 0;
+	p.healthState = (sc != NULL) ? sc->opt2 : 0;
+	p.effectState = (sc != NULL) ? sc->option : BL_UCCAST(BL_NPC, bl)->option;
+	p.isPKModeON = (sd != NULL) ? sd->status.karma : 0;
 	if (clif->isdisguised(bl)) {
-		clif->send(buf,packet_len(0x119),bl,AREA_WOS);
-		WBUFL(buf,2) = -bl->id;
-		clif->send(buf,packet_len(0x119),bl,SELF);
-		WBUFL(buf,2) = bl->id;
-		WBUFW(buf,10) = OPTION_INVISIBLE;
-		clif->send(buf,packet_len(0x119),bl,SELF);
-	} else {
-		clif->send(buf,packet_len(0x119),bl,AREA);
+		p.AID = -bl->id;
+		clif->send(&p, sizeof(p), target_bl, target);
+		p.AID = bl->id;
+		p.effectState = OPTION_INVISIBLE;
 	}
-#endif
+	clif->send(&p, sizeof(p), target_bl, target);
 }
 
 /// Displays status change effects on NPCs/monsters (ZC_NPC_SHOWEFST_UPDATE).
@@ -4893,7 +4903,7 @@ static int clif_damage(struct block_list *src, struct block_list *dst, int sdela
 	}
 
 	if(src == dst) {
-		unit->setdir(src,unit->getdir(src));
+		unit->set_dir(src, unit->getdir(src));
 	}
 
 	//Return adjusted can't walk delay for further processing.
@@ -6747,21 +6757,28 @@ static void clif_item_refine_list(struct map_session_data *sd)
 /// 0147 <skill id>.W <type>.L <level>.W <sp cost>.W <atk range>.W <skill name>.24B <upgradeable>.B
 static void clif_item_skill(struct map_session_data *sd, uint16 skill_id, uint16 skill_lv)
 {
-	int fd;
-
 	nullpo_retv(sd);
 
-	fd=sd->fd;
-	WFIFOHEAD(fd,packet_len(0x147));
-	WFIFOW(fd, 0)=0x147;
-	WFIFOW(fd, 2)=skill_id;
-	WFIFOL(fd, 4)=skill->get_inf(skill_id);
-	WFIFOW(fd, 8)=skill_lv;
-	WFIFOW(fd,10)=skill->get_sp(skill_id,skill_lv);
-	WFIFOW(fd,12)=skill->get_range2(&sd->bl, skill_id,skill_lv);
-	safestrncpy(WFIFOP(fd,14),skill->get_name(skill_id),NAME_LENGTH);
-	WFIFOB(fd,38)=0;
-	WFIFOSET(fd,packet_len(0x147));
+	int fd = sd->fd;
+
+	WFIFOHEAD(fd, sizeof(struct PACKET_ZC_AUTORUN_SKILL));
+
+	struct PACKET_ZC_AUTORUN_SKILL *p = WFIFOP(fd, 0);
+	int type = skill->get_inf(skill_id);
+
+	if (sd->state.itemskill_castonself == 1 && skill->is_item_skill(sd, skill_id, skill_lv))
+		type = INF_SELF_SKILL;
+
+	p->packetType = HEADER_ZC_AUTORUN_SKILL;
+	p->skill_id = skill_id;
+	p->skill_type = type;
+	p->skill_lv = skill_lv;
+	p->skill_sp = skill->get_sp(skill_id, skill_lv);
+	p->skill_range = skill->get_range2(&sd->bl, skill_id, skill_lv);
+	safestrncpy(p->skill_name, skill->get_name(skill_id), NAME_LENGTH);
+	p->up_flag = 0;
+
+	WFIFOSET(fd, sizeof(struct PACKET_ZC_AUTORUN_SKILL));
 }
 
 /// Adds an item to character's cart.
@@ -10571,6 +10588,65 @@ static void clif_parse_LoadEndAck(int fd, struct map_session_data *sd)
 		clif->updatestatus(sd, SP_CARTINFO);
 	}
 
+	/**
+	 * In official servers, an item's unequip script is executed when entering a zone where the item is restricted,
+	 * even if the item won't be unequipped.
+	 *
+	 **/
+	if (map->list[sd->bl.m].zone != NULL && map->list[sd->bl.m].zone->disabled_items_count != 0) {
+		struct map_zone_data *zone = map->list[sd->bl.m].zone;
+		int dis_items_cnt = zone->disabled_items_count;
+		int handled_equip = 0x00000000;
+
+		for (int i = 0; i < EQI_MAX; i++) {
+			if (sd->equip_index[i] == INDEX_NOT_FOUND)
+				continue;
+
+			int inv_idx = sd->equip_index[i];
+			struct item_data *equip_data = sd->inventory_data[inv_idx];
+
+			if (equip_data == NULL)
+				continue;
+
+			if ((handled_equip & equip_data->equip) != 0)
+				continue; // Equipment takes multiple slots and was already handled.
+
+			handled_equip |= equip_data->equip;
+
+			if (equip_data->unequip_script != NULL) {
+				int idx;
+
+				ARR_FIND(0, dis_items_cnt, idx, zone->disabled_items[idx] == equip_data->nameid);
+
+				if (idx < dis_items_cnt)
+					script->run_item_unequip_script(sd, equip_data, npc->fake_nd->bl.id);
+			}
+
+			if (inv_idx != sd->equip_index[i])
+				continue; // Unequip script execution corrupted the inventory index.
+
+			struct item *equip = &sd->status.inventory[inv_idx];
+
+			if (equip != NULL && !itemdb_isspecial(equip->card[0])) {
+				for (int slot = 0; slot < equip_data->slot; slot++) {
+					if (equip->card[slot] == 0)
+						continue;
+
+					struct item_data *card_data = itemdb->exists(equip->card[slot]);
+
+					if (card_data != NULL && card_data->unequip_script != NULL) {
+						int idx;
+
+						ARR_FIND(0, dis_items_cnt, idx, zone->disabled_items[idx] == card_data->nameid);
+
+						if (idx < dis_items_cnt)
+							script->run_item_unequip_script(sd, card_data, npc->fake_nd->bl.id);
+					}
+				}
+			}
+		}
+	}
+
 	// Check for and delete unavailable/disabled items.
 	pc->checkitem(sd);
 
@@ -11116,7 +11192,7 @@ static void clif_parse_WalkToXY(int fd, struct map_session_data *sd)
 	//Set last idle time... [Skotlex]
 	pc->update_idle_time(sd, BCIDLE_WALK);
 
-	unit->walktoxy(&sd->bl, x, y, 4);
+	unit->walk_toxy(&sd->bl, x, y, 4);
 }
 
 /// Notification about the result of a disconnect request (ZC_ACK_REQ_DISCONNECT).
@@ -11334,15 +11410,7 @@ static void clif_parse_MapMove(int fd, struct map_session_data *sd)
 ///     0 = straight
 ///     1 = turned CW
 ///     2 = turned CCW
-/// dir:
-///     0 = north
-///     1 = northwest
-///     2 = west
-///     3 = southwest
-///     4 = south
-///     5 = southeast
-///     6 = east
-///     7 = northeast
+/// dir: @see enum unit_dir
 static void clif_changed_dir(struct block_list *bl, enum send_target target)
 {
 	unsigned char buf[64];
@@ -11467,7 +11535,9 @@ static void clif_parse_ActionRequest_sub(struct map_session_data *sd, int action
 		{
 			struct npc_data *nd = map->id2nd(target_id);
 			if (nd != NULL) {
-				npc->click(sd, nd);
+				if (sd->block_action.npc == 0) { // *pcblock script command
+					npc->click(sd, nd);
+				}
 				return;
 			}
 
@@ -11942,7 +12012,7 @@ static void clif_parse_NpcClicked(int fd, struct map_session_data *sd)
 		clif->clearunit_area(&sd->bl,CLR_DEAD);
 		return;
 	}
-	if (sd->npc_id || sd->state.workinprogress & 2) {
+	if (sd->npc_id > 0 || (sd->state.workinprogress & 2) == 2 || sd->block_action.npc == 1) {	// *pcblock script command
 #if PACKETVER >= 20110308
 		clif->msgtable(sd, MSG_BUSY);
 #else
@@ -12917,6 +12987,7 @@ static void clif_parse_UseSkillMap(int fd, struct map_session_data *sd)
 
 	pc->delinvincibletimer(sd);
 	skill->castend_map(sd,skill_id,map_name);
+	pc->itemskill_clear(sd);
 }
 
 static void clif_parse_RequestMemo(int fd, struct map_session_data *sd) __attribute__((nonnull (2)));
@@ -15271,8 +15342,8 @@ static void clif_parse_GMKick(int fd, struct map_session_data *sd)
 				clif->GM_kickack(sd, 0);
 				return;
 			}
-			npc->unload_duplicates(nd);
-			npc->unload(nd,true);
+			npc->unload_duplicates(nd, true);
+			npc->unload(nd, true, true);
 			npc->read_event_script();
 		}
 		break;
@@ -16442,7 +16513,7 @@ static void clif_parse_HomMoveToMaster(int fd, struct map_session_data *sd)
 
 	unit->calc_pos(bl, sd->bl.x, sd->bl.y, sd->ud.dir);
 	ud = unit->bl2ud(bl);
-	unit->walktoxy(bl, ud->to_x, ud->to_y, 4);
+	unit->walk_toxy(bl, ud->to_x, ud->to_y, 4);
 }
 
 static void clif_parse_HomMoveTo(int fd, struct map_session_data *sd) __attribute__((nonnull (2)));
@@ -16466,7 +16537,7 @@ static void clif_parse_HomMoveTo(int fd, struct map_session_data *sd)
 	else
 		return;
 
-	unit->walktoxy(bl, x, y, 4);
+	unit->walk_toxy(bl, x, y, 4);
 }
 
 static void clif_parse_HomAttack(int fd, struct map_session_data *sd) __attribute__((nonnull (2)));
@@ -16889,7 +16960,7 @@ static void clif_parse_Mail_getattach(int fd, struct map_session_data *sd)
 	if( sd->mail.inbox.msg[i].zeny < 1 && (sd->mail.inbox.msg[i].item.nameid < 1 || sd->mail.inbox.msg[i].item.amount < 1) )
 		return;
 
-	if( sd->mail.inbox.msg[i].zeny + sd->status.zeny > MAX_ZENY ) {
+	if( sd->mail.inbox.msg[i].zeny > MAX_ZENY - sd->status.zeny ) {
 		clif->mail_getattachment(fd, 1);
 		return;
 	}
@@ -19982,8 +20053,8 @@ static void clif_parse_dull(int fd, struct map_session_data *sd)
 	return;
 }
 
-static void clif_parse_CashShopOpen1(int fd, struct map_session_data *sd) __attribute__((nonnull (2)));
-static void clif_parse_CashShopOpen1(int fd, struct map_session_data *sd)
+static void clif_parse_cashShopOpen1(int fd, struct map_session_data *sd) __attribute__((nonnull (2)));
+static void clif_parse_cashShopOpen1(int fd, struct map_session_data *sd)
 {
 	if (sd->state.trading || pc_isdead(sd) || pc_isvending(sd))
 		return;
@@ -19996,22 +20067,13 @@ static void clif_parse_CashShopOpen1(int fd, struct map_session_data *sd)
 	clif->cashShopOpen(fd, sd, 0);
 }
 
-static void clif_parse_CashShopOpen2(int fd, struct map_session_data *sd) __attribute__((nonnull (2)));
-static void clif_parse_CashShopOpen2(int fd, struct map_session_data *sd)
+static void clif_parse_cashShopLimitedReq(int fd, struct map_session_data *sd) __attribute__((nonnull (2)));
+static void clif_parse_cashShopLimitedReq(int fd, struct map_session_data *sd)
 {
-	if (sd->state.trading != 0 || pc_isdead(sd) || pc_isvending(sd))
-		return;
-
-	if (map->list[sd->bl.m].flag.nocashshop != 0) {
-		clif->messagecolor_self(fd, COLOR_RED, msg_fd(fd, 1489)); //Cash Shop is disabled in this map
-		return;
-	}
-
-	clif->cashShopOpen(fd, sd, 0);
 }
 
-static void clif_parse_CashShopOpen3(int fd, struct map_session_data *sd) __attribute__((nonnull (2)));
-static void clif_parse_CashShopOpen3(int fd, struct map_session_data *sd)
+static void clif_parse_cashShopOpen2(int fd, struct map_session_data *sd) __attribute__((nonnull (2)));
+static void clif_parse_cashShopOpen2(int fd, struct map_session_data *sd)
 {
 	if (sd->state.trading != 0 || pc_isdead(sd) || pc_isvending(sd))
 		return;
@@ -20022,7 +20084,7 @@ static void clif_parse_CashShopOpen3(int fd, struct map_session_data *sd)
 	}
 
 #if PACKETVER >= 20191224
-	const struct PACKET_CZ_SE_CASHSHOP_OPEN3 *p = RFIFOP(fd, 0);
+	const struct PACKET_CZ_SE_CASHSHOP_OPEN2 *p = RFIFOP(fd, 0);
 	clif->cashShopOpen(fd, sd, p->tab);
 #endif
 }
@@ -20035,21 +20097,21 @@ static void clif_cashShopOpen(int fd, struct map_session_data *sd, int tab)
 	p->packetType = HEADER_ZC_SE_CASHSHOP_OPEN;
 	p->cashPoints = sd->cashPoints;  //[Ryuuzaki] - switched positions to reflect proper values
 	p->kafraPoints = sd->kafraPoints;
-#if PACKETVER_ZERO_NUM >= 20191224
+#if PACKETVER_MAIN_NUM >= 20200129 || PACKETVER_RE_NUM >= 20200205 || PACKETVER_ZERO_NUM >= 20191224
 	p->tab = tab;
 #endif
-	WFIFOSET(fd, 10);
+	WFIFOSET(fd, sizeof(struct PACKET_ZC_SE_CASHSHOP_OPEN));
 #endif
 }
 
-static void clif_parse_CashShopClose(int fd, struct map_session_data *sd) __attribute__((nonnull (2)));
-static void clif_parse_CashShopClose(int fd, struct map_session_data *sd)
+static void clif_parse_cashShopClose(int fd, struct map_session_data *sd) __attribute__((nonnull (2)));
+static void clif_parse_cashShopClose(int fd, struct map_session_data *sd)
 {
 	/* TODO apply some state tracking */
 }
 
-static void clif_parse_CashShopSchedule(int fd, struct map_session_data *sd) __attribute__((nonnull (2)));
-static void clif_parse_CashShopSchedule(int fd, struct map_session_data *sd)
+static void clif_parse_cashShopSchedule(int fd, struct map_session_data *sd) __attribute__((nonnull (2)));
+static void clif_parse_cashShopSchedule(int fd, struct map_session_data *sd)
 {
 	if (sd->state.trading || pc_isdead(sd) || pc_isvending(sd))
 		return;
@@ -20088,8 +20150,8 @@ void clif_cashShopSchedule(int fd, struct map_session_data *sd)
 }
 
 /// R 0848 <len>.W <limit>.W <kafra pay>.L (<item id>.L <amount>.L <tab>.W)*
-static void clif_parse_CashShopBuy(int fd, struct map_session_data *sd) __attribute__((nonnull (2)));
-static void clif_parse_CashShopBuy(int fd, struct map_session_data *sd)
+static void clif_parse_cashShopBuy(int fd, struct map_session_data *sd) __attribute__((nonnull (2)));
+static void clif_parse_cashShopBuy(int fd, struct map_session_data *sd)
 {
 	if (sd->state.trading || pc_isdead(sd) || pc_isvending(sd))
 		return;
@@ -20148,7 +20210,7 @@ static void clif_parse_CashShopBuy(int fd, struct map_session_data *sd)
 
 				ret = pc->paycash(sd, clif->cs.data[tab][j]->price * qty, kafra_pay);// [Ryuuzaki] //changed Kafrapoints calculation. [Normynator]
 				if (ret < 0) {
-					ShowError("clif_parse_CashShopBuy: The return from pc->paycash was negative which is not allowed.\n");
+					ShowError("clif_parse_cashShopBuy: The return from pc->paycash was negative which is not allowed.\n");
 					break; //This should never happen.
 				}
 				kafra_pay = ret;
@@ -20208,9 +20270,9 @@ static void clif_cashShopBuyAck(int fd, struct map_session_data *sd, int itemId,
 #endif
 }
 
-static void clif_parse_CashShopReqTab(int fd, struct map_session_data *sd) __attribute__((nonnull (2)));
+static void clif_parse_cashShopReqTab(int fd, struct map_session_data *sd) __attribute__((nonnull (2)));
 /* [Ind/Hercules] */
-static void clif_parse_CashShopReqTab(int fd, struct map_session_data *sd)
+static void clif_parse_cashShopReqTab(int fd, struct map_session_data *sd)
 {
 // [4144] packet exists only in 2011 and was dropped after
 #if PACKETVER >= 20110222 && PACKETVER < 20120000
@@ -20285,12 +20347,15 @@ static void clif_status_change2(struct block_list *bl, int tid, enum send_target
 
 static void clif_partytickack(struct map_session_data *sd, bool flag)
 {
+#if PACKETVER_MAIN_NUM >= 20070911 || defined(PACKETVER_RE) || PACKETVER_AD_NUM >= 20070911 || PACKETVER_SAK_NUM >= 20070904 || defined(PACKETVER_ZERO)
 	nullpo_retv(sd);
 
-	WFIFOHEAD(sd->fd, packet_len(0x2c9));
-	WFIFOW(sd->fd, 0) = 0x2c9;
-	WFIFOB(sd->fd, 2) = flag;
-	WFIFOSET(sd->fd, packet_len(0x2c9));
+	WFIFOHEAD(sd->fd, sizeof(struct PACKET_ZC_PARTY_CONFIG));
+	struct PACKET_ZC_PARTY_CONFIG *p = WFIFOP(sd->fd, 0);
+	p->packetType = HEADER_ZC_PARTY_CONFIG;
+	p->denyPartyInvites = flag;
+	WFIFOSET(sd->fd, sizeof(struct PACKET_ZC_PARTY_CONFIG));
+#endif
 }
 
 static void clif_ShowScript(struct block_list *bl, const char *message, enum send_target target)
@@ -23213,6 +23278,121 @@ static void clif_parse_NPCBarterPurchase(int fd, struct map_session_data *sd)
 #endif
 }
 
+static void clif_parse_npc_expanded_barter_closed(int fd, struct map_session_data *sd) __attribute__((nonnull (2)));
+static void clif_parse_npc_expanded_barter_closed(int fd, struct map_session_data *sd)
+{
+}
+
+#if PACKETVER_MAIN_NUM >= 20191120 || PACKETVER_RE_NUM >= 20191106 || PACKETVER_ZERO_NUM >= 20191127
+#define NEXT_EXPANDED_BARTER_ITEM(var, count) \
+	var = (struct PACKET_ZC_NPC_EXPANDED_BARTER_OPEN_sub *)((char*)item + \
+		sizeof(struct PACKET_ZC_NPC_EXPANDED_BARTER_OPEN_sub) - \
+		sizeof(struct PACKET_ZC_NPC_EXPANDED_BARTER_OPEN_sub2) + \
+		count * sizeof(struct PACKET_ZC_NPC_EXPANDED_BARTER_OPEN_sub2))
+#endif
+
+static void clif_npc_expanded_barter_open(struct map_session_data *sd, struct npc_data *nd)
+{
+#if PACKETVER_MAIN_NUM >= 20191120 || PACKETVER_RE_NUM >= 20191106 || PACKETVER_ZERO_NUM >= 20191127
+	nullpo_retv(sd);
+	nullpo_retv(nd);
+	struct npc_item_list *shop = nd->u.scr.shop->item;
+	const int shop_size = nd->u.scr.shop->items;
+
+	int items_count = 0;
+	int currencies_count = 0;
+	struct PACKET_ZC_NPC_EXPANDED_BARTER_OPEN *packet = (struct PACKET_ZC_NPC_EXPANDED_BARTER_OPEN*)&packet_buf[0];
+	STATIC_ASSERT(sizeof(packet_buf) > sizeof(struct PACKET_ZC_NPC_EXPANDED_BARTER_OPEN), "packet_buf size too small");
+	int buf_left = sizeof(packet_buf) - sizeof(struct PACKET_ZC_NPC_EXPANDED_BARTER_OPEN);
+	packet->packetType = HEADER_ZC_NPC_EXPANDED_BARTER_OPEN;
+	struct PACKET_ZC_NPC_EXPANDED_BARTER_OPEN_sub *item = &packet->items[0];
+
+	// Workaround for fix Visual Studio bug (error C2233)
+	// Here should be sizeof(struct PACKET_ZC_NPC_EXPANDED_BARTER_OPEN_sub)
+	const int ptr_size = sizeof(struct PACKET_ZC_NPC_EXPANDED_BARTER_OPEN_sub) -
+		sizeof(struct PACKET_ZC_NPC_EXPANDED_BARTER_OPEN_sub2);
+	for (int i = 0; i < shop_size && buf_left >= ptr_size; i++) {
+		if (shop[i].nameid) {
+			struct item_data *id = itemdb->exists(shop[i].nameid);
+			if (id == NULL)
+				continue;
+
+			item->nameid = shop[i].nameid;
+			item->type   = itemtype(id->type);
+			item->amount = shop[i].qty;
+			item->weight = id->weight * 10;
+			item->index  = i;
+			item->zeny   = shop[i].value;
+			item->currency_count = 0;
+			buf_left -= ptr_size;
+			items_count ++;
+			int count = shop[i].value2;
+			if (buf_left < sizeof(struct PACKET_ZC_NPC_EXPANDED_BARTER_OPEN_sub2) * count) {
+				NEXT_EXPANDED_BARTER_ITEM(item, 0);
+				break;
+			}
+			for (int j = 0; j < count; j ++) {
+				struct PACKET_ZC_NPC_EXPANDED_BARTER_OPEN_sub2 *packet_currency = &item->currencies[j];
+				struct npc_barter_currency *currency = &shop[i].currency[j];
+				struct item_data *id2 = itemdb->exists(currency->nameid);
+				if (id2 == NULL)
+					continue;
+				packet_currency->nameid = currency->nameid;
+				if (currency->refine == -1)
+					packet_currency->refine_level = 0;
+				else
+					packet_currency->refine_level = currency->refine;
+				packet_currency->amount = currency->amount;
+				packet_currency->type = itemtype(id2->type);
+				currencies_count ++;
+				item->currency_count ++;
+			}
+			NEXT_EXPANDED_BARTER_ITEM(item, item->currency_count);
+		}
+	}
+
+	packet->items_count = items_count;
+	packet->packetLength = sizeof(struct PACKET_ZC_NPC_EXPANDED_BARTER_OPEN) +
+		ptr_size * items_count +
+		sizeof(struct PACKET_ZC_NPC_EXPANDED_BARTER_OPEN_sub2) * currencies_count;
+	clif->send(packet, packet->packetLength, &sd->bl, SELF);
+#endif
+}
+
+#undef NEXT_EXPANDED_BARTER_ITEM
+
+static void clif_parse_npc_expanded_barter_purchase(int fd, struct map_session_data *sd) __attribute__((nonnull (2)));
+static void clif_parse_npc_expanded_barter_purchase(int fd, struct map_session_data *sd)
+{
+#if PACKETVER_MAIN_NUM >= 20190904 || PACKETVER_RE_NUM >= 20190904 || PACKETVER_ZERO_NUM >= 20190828
+	if (sd->state.trading || pc_isdead(sd) || pc_isvending(sd))
+		return;
+
+	const struct PACKET_CZ_NPC_EXPANDED_BARTER_PURCHASE *const p = RP2PTR(fd);
+	int count = (p->packetLength - sizeof(struct PACKET_CZ_NPC_EXPANDED_BARTER_PURCHASE)) / sizeof p->list[0];
+	struct barteritemlist item_list;
+
+	Assert_retv(count >= 0 && count <= sd->status.inventorySize);
+
+	VECTOR_INIT(item_list);
+	VECTOR_ENSURE(item_list, count, 1);
+
+	for (int i = 0; i < count; i++) {
+		struct barter_itemlist_entry entry = { 0 };
+		entry.addId = p->list[i].itemId;
+		entry.addAmount = p->list[i].amount;
+		entry.removeIndex = -1;
+		entry.shopIndex = p->list[i].shopIndex;
+		VECTOR_PUSH(item_list, entry);
+	}
+
+	int response = npc->expanded_barter_buylist(sd, &item_list);
+	clif->npc_buy_result(sd, response);
+
+	VECTOR_CLEAR(item_list);
+#endif
+}
+
 static void clif_parse_clientVersion(int fd, struct map_session_data *sd) __attribute__((nonnull (2)));
 static void clif_parse_clientVersion(int fd, struct map_session_data *sd)
 {
@@ -24106,6 +24286,7 @@ void clif_defaults(void)
 	/* visual effects client-side */
 	clif->misceffect = clif_misceffect;
 	clif->changeoption = clif_changeoption;
+	clif->changeoption_target = clif_changeoption_target;
 	clif->changeoption2 = clif_changeoption2;
 	clif->emotion = clif_emotion;
 	clif->talkiebox = clif_talkiebox;
@@ -24655,13 +24836,13 @@ void clif_defaults(void)
 	clif->pBGQueueRevokeReq = clif_parse_bgqueue_revoke_req;
 	clif->pBGQueueBattleBeginAck = clif_parse_bgqueue_battlebegin_ack;
 	/* RagExe Cash Shop [Ind/Hercules] */
-	clif->pCashShopOpen1 = clif_parse_CashShopOpen1;
-	clif->pCashShopOpen2 = clif_parse_CashShopOpen2;
-	clif->pCashShopOpen3 = clif_parse_CashShopOpen3;
-	clif->pCashShopClose = clif_parse_CashShopClose;
-	clif->pCashShopReqTab = clif_parse_CashShopReqTab;
-	clif->pCashShopSchedule = clif_parse_CashShopSchedule;
-	clif->pCashShopBuy = clif_parse_CashShopBuy;
+	clif->pCashShopOpen1 = clif_parse_cashShopOpen1;
+	clif->pCashShopOpen2 = clif_parse_cashShopOpen2;
+	clif->pCashShopLimitedReq = clif_parse_cashShopLimitedReq;
+	clif->pCashShopClose = clif_parse_cashShopClose;
+	clif->pCashShopReqTab = clif_parse_cashShopReqTab;
+	clif->pCashShopSchedule = clif_parse_cashShopSchedule;
+	clif->pCashShopBuy = clif_parse_cashShopBuy;
 	clif->cashShopBuyAck = clif_cashShopBuyAck;
 	clif->cashShopOpen = clif_cashShopOpen;
 	/*  */
@@ -24770,6 +24951,9 @@ void clif_defaults(void)
 	clif->npc_barter_open = clif_npc_barter_open;
 	clif->pNPCBarterClosed = clif_parse_NPCBarterClosed;
 	clif->pNPCBarterPurchase = clif_parse_NPCBarterPurchase;
+	clif->npc_expanded_barter_open = clif_npc_expanded_barter_open;
+	clif->pNPCExpandedBarterPurchase = clif_parse_npc_expanded_barter_purchase;
+	clif->pNPCExpandedBarterClosed = clif_parse_npc_expanded_barter_closed;
 	clif->pClientVersion = clif_parse_clientVersion;
 	clif->pPing = clif_parse_ping;
 	clif->ping = clif_ping;

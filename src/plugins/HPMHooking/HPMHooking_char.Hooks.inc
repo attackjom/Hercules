@@ -2,7 +2,7 @@
  * This file is part of Hercules.
  * http://herc.ws - http://github.com/HerculesWS/Hercules
  *
- * Copyright (C) 2013-2019  Hercules Dev Team
+ * Copyright (C) 2013-2020 Hercules Dev Team
  *
  * Hercules is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -8712,6 +8712,33 @@ int HP_inter_party_check_lv(struct party_data *p) {
 	}
 	return retVal___;
 }
+int HP_inter_party_is_family_party(struct party_data *p) {
+	int hIndex = 0;
+	int retVal___ = 0;
+	if (HPMHooks.count.HP_inter_party_is_family_party_pre > 0) {
+		int (*preHookFunc) (struct party_data **p);
+		*HPMforce_return = false;
+		for (hIndex = 0; hIndex < HPMHooks.count.HP_inter_party_is_family_party_pre; hIndex++) {
+			preHookFunc = HPMHooks.list.HP_inter_party_is_family_party_pre[hIndex].func;
+			retVal___ = preHookFunc(&p);
+		}
+		if (*HPMforce_return) {
+			*HPMforce_return = false;
+			return retVal___;
+		}
+	}
+	{
+		retVal___ = HPMHooks.source.inter_party.is_family_party(p);
+	}
+	if (HPMHooks.count.HP_inter_party_is_family_party_post > 0) {
+		int (*postHookFunc) (int retVal___, struct party_data *p);
+		for (hIndex = 0; hIndex < HPMHooks.count.HP_inter_party_is_family_party_post; hIndex++) {
+			postHookFunc = HPMHooks.list.HP_inter_party_is_family_party_post[hIndex].func;
+			retVal___ = postHookFunc(retVal___, p);
+		}
+	}
+	return retVal___;
+}
 void HP_inter_party_calc_state(struct party_data *p) {
 	int hIndex = 0;
 	if (HPMHooks.count.HP_inter_party_calc_state_pre > 0) {
@@ -8761,6 +8788,33 @@ int HP_inter_party_tosql(struct party *p, int flag, int index) {
 		for (hIndex = 0; hIndex < HPMHooks.count.HP_inter_party_tosql_post; hIndex++) {
 			postHookFunc = HPMHooks.list.HP_inter_party_tosql_post[hIndex].func;
 			retVal___ = postHookFunc(retVal___, p, flag, index);
+		}
+	}
+	return retVal___;
+}
+int HP_inter_party_del_nonexistent_party(int party_id) {
+	int hIndex = 0;
+	int retVal___ = 0;
+	if (HPMHooks.count.HP_inter_party_del_nonexistent_party_pre > 0) {
+		int (*preHookFunc) (int *party_id);
+		*HPMforce_return = false;
+		for (hIndex = 0; hIndex < HPMHooks.count.HP_inter_party_del_nonexistent_party_pre; hIndex++) {
+			preHookFunc = HPMHooks.list.HP_inter_party_del_nonexistent_party_pre[hIndex].func;
+			retVal___ = preHookFunc(&party_id);
+		}
+		if (*HPMforce_return) {
+			*HPMforce_return = false;
+			return retVal___;
+		}
+	}
+	{
+		retVal___ = HPMHooks.source.inter_party.del_nonexistent_party(party_id);
+	}
+	if (HPMHooks.count.HP_inter_party_del_nonexistent_party_post > 0) {
+		int (*postHookFunc) (int retVal___, int party_id);
+		for (hIndex = 0; hIndex < HPMHooks.count.HP_inter_party_del_nonexistent_party_post; hIndex++) {
+			postHookFunc = HPMHooks.list.HP_inter_party_del_nonexistent_party_post[hIndex].func;
+			retVal___ = postHookFunc(retVal___, party_id);
 		}
 	}
 	return retVal___;
@@ -9115,11 +9169,11 @@ bool HP_inter_party_change_option(int party_id, int account_id, int exp, int ite
 	}
 	return retVal___;
 }
-bool HP_inter_party_change_map(int party_id, int account_id, int char_id, unsigned short map, int online, unsigned int lv) {
+bool HP_inter_party_change_map(int party_id, int account_id, int char_id, unsigned short map, int online, int lv) {
 	int hIndex = 0;
 	bool retVal___ = false;
 	if (HPMHooks.count.HP_inter_party_change_map_pre > 0) {
-		bool (*preHookFunc) (int *party_id, int *account_id, int *char_id, unsigned short *map, int *online, unsigned int *lv);
+		bool (*preHookFunc) (int *party_id, int *account_id, int *char_id, unsigned short *map, int *online, int *lv);
 		*HPMforce_return = false;
 		for (hIndex = 0; hIndex < HPMHooks.count.HP_inter_party_change_map_pre; hIndex++) {
 			preHookFunc = HPMHooks.list.HP_inter_party_change_map_pre[hIndex].func;
@@ -9134,7 +9188,7 @@ bool HP_inter_party_change_map(int party_id, int account_id, int char_id, unsign
 		retVal___ = HPMHooks.source.inter_party.change_map(party_id, account_id, char_id, map, online, lv);
 	}
 	if (HPMHooks.count.HP_inter_party_change_map_post > 0) {
-		bool (*postHookFunc) (bool retVal___, int party_id, int account_id, int char_id, unsigned short map, int online, unsigned int lv);
+		bool (*postHookFunc) (bool retVal___, int party_id, int account_id, int char_id, unsigned short map, int online, int lv);
 		for (hIndex = 0; hIndex < HPMHooks.count.HP_inter_party_change_map_post; hIndex++) {
 			postHookFunc = HPMHooks.list.HP_inter_party_change_map_post[hIndex].func;
 			retVal___ = postHookFunc(retVal___, party_id, account_id, char_id, map, online, lv);

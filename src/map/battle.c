@@ -2,8 +2,8 @@
  * This file is part of Hercules.
  * http://herc.ws - http://github.com/HerculesWS/Hercules
  *
- * Copyright (C) 2012-2018  Hercules Dev Team
- * Copyright (C)  Athena Dev Teams
+ * Copyright (C) 2012-2020 Hercules Dev Team
+ * Copyright (C) Athena Dev Teams
  *
  * Hercules is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -3231,12 +3231,11 @@ static int64 battle_calc_damage(struct block_list *src, struct block_list *bl, s
 		if (!damage) return 0;
 
 		if( (sce = sc->data[SC_LIGHTNINGWALK]) && flag&BF_LONG && rnd()%100 < sce->val1 ) {
-			int dx[8]={0,-1,-1,-1,0,1,1,1};
-			int dy[8]={1,1,0,-1,-1,-1,0,1};
-			uint8 dir = map->calc_dir(bl, src->x, src->y);
-			if( unit->movepos(bl, src->x-dx[dir], src->y-dy[dir], 1, 1) ) {
-				clif->slide(bl,src->x-dx[dir],src->y-dy[dir]);
-				unit->setdir(bl, dir);
+			enum unit_dir dir = map->calc_dir(bl, src->x, src->y);
+			Assert_ret(dir >= UNIT_DIR_FIRST && dir < UNIT_DIR_MAX);
+			if (unit->movepos(bl, src->x - dirx[dir], src->y - diry[dir], 1, 1)) {
+				clif->slide(bl, src->x - dirx[dir], src->y - diry[dir]);
+				unit->set_dir(bl, dir);
 			}
 			d->dmg_lv = ATK_DEF;
 			status_change_end(bl, SC_LIGHTNINGWALK, INVALID_TIMER);
@@ -4977,6 +4976,7 @@ static struct Damage battle_calc_weapon_attack(struct block_list *src, struct bl
 				switch (sd->weapontype) {
 					case W_BOW:
 					case W_REVOLVER:
+					case W_RIFLE:
 					case W_GATLING:
 					case W_SHOTGUN:
 					case W_GRENADE:
@@ -5857,10 +5857,10 @@ static void battle_reflect_damage(struct block_list *target, struct block_list *
 		if( wd->flag & BF_SHORT ) {
 			if( !is_boss(src) ) {
 				if( sc->data[SC_DEATHBOUND] && skill_id != WS_CARTTERMINATION ) {
-					uint8 dir = map->calc_dir(target,src->x,src->y),
-					t_dir = unit->getdir(target);
+					enum unit_dir dir = map->calc_dir(target, src->x, src->y);
+					enum unit_dir t_dir = unit->getdir(target);
 
-					if( !map->check_dir(dir,t_dir) ) {
+					if (map->check_dir(dir, t_dir) == 0) {
 						int64 rd1 = damage * sc->data[SC_DEATHBOUND]->val2 / 100; // Amplify damage.
 
 						trdamage += rdamage = rd1 - (damage = rd1 * 30 / 100); // not normalized as intended.
@@ -6228,10 +6228,10 @@ static enum damage_lv battle_weapon_attack(struct block_list *src, struct block_
 			status_change_end(src, SC_CLOAKINGEXCEED, INVALID_TIMER);
 	}
 	if( tsc && tsc->data[SC_AUTOCOUNTER] && status->check_skilluse(target, src, KN_AUTOCOUNTER, 1) ) {
-		uint8 dir = map->calc_dir(target,src->x,src->y);
-		int t_dir = unit->getdir(target);
+		enum unit_dir   dir = map->calc_dir(target, src->x, src->y);
+		enum unit_dir t_dir = unit->getdir(target);
 		int dist = distance_bl(src, target);
-		if(dist <= 0 || (!map->check_dir(dir,t_dir) && dist <= tstatus->rhw.range+1)) {
+		if(dist <= 0 || (map->check_dir(dir, t_dir) == 0 && dist <= tstatus->rhw.range + 1)) {
 			uint16 skill_lv = tsc->data[SC_AUTOCOUNTER]->val1;
 			clif->skillcastcancel(target); //Remove the casting bar. [Skotlex]
 			clif->damage(src, target, sstatus->amotion, 1, 0, 1, BDT_NORMAL, 0); //Display MISS.
@@ -6600,10 +6600,6 @@ static int battle_check_target(struct block_list *src, struct block_list *target
 
 	m = target->m;
 
-	if (flag & BCT_ENEMY && (map->getcell(m, src, src->x, src->y, CELL_CHKBASILICA) || map->getcell(m, src, target->x, target->y, CELL_CHKBASILICA))) {
-		return -1;
-	}
-
 	//t_bl/s_bl hold the 'master' of the attack, while src/target are the actual
 	//objects involved.
 	if( (t_bl = battle->get_master(target)) == NULL )
@@ -6611,6 +6607,11 @@ static int battle_check_target(struct block_list *src, struct block_list *target
 
 	if( (s_bl = battle->get_master(src)) == NULL )
 		s_bl = src;
+
+	if ((flag & BCT_ENEMY) != 0 && (status_get_mode(s_bl) & MD_BOSS) == 0 && (map->getcell(m, src, src->x, src->y, CELL_CHKBASILICA) != 0
+	    || map->getcell(m, src, target->x, target->y, CELL_CHKBASILICA) != 0)) {
+		return -1;
+	}
 
 	if (s_bl->type == BL_PC) {
 		const struct map_session_data *s_sd = BL_UCCAST(BL_PC, s_bl);
