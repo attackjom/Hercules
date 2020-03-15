@@ -9,6 +9,115 @@ and this project does not adhere to [Semantic Versioning](http://semver.org/spec
 If you are reading this in a text editor, simply ignore this section
 -->
 
+## [v2020.03.08] `March 08 2020` `PATCH 1`
+
+### Fixed
+
+- Fixed an incorrect return value in `unit->walktobl()` causing mobs to be unable to walk to their target. (#2659)
+
+## [v2020.03.08] `March 08 2020`
+
+### Added
+
+- Added/updated packets, encryption keys and message tables for clients up to 2020-03-04. (#2645)
+- Exposed the item bound type (`IBT_*`) constants to the script engine. (#2650)
+- Added item scripts for item IDs 12459 through 12465 and corrected their name in the pre-renewal DB. (#2634, issue #1196)
+- Added the `unitiswalking()` script command, to check whether an unit is walking at a given time. (#2628)
+
+### Changed
+
+- Changed the default `PACKETVER` to 2019-05-30. (part of #2645)
+- Major refactoring of the functions in `unit.c`, adding code documentation and following the code style guidelines. Functions have been renamed when backward compatible changes to the arguments or return values were made. (#2546)
+  - A new header `unitdefines.h` has been added.
+  - `enum unit_dir` is now provided, to standardize handling of facing/walking directions.
+  - The macros `unit_get_opposite_dir()`, `unit_is_diagonal_dir()`, `unit_is_dir_or_opposite()`, `unit_get_ccw90_dir()`, `unit_get_rnd_diagonal_dir()` have been added.
+  - `unit->walktoxy_timer()` has been renamed to `unit->walk_toxy_timer()` and its return values have been changed and documented.
+  - `unit->walktoxy_sub()` has been renamed to `unit->walk_toxy_sub()` and its return values have been changed and documented.
+  - `unit->delay_walktoxy_timer()` has been renamed to `unit->delay_walk_toxy_timer()` and its return values have been changed and documented.
+  - `unit->walktoxy()` has been renamed to `unit->walk_toxy()` and its return values have been changed and documented.
+  - `unit->walktobl_sub()` has been renamed to `unit->walk_tobl_timer()` and its return values have been changed and documented.
+  - `unit->setdir()` has been renamed to `unit->set_dir()` and its return value and arguments have been changed and documented.
+  - `unit->getdir()` has been renamed to `unit->get_dir()` and its return type and constness of the arguments have been changed.
+  - `unit->warpto_master()` has been added.
+  - `unit->sleep_timer()` has been renamed to `unit->sleeptimer()` and its return values have been changed and documented.
+  - `unit->calc_pos()` now accepts `enum unit_dir`.
+  - `map->check_dir()` now accepts `enum unit_dir`.
+  - `map->calc_dir()` now returns `enum unit_dir` and accepts a const bl.
+  - `npc->create_npc()` now accepts `enum unit_dir`.
+  - `skill->blown()` now accepts `enum unit_dir`.
+  - `skill->brandishspear_first()` now accepts `enum unit_dir`.
+  - `skill->brandishspear_dir()` now accepts `enum unit_dir`.
+  - `skill->attack_blow_unknown()` now accepts `enum unit_dir`.
+  - The remaining unit functions have been documented.
+- New return values have been added to `pc->setpos()`, for better error handling. (#2633, issue #2632)
+- Increased the `MAX_MOB_LIST_PER_MAP` value to 115 in pre-renewal builds, to fit all the default spawns. (#2638, issue #1915)
+- Extended the `getiteminfo()` command to also accept item names, and added the types `ITEMINFO_ID`, `ITEMINFO_AEGISNAME`, `ITEMINFO_NAME`. (#2639)
+- Changed `itemskill()` to ignore conditions by default. The `ISF_CHECKCONDITIONS` needs to be explicitly passed if conditions should be checked/consumed. (part of #2648)
+- Changed the NPC shop behavior to prevent selling items from the favorites tab of the inventory. (#2651)
+- Updated Doxygen configuration to speed up generation and fix compatibility warnings. (0d747896e0)
+- Updated the Travis-CI configuration file according to the validation warnings and notices. (eb97973e68)
+
+### Fixed
+
+- Fixed a missing `get_index()` call in `Skill2SCTable`, causing some skills to activate the wrong status. (#2643, issue #2636)
+- Fixed a compilation error C2233 in Visual Studio. (part of #2645)
+- Fixed Basilica unintentionally restraining boss mobs. (#2612, issue #1276, related to issue #2420)
+- Fixed the handling of unequip scripts in zones where an item is restricted. The `OnUnequip` script is now never executed when unequipping in a restricted zone, but it is always executed when entering such zones, regardless of the `unequip_restricted_equipment` battle flag. (#2642, issue #2180)
+- Fixed the handling of skill requirements and conditions by the `itemskill()` command. (#2648, issue #2646)
+- Added missing requirements to `CASH_INCAGI` and `RK_CRUSHSTRIKE`. (part of #2648)
+
+### Removed
+
+- Removed the `ISF_IGNORECONDITIONS` flag previously used by `itemskill()`, now the default behavior. (#2648)
+
+## [v2020.02.09] `February 09 2020`
+
+### Added
+
+- Added/updated packets, encryption keys and message tables for clients up to 2020-02-06. (#2625)
+- Added support for the expanded barter shop, see example script in `npc/custom/expandedbartershop.txt` and the related script commands `sellitem()`, `startsellitem()`, `sellitemcurrency()`, `endsellitem()`. Note: this includes a database migration. (part of #2625)
+- Added the new script commands `cloakonnpc()` and `cloakoffnpc()`. (part of #2615)
+- Added the new script command `achievement_iscompleted()` to check for achievement completion. (part of #2615)
+- Added Exploration Achievement NPCs. (#2615)
+- Added support for an `OnNPCUnload` label, where a script can perform its cleanup before being unloaded (such as removing mapflags, etc). (part of #2590)
+- Added the Rebellion jobchange quest and its related mobs and items. (#2621)
+- Added support for switching madogear type. See the documentation for `setmount()` and the related `MADO_ROBOT` and `MADO_SUITE` constants. (#2586)
+
+### Changed
+
+- Changed the logic of `skill_get_index` to make it easier to add new skills, custom or official. (#2596)
+- Refactored `int_party` code related to exp sharing calculations. (part of #2601)
+- Updated the Duel system cooldown to be configurable with seconds granularity. The `duel_time_interval` setting can be safely updated and with `@reloadbattleconf`, applying to any existing cooldowns. (#1495)
+- Converted `PACKET_ZC_STATE_CHANGE` to use its struct format and added a function to send it to a single target. (part of #2615)
+- Changed the behavior of `@unloadnpc`, `@reloadnpc`, `@unloadnpcfile` to kill the monsters that were spawned by the unloaded script (non-permanent spawns). (#2590, issue #2530)
+- Updated the `mobdbconverter.py` tool to support Race, Size and Element constants. The script now requires Python 3. (#2620)
+- Cleaned up a duplicate definition of `SP_VARCASTRATE` in `pc_readparam()`. (#2624, issue #1311)
+- Extended `itemskill()` with a new `ISF_INSTANTCAST` flag to be able to cast a skill without cast time. (part of #2616)
+- Extended `itemskill()` with a new `ISF_CASTONSELF` flag to be able to forcefully cast a skill on the invoking character. (part of #2616)
+- Converted `ZC_AUTORUN_SKILL` to use its struct format. (part of #2616)
+
+### Fixed
+
+- Fixed some signed/unsigned mismatch compiler warnings. (#2601, issue #1434)
+- Fixed some cases where the family exp sharing state wasn't correctly detected. (part of #2601)
+- Fixed a duplicate "Skill Failed" message when using Asura Strike. (part of #2248, issue #1239)
+- Fixed an issue that made a character turn to face its target after casting Asura Strike. (#2248, issue #1239)
+- Fixed the position of a character after a failed Asura Strike cast, to be 3 cells from its original position instead of 2. (part of #2248, issue #1239)
+- Fixed the status icon from the Elemental Resistance Potions and the Undead Element Scroll not disappearing when the status changes end. (#2614, issue #2593)
+- Fixed a crash when using `@loadnpc`, `@reloadnpc` or `@unloadnpcfile` on a directory. (part of #2590, issue #1279)
+- Fixed `PR_STRECOVERY` to only cure status effects if the target's element isn't Undead. (#2618, issue #2558)
+- Fixed the mobs spawned by `mob_clone_spawn()` (`clone()`, `@evilclone`) being invulnerable because of an uninitialized `dmg_taken_rate` taking the value of 0. (#2617, issue #2607)
+- Fixed a crash when the script function `getunits()` was called with an invalid mapindex. Now an error message is added when the mapindex validation fails. (#2619)
+- Fixed a crash when `map_forcountinmap()` was called with an invalid mapindex. Now the function will return 0 instead. (part of #2619)
+- Fixed clientside errors when using a `ViewData` block in the mob database without specifying a `HairStyleId`. The hair style will now default to 1 when a `ViewData` block is specified. (#2622)
+- Fixed the damage calculation being too low when using weapons of type `W_RIFLE` (in pre-renewal). (#2623)
+- Fixed an issue that could cause homunculi to be in an unexpected partially-vaporized state (i.e. when a Vanilmirth kills its own master through `HVAN_EXPLOSION`). (#2626)
+- Fixed NPC ID validation when `SECURE_NPCTIMEOUT` is defined, causing scripts to abort with an "Unknown NPC" error on the console. (#2627, issue #2073)
+- Fixed the skill condition checks and the `flag` parameter of `itemskill()`. The constants `ISF_NONE` and `ISF_IGNORECONDITIONS` are now available. (part of #2616)
+- Fixed the `itemskill()` items to provide their proper Aegis behavior, in their requirement checks, self-targeting and item consumption.  (#2616, issue #819)
+- Fixed the Earth Spike Scroll to consume 10 SP when `SC_EARTHSCROLL` is active. (part of #2616)
+- Fixed warnings in the HPMHookGenerator. (1000b10026)
+
 ## [v2020.01.12] `January 12 2020`
 
 ### Added
@@ -669,7 +778,7 @@ If you are reading this in a text editor, simply ignore this section
 ### Changed
 
 - Changed the Travis build to use the maximum available PACKETVER, so that the recent code is tested. (#2199)
-- Added a shortand to call `mes()` without arguments to mean `mes("")`. (#2193)
+- Added a shorthand to call `mes()` without arguments to mean `mes("")`. (#2193)
 
 ### Fixed
 
@@ -767,7 +876,7 @@ If you are reading this in a text editor, simply ignore this section
 - Fixed the maximum array size being higher than the maximum integer (uint32 vs int32), which could cause integer overflows in scripts. (#2093)
 - Fixed a wrongly named constant, which made `Sea-Otter Card` not increase the `Sushi` heal rate. (#2117)
 - Fixed misc bugs related to pet evolution. (#2136, #2153)
-- Fixed a bug that sent an attendance system message without the attendence ui being opened. (#2129)
+- Fixed a bug that sent an attendance system message without the attendance ui being opened. (#2129)
 - Corrected several outdated documentation references to `db/constants.conf`, to point to `doc/constants.md`. (#2090)
 - Fixed an issue in the script command `getd()` that wouldn't properly initialize the type of newly created variables through `set(getd(...), ...)` (#2158)
 - Fixed a missing memory initialization in several dummy `struct block_list` entries created as local variables. (#2159)
@@ -1148,6 +1257,9 @@ If you are reading this in a text editor, simply ignore this section
 - New versioning scheme and project changelogs/release notes (#1853)
 
 [Unreleased]: https://github.com/HerculesWS/Hercules/compare/stable...master
+[v2020.03.08+1]: https://github.com/HerculesWS/Hercules/compare/v2020.03.08...v2020.03.08+1
+[v2020.03.08]: https://github.com/HerculesWS/Hercules/compare/v2020.02.09...v2020.03.08
+[v2020.02.09]: https://github.com/HerculesWS/Hercules/compare/v2020.01.12...v2020.02.09
 [v2020.01.12]: https://github.com/HerculesWS/Hercules/compare/v2019.12.15...v2020.01.12
 [v2019.12.15]: https://github.com/HerculesWS/Hercules/compare/v2019.11.17+1...v2019.12.15
 [v2019.11.17+1]: https://github.com/HerculesWS/Hercules/compare/v2019.11.17...v2019.11.17+1

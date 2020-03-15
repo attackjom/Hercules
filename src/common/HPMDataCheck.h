@@ -600,6 +600,7 @@ HPExport const struct s_HPMDataCheck HPMDataCheck[] = {
 	#endif // MAP_MOB_H
 	#ifdef MAP_NPC_H
 		{ "event_data", sizeof(struct event_data), SERVER_TYPE_MAP },
+		{ "npc_barter_currency", sizeof(struct npc_barter_currency), SERVER_TYPE_MAP },
 		{ "npc_chat_interface", sizeof(struct npc_chat_interface), SERVER_TYPE_MAP },
 		{ "npc_data", sizeof(struct npc_data), SERVER_TYPE_MAP },
 		{ "npc_interface", sizeof(struct npc_interface), SERVER_TYPE_MAP },
@@ -684,6 +685,7 @@ HPExport const struct s_HPMDataCheck HPMDataCheck[] = {
 		{ "PACKET_ZC_ADD_ITEM_TO_STORE", sizeof(struct PACKET_ZC_ADD_ITEM_TO_STORE), SERVER_TYPE_MAP },
 		{ "PACKET_ZC_ADD_MEMBER_TO_GROUP", sizeof(struct PACKET_ZC_ADD_MEMBER_TO_GROUP), SERVER_TYPE_MAP },
 		{ "PACKET_ZC_ADD_SKILL", sizeof(struct PACKET_ZC_ADD_SKILL), SERVER_TYPE_MAP },
+		{ "PACKET_ZC_AUTORUN_SKILL", sizeof(struct PACKET_ZC_AUTORUN_SKILL), SERVER_TYPE_MAP },
 		{ "PACKET_ZC_BAN_LIST", sizeof(struct PACKET_ZC_BAN_LIST), SERVER_TYPE_MAP },
 		{ "PACKET_ZC_BAN_LIST_sub", sizeof(struct PACKET_ZC_BAN_LIST_sub), SERVER_TYPE_MAP },
 		{ "PACKET_ZC_CASH_ITEM_DELETE", sizeof(struct PACKET_ZC_CASH_ITEM_DELETE), SERVER_TYPE_MAP },
@@ -743,6 +745,7 @@ HPExport const struct s_HPMDataCheck HPMDataCheck[] = {
 		{ "PACKET_ZC_SKILLINFO_LIST", sizeof(struct PACKET_ZC_SKILLINFO_LIST), SERVER_TYPE_MAP },
 		{ "PACKET_ZC_SKILLINFO_UPDATE2", sizeof(struct PACKET_ZC_SKILLINFO_UPDATE2), SERVER_TYPE_MAP },
 		{ "PACKET_ZC_SPRITE_CHANGE", sizeof(struct PACKET_ZC_SPRITE_CHANGE), SERVER_TYPE_MAP },
+		{ "PACKET_ZC_STATE_CHANGE", sizeof(struct PACKET_ZC_STATE_CHANGE), SERVER_TYPE_MAP },
 		{ "PACKET_ZC_STATUS_CHANGE_ACK", sizeof(struct PACKET_ZC_STATUS_CHANGE_ACK), SERVER_TYPE_MAP },
 		{ "PACKET_ZC_STYLE_CHANGE_RES", sizeof(struct PACKET_ZC_STYLE_CHANGE_RES), SERVER_TYPE_MAP },
 		{ "PACKET_ZC_TALKBOX_CHATCONTENTS", sizeof(struct PACKET_ZC_TALKBOX_CHATCONTENTS), SERVER_TYPE_MAP },

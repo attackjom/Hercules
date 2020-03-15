@@ -4617,5 +4617,40 @@ packetLen(0x0b6d, 6)
 // Packet: 0x0b6e
 packetLen(0x0b6e, 14)
 
+// Packet: 0x0b6f
+#if PACKETVER >= 20200122
+packetLen(0x0b6f, 177)
+#endif
+
+// Packet: 0x0b70
+#if PACKETVER >= 20200122
+packetLen(0x0b70, 8)
+#endif
+
+// Packet: 0x0b71
+#if PACKETVER >= 20200122
+packetLen(0x0b71, 177)
+#endif
+
+// Packet: 0x0b72
+#if PACKETVER >= 20200122
+packetLen(0x0b72, 4)
+#endif
+
+// Packet: 0x0b73
+#if PACKETVER >= 20200212
+packetLen(0x0b73, 8)
+#endif
+
+// Packet: 0x0b74
+#if PACKETVER >= 20200304
+packetLen(0x0b74, 1026)
+#endif
+
+// Packet: 0x0b75
+#if PACKETVER >= 20200304
+packetLen(0x0b75, 1026)
+#endif
+
 
 #endif /* COMMON_PACKETS2020_LEN_RE_H */

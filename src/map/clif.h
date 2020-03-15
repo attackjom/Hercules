@@ -1006,6 +1006,7 @@ struct clif_interface {
 	/* visual effects client-side */
 	void (*misceffect) (struct block_list* bl,int type);
 	void (*changeoption) (struct block_list* bl);
+	void (*changeoption_target) (struct block_list *bl, struct block_list *target_bl, enum send_target target);
 	void (*changeoption2) (struct block_list* bl);
 	void (*emotion) (struct block_list *bl,int type);
 	void (*talkiebox) (struct block_list* bl, const char* talkie);
@@ -1663,6 +1664,9 @@ struct clif_interface {
 	void (*npc_barter_open) (struct map_session_data *sd, struct npc_data *nd);
 	void (*pNPCBarterClosed) (int fd, struct map_session_data *sd);
 	void (*pNPCBarterPurchase) (int fd, struct map_session_data *sd);
+	void (*pNPCExpandedBarterClosed) (int fd, struct map_session_data *sd);
+	void (*pNPCExpandedBarterPurchase) (int fd, struct map_session_data *sd);
+	void (*npc_expanded_barter_open) (struct map_session_data *sd, struct npc_data *nd);
 	void (*pClientVersion) (int fd, struct map_session_data *sd);
 	void (*pPing) (int fd, struct map_session_data *sd);
 	void (*ping) (struct map_session_data *sd);
