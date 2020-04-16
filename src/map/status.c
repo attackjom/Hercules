@@ -890,6 +890,13 @@ static void initChangeTables(void)
 	status->dbs->ChangeFlagTable[SC_PHI_DEMON] |= SCB_ALL;
 	status->dbs->ChangeFlagTable[SC_MAGIC_CANDY] |= SCB_MATK | SCB_ALL;
 	status->dbs->ChangeFlagTable[SC_MYSTICPOWDER] |= SCB_FLEE | SCB_LUK;
+	status->dbs->ChangeFlagTable[SC_POPECOOKIE] |= SCB_BASE | SCB_BATK | SCB_MATK;
+	status->dbs->ChangeFlagTable[SC_VITALIZE_POTION] |= SCB_BATK | SCB_MATK;
+	status->dbs->ChangeFlagTable[SC_SKF_MATK] |= SCB_MATK;
+	status->dbs->ChangeFlagTable[SC_SKF_ATK] |= SCB_BATK;
+	status->dbs->ChangeFlagTable[SC_SKF_ASPD] |= SCB_ASPD;
+	status->dbs->ChangeFlagTable[SC_SKF_CAST] |= SCB_NONE;
+	status->dbs->ChangeFlagTable[SC_ALMIGHTY] |= SCB_BATK | SCB_MATK;
 
 	// Cash Items
 	status->dbs->ChangeFlagTable[SC_FOOD_STR_CASH] |= SCB_STR;
@@ -1590,7 +1597,7 @@ static int status_check_skilluse(struct block_list *src, struct block_list *targ
 	}
 
 	if( skill_id ) {
-		if (src != NULL && (sd == NULL || sd->skillitem == 0)) {
+		if (src != NULL && (sd == NULL || sd->autocast.type != AUTOCAST_ITEM)) {
 			// Items that cast skills using 'itemskill' will not be handled by map_zone_db.
 			int i;
 
@@ -1634,7 +1641,7 @@ static int status_check_skilluse(struct block_list *src, struct block_list *targ
 				if (src != NULL
 				 && map->getcell(src->m, src, src->x, src->y, CELL_CHKLANDPROTECTOR)
 				 && !(st->mode&MD_BOSS)
-				 && (src->type != BL_PC || sd->skillitem != skill_id))
+				 && (src->type != BL_PC || sd->autocast.type != AUTOCAST_ITEM))
 					return 0;
 				break;
 			default:
@@ -1715,7 +1722,7 @@ static int status_check_skilluse(struct block_list *src, struct block_list *targ
 				return 0; //Can't amp out of Wand of Hermode :/ [Skotlex]
 		}
 
-		if (skill_id != 0 /* Do not block item-casted skills.*/ && (src->type != BL_PC || sd->skillitem != skill_id)) {
+		if (skill_id != 0 /* Do not block item-casted skills.*/ && (src->type != BL_PC || sd->autocast.type != AUTOCAST_ITEM)) {
 			//Skills blocked through status changes...
 			if (!flag && ( //Blocked only from using the skill (stuff like autospell may still go through
 				sc->data[SC_SILENCE] ||
@@ -2581,12 +2588,16 @@ static int status_calc_pc_(struct map_session_data *sd, enum e_status_calc_opt o
 
 	status->calc_pc_additional(sd, opt);
 
-	if( sd->pd ) { // Pet Bonus
+	if (sd->pd != NULL) { // Pet bonus.
 		struct pet_data *pd = sd->pd;
-		if( pd && pd->petDB && pd->petDB->equip_script && pd->pet.intimate >= battle_config.pet_equip_min_friendly )
-			script->run(pd->petDB->equip_script,0,sd->bl.id,0);
-		if( pd && pd->pet.intimate > 0 && (!battle_config.pet_equip_required || pd->pet.equip > 0) && pd->state.skillbonus == 1 && pd->bonus )
-			pc->bonus(sd,pd->bonus->type, pd->bonus->val);
+
+		if (pd->petDB != NULL && pd->petDB->equip_script != NULL)
+			script->run(pd->petDB->equip_script, 0, sd->bl.id, 0);
+
+		if (pd->pet.intimate > PET_INTIMACY_NONE && pd->state.skillbonus == 1 && pd->bonus != NULL
+		    && (battle_config.pet_equip_required == 0 || pd->pet.equip > 0)) {
+			pc->bonus(sd, pd->bonus->type, pd->bonus->val);
+		}
 	}
 
 	//param_bonus now holds card bonuses.
@@ -3057,6 +3068,18 @@ static int status_calc_pc_(struct map_session_data *sd, enum e_status_calc_opt o
 		if (sc->data[SC_FORTUNE])
 			sd->bonus.crit_atk_rate += 2 * sc->data[SC_FORTUNE]->val1;
 #endif
+		if (sc->data[SC_POPECOOKIE] != NULL) {
+			i = sc->data[SC_POPECOOKIE]->val3;
+			sd->subele[ELE_WATER] += i;
+			sd->subele[ELE_EARTH] += i;
+			sd->subele[ELE_FIRE] += i;
+			sd->subele[ELE_WIND] += i;
+			sd->subele[ELE_POISON] += i;
+			sd->subele[ELE_HOLY] += i;
+			sd->subele[ELE_DARK] += i;
+			sd->subele[ELE_GHOST] += i;
+			sd->subele[ELE_UNDEAD] += i;
+		}
 		if (sc->data[SC_MTF_MLEATKED])
 			sd->subele[ELE_NEUTRAL] += sc->data[SC_MTF_MLEATKED]->val1;
 		if (sc->data[SC_FIRE_INSIGNIA] && sc->data[SC_FIRE_INSIGNIA]->val1 == 3)
@@ -4883,6 +4906,10 @@ static int status_calc_batk(struct block_list *bl, struct status_change *sc, int
 		/* some statuses that are hidden in the status window */
 		if(sc->data[SC_PLUSATTACKPOWER])
 			batk += sc->data[SC_PLUSATTACKPOWER]->val1;
+		if (sc->data[SC_POPECOOKIE] != NULL)
+			batk += batk * sc->data[SC_POPECOOKIE]->val1 / 100;
+		if (sc->data[SC_VITALIZE_POTION] != NULL)
+			batk += batk * sc->data[SC_VITALIZE_POTION]->val1 / 100;
 		return cap_value(batk, battle_config.batk_min, battle_config.batk_max);
 	}
 #ifndef RENEWAL
@@ -4962,6 +4989,10 @@ static int status_calc_batk(struct block_list *bl, struct status_change *sc, int
 		batk += batk * sc->data[SC_2011RWC]->val2 / 100;
 	if (sc->data[SC_STEAMPACK])
 		batk += sc->data[SC_STEAMPACK]->val1;
+	if (sc->data[SC_SKF_ATK] != NULL)
+		batk += sc->data[SC_SKF_ATK]->val1;
+	if (sc->data[SC_ALMIGHTY] != NULL)
+		batk += sc->data[SC_ALMIGHTY]->val1;
 
 	if (sc->data[SC_SHRIMP])
 		batk += batk * sc->data[SC_SHRIMP]->val2 / 100;
@@ -5110,6 +5141,10 @@ static int status_calc_matk(struct block_list *bl, struct status_change *sc, int
 		/* some statuses that are hidden in the status window */
 		if (sc->data[SC_MINDBREAKER])
 			matk += matk * sc->data[SC_MINDBREAKER]->val2 / 100;
+		if (sc->data[SC_POPECOOKIE] != NULL)
+			matk += matk * sc->data[SC_POPECOOKIE]->val2 / 100;
+		if (sc->data[SC_VITALIZE_POTION] != NULL)
+			matk += matk * sc->data[SC_VITALIZE_POTION]->val2 / 100;
 		return cap_value(matk, battle_config.matk_min, battle_config.matk_max);
 	}
 
@@ -5169,6 +5204,10 @@ static int status_calc_matk(struct block_list *bl, struct status_change *sc, int
 		matk += matk * sc->data[SC_2011RWC]->val2 / 100;
 	if (sc->data[SC_MAGIC_CANDY])
 		matk += sc->data[SC_MAGIC_CANDY]->val1;
+	if (sc->data[SC_SKF_MATK] != NULL)
+		matk += sc->data[SC_SKF_MATK]->val1;
+	if (sc->data[SC_ALMIGHTY] != NULL)
+		matk += sc->data[SC_ALMIGHTY]->val2;
 
 	return cap_value(matk, battle_config.matk_min, battle_config.matk_max);
 }
@@ -6027,6 +6066,8 @@ static short status_calc_aspd(struct block_list *bl, struct status_change *sc, s
 			bonus += sc->data[SC_INC_AGI]->val1;
 		if (sc->data[SC_NIBELUNGEN] && sc->data[SC_NIBELUNGEN]->val2 == RINGNBL_ASPDRATE)
 			bonus += 20;
+		if (sc->data[SC_SKF_ASPD] != NULL)
+			bonus += sc->data[SC_SKF_ASPD]->val1;
 	}
 
 	return (bonus + pots);
@@ -6196,6 +6237,8 @@ static short status_calc_aspd_rate(struct block_list *bl, struct status_change *
 		aspd_rate += sc->data[SC_BATTLESCROLL]->val1 * 10;
 	if (sc->data[SC_STEAMPACK])
 		aspd_rate += sc->data[SC_STEAMPACK]->val2 * 10;
+	if (sc->data[SC_SKF_ASPD] != NULL)
+		aspd_rate -= sc->data[SC_SKF_ASPD]->val1 * 10;
 
 	return (short)cap_value(aspd_rate,0,SHRT_MAX);
 }
