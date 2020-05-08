@@ -439,7 +439,7 @@ END_ZEROED_BLOCK;
 	int spiritball, spiritball_old;
 	int spirit_timer[MAX_SPIRITBALL];
 	int charm_count;
-	int charm_type;
+	enum spirit_charm_types charm_type;
 	int charm_timer[MAX_SPIRITCHARM];
 	unsigned char potion_success_counter; //Potion successes in row counter
 	unsigned char mission_count; //Stores the bounty kill count for TK_MISSION
@@ -678,6 +678,7 @@ END_ZEROED_BLOCK;
 #define pc_isidle(sd)         ( (sd)->chat_id != 0 || (sd)->state.vending || (sd)->state.buyingstore || DIFF_TICK(sockt->last_tick, (sd)->idletime) >= battle->bc->idle_no_share )
 #define pc_istrading(sd)      ( (sd)->npc_id || (sd)->state.vending || (sd)->state.buyingstore || (sd)->state.trading )
 #define pc_cant_act(sd)       ( (sd)->npc_id || (sd)->state.vending || (sd)->state.buyingstore || (sd)->chat_id != 0 || ((sd)->sc.opt1 && (sd)->sc.opt1 != OPT1_BURNING) || (sd)->state.trading || (sd)->state.storage_flag || (sd)->state.prevend || (sd)->state.refine_ui == 1 || (sd)->state.lapine_ui == 1)
+#define pc_cant_act_except_lapine(sd) ((sd)->npc_id || (sd)->state.vending || (sd)->state.buyingstore || (sd)->chat_id != 0 || ((sd)->sc.opt1 && (sd)->sc.opt1 != OPT1_BURNING) || (sd)->state.trading || (sd)->state.storage_flag || (sd)->state.prevend || (sd)->state.refine_ui == 1)
 
 /* equals pc_cant_act except it doesn't check for chat rooms */
 #define pc_cant_act2(sd)       ( (sd)->npc_id || (sd)->state.buyingstore || ((sd)->sc.opt1 && (sd)->sc.opt1 != OPT1_BURNING) || (sd)->state.trading || (sd)->state.storage_flag || (sd)->state.prevend || (sd)->state.refine_ui == 1 || (sd)->state.lapine_ui == 1)
@@ -687,7 +688,7 @@ END_ZEROED_BLOCK;
 #define pc_ishiding(sd)       ( (sd)->sc.option&(OPTION_HIDE|OPTION_CLOAK|OPTION_CHASEWALK) )
 #define pc_iscloaking(sd)     ( !((sd)->sc.option&OPTION_CHASEWALK) && ((sd)->sc.option&OPTION_CLOAK) )
 #define pc_ischasewalk(sd)    ( (sd)->sc.option&OPTION_CHASEWALK )
-#define pc_ismuted(sc,type)   ( (sc)->data[SC_NOCHAT] && (sc)->data[SC_NOCHAT]->val1&(type) )
+#define pc_ismuted(sc, type)  ( (sc)->data[SC_NOCHAT] != NULL && (battle_config.manner_system & (type)) != 0 )
 #define pc_isvending(sd)      ((sd)->state.vending || (sd)->state.prevend || (sd)->state.buyingstore)
 
 #ifdef NEW_CARTS
@@ -1044,6 +1045,8 @@ END_ZEROED_BLOCK; /* End */
 	int (*itemheal) (struct map_session_data *sd,int itemid, int hp,int sp);
 	int (*percentheal) (struct map_session_data *sd,int hp,int sp);
 	int (*jobchange) (struct map_session_data *sd, int class, int upper);
+	void (*hide) (struct map_session_data *sd, bool show_msg);
+	void (*unhide) (struct map_session_data *sd, bool show_msg);
 	int (*setoption) (struct map_session_data *sd,int type);
 	int (*setcart) (struct map_session_data* sd, int type);
 	void (*setfalcon) (struct map_session_data *sd, bool flag);
@@ -1127,8 +1130,8 @@ END_ZEROED_BLOCK; /* End */
 
 	int (*load_combo) (struct map_session_data *sd);
 
-	void (*add_charm) (struct map_session_data *sd, int interval, int max, int type);
-	void (*del_charm) (struct map_session_data *sd, int count, int type);
+	void (*add_charm) (struct map_session_data *sd, int interval, int max, enum spirit_charm_types type);
+	void (*del_charm) (struct map_session_data *sd, int count, enum spirit_charm_types type);
 
 	void (*baselevelchanged) (struct map_session_data *sd);
 	int (*level_penalty_mod) (int diff, unsigned char race, uint32 mode, int type);

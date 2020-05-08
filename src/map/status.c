@@ -696,6 +696,7 @@ static void initChangeTables(void)
 	status->set_sc( WM_BEYOND_OF_WARCRY       , SC_BEYOND_OF_WARCRY       , SCB_STR|SCB_CRI|SCB_MAXHP );
 	status->set_sc( WM_UNLIMITED_HUMMING_VOICE, SC_UNLIMITED_HUMMING_VOICE, SCB_NONE );
 	status->set_sc( WM_FRIGG_SONG             , SC_FRIGG_SONG             , SCB_MAXHP );
+	status->set_sc( WM_SEVERE_RAINSTORM       , SC_NO_SWITCH_EQUIP        , SCB_NONE );
 
 	/**
 	* Sorcerer
@@ -7808,6 +7809,9 @@ static int status_change_start_sub(struct block_list *src, struct block_list *bl
 	calc_flag = status->dbs->ChangeFlagTable[type];
 	if(!(flag&SCFLAG_LOADED)) { // Do not parse val settings when loading SCs
 		switch(type) {
+			case SC_AUTOTRADE:
+			case SC_KSPROTECTED:
+				break; // Prevent calling status_change_start_unknown_sc().
 			case SC_ADORAMUS:
 				sc_start(src,bl,SC_BLIND,100,val1,skill->get_time(status->sc2skill(type),val1));
 				// Fall through to SC_INC_AGI
@@ -8052,7 +8056,6 @@ static int status_change_start_sub(struct block_list *src, struct block_list *bl
 				// This is done this way because the message that the client displays is hardcoded, and only
 				// shows how many minutes are remaining. [Panikon]
 				total_tick = 60000;
-				val1 = battle_config.manner_system; //Mute filters.
 				if (sd)
 				{
 					clif->changestatus(sd,SP_MANNER,sd->status.manner);

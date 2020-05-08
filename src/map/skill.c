@@ -72,6 +72,34 @@ static struct s_skill_dbs skilldbs;
 
 struct skill_interface *skill;
 
+static const struct {
+	int start;
+	int end;
+} skill_idx_ranges[] = {
+	{ NV_BASIC, NPC_LEX_AETERNA },
+	{ KN_CHARGEATK, SA_ELEMENTWIND },
+	{ RK_ENCHANTBLADE, AB_SILENTIUM },
+	{ WL_WHITEIMPRISON, SC_FEINTBOMB },
+	{ LG_CANNONSPEAR, SR_GENTLETOUCH_REVITALIZE },
+	{ WA_SWING_DANCE, WA_MOONLIT_SERENADE },
+	{ MI_RUSH_WINDMILL, MI_HARMONIZE },
+	{ WM_LESSON, WM_UNLIMITED_HUMMING_VOICE },
+	{ SO_FIREWALK, SO_EARTH_INSIGNIA },
+	{ GN_TRAINING_SWORD, GN_SLINGITEM_RANGEMELEEATK },
+	{ AB_SECRAMENT, LG_OVERBRAND_PLUSATK },
+	{ ALL_ODINS_RECALL, ALL_LIGHTGUARD },
+	{ RL_GLITTERING_GREED, RL_GLITTERING_GREED_ATK },
+	{ KO_YAMIKUMO, OB_AKAITSUKI },
+	{ ECL_SNOWFLIP, ALL_THANATOS_RECALL },
+	{ GC_DARKCROW, NC_MAGMA_ERUPTION_DOTDAMAGE },
+	{ SU_BASIC_SKILL, SU_SPIRITOFSEA },
+	{ HLIF_HEAL, MH_VOLCANIC_ASH },
+	{ MS_BASH, MER_INVINCIBLEOFF2 },
+	{ EL_CIRCLE_OF_FIRE, EL_STONE_RAIN },
+	{ GD_APPROVAL, GD_DEVELOPMENT },
+	CUSTOM_SKILL_RANGES
+};
+
 //Since only mob-casted splash skills can hit ice-walls
 static int skill_splash_target(struct block_list *bl)
 {
@@ -96,51 +124,37 @@ static int skill_name2id(const char *name)
 /// Returns the skill's array index, or 0 (Unknown Skill).
 static int skill_get_index(int skill_id)
 {
-	int skillRange[] = { NV_BASIC, NPC_LEX_AETERNA,
-			KN_CHARGEATK, SA_ELEMENTWIND,
-			RK_ENCHANTBLADE, AB_SILENTIUM,
-			WL_WHITEIMPRISON, SC_FEINTBOMB,
-			LG_CANNONSPEAR, SR_GENTLETOUCH_REVITALIZE,
-			WA_SWING_DANCE, WA_MOONLIT_SERENADE,
-			MI_RUSH_WINDMILL, MI_HARMONIZE,
-			WM_LESSON, WM_UNLIMITED_HUMMING_VOICE,
-			SO_FIREWALK, SO_EARTH_INSIGNIA,
-			GN_TRAINING_SWORD, GN_SLINGITEM_RANGEMELEEATK,
-			AB_SECRAMENT, LG_OVERBRAND_PLUSATK,
-			ALL_ODINS_RECALL, ALL_LIGHTGUARD,
-			RL_GLITTERING_GREED, RL_GLITTERING_GREED_ATK,
-			KO_YAMIKUMO, OB_AKAITSUKI,
-			ECL_SNOWFLIP, ALL_THANATOS_RECALL,
-			GC_DARKCROW, NC_MAGMA_ERUPTION_DOTDAMAGE,
-			SU_BASIC_SKILL, SU_SPIRITOFSEA,
-			HLIF_HEAL, MH_VOLCANIC_ASH,
-			MS_BASH, MER_INVINCIBLEOFF2,
-			EL_CIRCLE_OF_FIRE, EL_STONE_RAIN,
-			GD_APPROVAL, GD_DEVELOPMENT
-			CUSTOM_SKILL_RANGES};
-	int length = sizeof(skillRange) / sizeof(int);
-	STATIC_ASSERT(sizeof(skillRange) / sizeof(int) % 2 == 0, "skill_get_index: skillRange should be multiple of 2");
+	int length = ARRAYLENGTH(skill_idx_ranges);
 
 
-	if (skill_id < skillRange[0] || skill_id > skillRange[length - 1]) {
+	if (skill_id < skill_idx_ranges[0].start || skill_id > skill_idx_ranges[length - 1].end) {
 		ShowWarning("skill_get_index: skill id '%d' is not being handled!\n", skill_id);
+		Assert_report(0);
 		return 0;
 	}
 
 	int skill_idx = 0;
+	bool found = false;
 	// Map Skill ID to Skill Indexes (in reverse order)
-	for (int i = 0; i < length; i += 2) {
+	for (int i = 0; i < length; i++) {
 		// Check if SkillID belongs to this range.
-		if (skill_id <= skillRange[i + 1] && skill_id >= skillRange[i]) {
-			skill_idx += (skillRange[i + 1] - skill_id);
+		if (skill_id <= skill_idx_ranges[i].end && skill_id >= skill_idx_ranges[i].start) {
+			skill_idx += (skill_idx_ranges[i].end - skill_id);
+			found = true;
 			break;
 		}
 		// Add the difference of current range
-		skill_idx += (skillRange[i + 1] - skillRange[i] + 1);
+		skill_idx += (skill_idx_ranges[i].end - skill_idx_ranges[i].start + 1);
 	}
 
+	if (!found) {
+		ShowWarning("skill_get_index: skill id '%d' (idx: %d) is not handled as it lies outside the defined ranges!\n", skill_id, skill_idx);
+		Assert_report(0);
+		return 0;
+	}
 	if (skill_idx >= MAX_SKILL_DB) {
 		ShowWarning("skill_get_index: skill id '%d'(idx: %d) is not being handled as it exceeds MAX_SKILL_DB!\n", skill_id, skill_idx);
+		Assert_report(0);
 		return 0;
 	}
 
@@ -1011,6 +1025,9 @@ static int skillnotok(uint16 skill_id, struct map_session_data *sd)
 
 	if (pc_has_permission(sd, PC_PERM_SKILL_UNCONDITIONAL))
 		return 0; // can do any damn thing they want
+
+	if (map->getcell(sd->bl.m, &sd->bl, sd->bl.x, sd->bl.y, CELL_CHKNOSKILL))
+		return 1; // block usage on 'noskill' cells [Wolfie]
 
 	if (skill_id == AL_TELEPORT && sd->autocast.type == AUTOCAST_ITEM && sd->autocast.skill_lv > 2)
 		return 0; // Teleport level 3 and higher bypasses this check if cast by itemskill() script commands.
@@ -5005,7 +5022,7 @@ static int skill_castend_damage_id(struct block_list *src, struct block_list *bl
 			if( (tsc = status->get_sc(bl)) && (tsc->data[SC_HIDING] )) {
 				clif->skill_nodamage(src,src,skill_id,skill_lv,1);
 			} else
-				skill->attack(BF_MISC,src,src,bl,skill_id,skill_lv,tick,flag);
+				skill->attack(BF_WEAPON,src,src,bl,skill_id,skill_lv,tick,flag);
 		}
 			break;
 		case NPC_SELFDESTRUCTION: {
@@ -7383,7 +7400,7 @@ static int skill_castend_nodamage_id(struct block_list *src, struct block_list *
 				int rate = 100 * (100 - (tstatus->int_ / 2 + tstatus->vit / 3 + tstatus->luk / 10));
 				int duration = skill->get_time2(skill_id, skill_lv);
 
-				duration *= (100 - (tstatus->int_ + tstatus->vit) / 2) / 100;
+				duration = duration * (100 - (tstatus->int_ + tstatus->vit) / 2) / 100;
 				status->change_start(src, bl, SC_BLIND, rate, 1, 0, 0, 0, duration, SCFLAG_NONE);
 			}
 
@@ -10470,7 +10487,7 @@ static int skill_castend_nodamage_id(struct block_list *src, struct block_list *
 		case KO_KAZEHU_SEIRAN:
 		case KO_DOHU_KOUKAI:
 			if(sd) {
-				int ttype = skill->get_ele(skill_id, skill_lv);
+				enum spirit_charm_types ttype = skill->get_ele(skill_id, skill_lv);
 				clif->skill_nodamage(src, bl, skill_id, skill_lv, 1);
 				pc->add_charm(sd, skill->get_time(skill_id, skill_lv), MAX_SPIRITCHARM, ttype); // replace existing charms of other type
 			}
@@ -10927,6 +10944,37 @@ static int skill_count_wos(struct block_list *bl, va_list ap)
 	return 0;
 }
 
+/**
+ * Returns the linked song/dance skill ID, if any (for the Bard/Dancer Soul Link).
+ *
+ * @param skill_id The skill ID to look up
+ *
+ * @return The linked song or dance's skill ID if any
+ * @retval 0 if the given skill_id doesn't have a linked skill ID
+ */
+static int skill_get_linked_song_dance_id(int skill_id)
+{
+	switch (skill_id) {
+		case BA_WHISTLE:
+			return DC_HUMMING;
+		case BA_ASSASSINCROSS:
+			return DC_DONTFORGETME;
+		case BA_POEMBRAGI:
+			return DC_FORTUNEKISS;
+		case BA_APPLEIDUN:
+			return DC_SERVICEFORYOU;
+		case DC_HUMMING:
+			return BA_WHISTLE;
+		case DC_DONTFORGETME:
+			return BA_ASSASSINCROSS;
+		case DC_FORTUNEKISS:
+			return BA_POEMBRAGI;
+		case DC_SERVICEFORYOU:
+			return BA_APPLEIDUN;
+	}
+	return 0;
+}
+
 /*==========================================
  *
  *------------------------------------------*/
@@ -11296,7 +11344,7 @@ static int skill_castend_pos2(struct block_list *src, int x, int y, uint16 skill
 			FALLTHROUGH
 		case GS_GROUNDDRIFT: //Ammo should be deleted right away.
 			if ( skill_id == WM_SEVERE_RAINSTORM )
-				sc_start(src,src,SC_NO_SWITCH_EQUIP,100,0,skill->get_time(skill_id,skill_lv));
+				sc_start(src, src, type, 100, 0, skill->get_time(skill_id, skill_lv));
 			skill->unitsetting(src,skill_id,skill_lv,x,y,0);
 			break;
 		case WZ_ICEWALL:
@@ -21801,4 +21849,5 @@ void skill_defaults(void)
 	skill->splash_target = skill_splash_target;
 	skill->check_npc_chaospanic = skill_check_npc_chaospanic;
 	skill->count_wos = skill_count_wos;
+	skill->get_linked_song_dance_id = skill_get_linked_song_dance_id;
 }

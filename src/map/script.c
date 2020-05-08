@@ -16111,7 +16111,6 @@ static BUILDIN(atcommand)
 	struct map_session_data *sd, *dummy_sd = NULL;
 	int fd;
 	const char* cmd;
-	bool ret = true;
 
 	cmd = script_getstr(st,2);
 
@@ -16134,11 +16133,12 @@ static BUILDIN(atcommand)
 
 	if (!atcommand->exec(fd, sd, cmd, false)) {
 		ShowWarning("script: buildin_atcommand: failed to execute command '%s'\n", cmd);
-		script->reportsrc(st);
-		ret = false;
+		if (dummy_sd != NULL)
+			aFree(dummy_sd);
+		return false;
 	}
 	if (dummy_sd) aFree(dummy_sd);
-	return ret;
+	return true;
 }
 
 /**
@@ -27846,6 +27846,11 @@ static void script_hardcoded_constants(void)
 	script->set_constant("MST_AROUND3", MST_AROUND3, false, false);
 	script->set_constant("MST_AROUND4", MST_AROUND4, false, false);
 	script->set_constant("MST_AROUND", MST_AROUND , false, false);
+
+	script->constdb_comment("Monster group constants");
+	script->set_constant("ALL_MOBS_NONBOSS", ALL_MOBS_NONBOSS, false, false);
+	script->set_constant("ALL_MOBS_BOSS", ALL_MOBS_BOSS, false, false);
+	script->set_constant("ALL_MOBS", ALL_MOBS, false, false);
 
 	script->constdb_comment("pc block constants, use with *setpcblock* and *checkpcblock*");
 	script->set_constant("PCBLOCK_NONE",     PCBLOCK_NONE,     false, false);

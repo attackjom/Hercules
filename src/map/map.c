@@ -1713,9 +1713,9 @@ static bool map_closest_freecell(int16 m, const struct block_list *bl, int16 *x,
 			tx = *x + dx;
 			ty = *y + dy;
 			if (unit_is_dir_or_opposite(dir, UNIT_DIR_SOUTHWEST))
-				tx *= costrange / MOVE_COST;
+				tx = tx * costrange / MOVE_COST;
 			if (unit_is_dir_or_opposite(dir, UNIT_DIR_NORTHWEST))
-				ty *= costrange / MOVE_COST;
+				ty = ty * costrange / MOVE_COST;
 			if (!map->count_oncell(m, tx, ty, type, flag) && map->getcell(m, bl, tx, ty, CELL_CHKPASS)) {
 				*x = tx;
 				*y = ty;
@@ -1724,9 +1724,9 @@ static bool map_closest_freecell(int16 m, const struct block_list *bl, int16 *x,
 			tx = *x + dx;
 			ty = *y + dy;
 			if (unit_is_dir_or_opposite(dir, UNIT_DIR_NORTHWEST))
-				tx *= costrange / MOVE_COST;
+				tx = tx * costrange / MOVE_COST;
 			if (unit_is_dir_or_opposite(dir, UNIT_DIR_SOUTHWEST))
-				ty *= costrange / MOVE_COST;
+				ty = ty * costrange / MOVE_COST;
 			if (!map->count_oncell(m, tx, ty, type, flag) && map->getcell(m, bl, tx, ty, CELL_CHKPASS)) {
 				*x = tx;
 				*y = ty;
@@ -3077,6 +3077,8 @@ static int map_getcellp(struct map_data *m, const struct block_list *bl, int16 x
 		return (cell.icewall);
 	case CELL_CHKNOICEWALL:
 		return (cell.noicewall);
+	case CELL_CHKNOSKILL:
+		return (cell.noskill);
 
 		// special checks
 	case CELL_CHKPASS:
@@ -3141,6 +3143,7 @@ static void map_setcell(int16 m, int16 x, int16 y, cell_t cell, bool flag)
 	case CELL_NOCHAT:        map->list[m].cell[j].nochat = flag;        break;
 	case CELL_ICEWALL:       map->list[m].cell[j].icewall = flag;       break;
 	case CELL_NOICEWALL:     map->list[m].cell[j].noicewall = flag;     break;
+	case CELL_NOSKILL:       map->list[m].cell[j].noskill = flag;       break;
 
 	default:
 		ShowWarning("map_setcell: invalid cell type '%d'\n", (int)cell);
